@@ -1,0 +1,21 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^9.4.0"
+  },
+  "dependencies": {
+    "@homebot/common": "file:../common",
+    "@homebot/core": "file:../core",
+    "restify": "^6.3.4",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.6.2"
+  }
+}
