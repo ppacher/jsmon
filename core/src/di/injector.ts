@@ -144,6 +144,7 @@ class _Injector extends Injector {
                 }
                 
                 try {
+                    console.log(`Querying parent for ${dep.token}`);
                     instance = this.parent.get(dep.token);
                 } catch {}
                 
@@ -311,3 +312,20 @@ function _zipParametersAndAnnotations(params: any[], annotations: any[][]): Reso
 
     return debs;
 }
+
+let RootInjector: Injector|null = null;
+
+export function getRootInjector(): Injector {
+    return RootInjector || createRootInjector();
+}
+
+function createRootInjector(): Injector {
+    if (!!RootInjector) {
+        return RootInjector;
+    }
+    
+    RootInjector = Injector.fromProviders([]);
+    return RootInjector;
+}
+
+createRootInjector();

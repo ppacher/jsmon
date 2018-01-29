@@ -5,7 +5,12 @@ export interface ModuleSettings {
     /** Providers for the module injector */
     providers?: Provider[];
     
-    /** A set of DI providers to provide on the first importing module */
+    /**
+     * A set of DI providers to provide on the top-most module
+     * that imports the decorated module. If there is no parent module
+     * with the exact import available, the providers listed in `exports`
+     * are registered the the importing modules injector
+     */
     exports?: Provider[];
     
     /** A set of required modules */
@@ -38,6 +43,7 @@ export class ModuleInstance<T> {
                 public readonly imports: ReadonlyArray<ModuleInstance<any>>,
                 public readonly parent: ModuleInstance<any>|null = null) {}
     
+    /** Check if `module` is imported by this or a parent module */
     hasImported(module: Type<any>): boolean {
         let imported = this.imports.find(instance => instance.instance instanceof module);
         
@@ -50,6 +56,24 @@ export class ModuleInstance<T> {
         }
 
         return false;
+    }
+    
+    /**
+     * Returns the instance of `module` if already available in this or any
+     * parents module imports
+     */
+    getImportedModuleInstance<T>(module: Type<T>): ModuleInstance<T>|null {
+        let imported = this.imports.find(instance => instance.instance instanceof module);
+        
+        if (imported !== undefined) {
+            return imported;
+        }
+        
+        if (this.parent !== null) {
+            return this.parent.getImportedModuleInstance(module);
+        }
+
+        return null;
     }
 }
 

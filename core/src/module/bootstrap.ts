@@ -1,18 +1,27 @@
-import {Injector, Type, Provider} from '../di';
+import {Injector, Type, Provider, getRootInjector} from '../di';
 import {ANNOTATIONS} from '../utils/decorator';
 import {Module, ModuleSettings, ModuleInstance, ModuleWithExports} from './module';
 import {Logger, LOG_PREFIX} from '../logger';
 
+export function bootstrapModule<T>(module: Type<T>): ModuleInstance<T> {
+    return _bootstrapModule(module, null, undefined);
+}
 
-export function bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentModule?: ModuleInstance<any>): ModuleInstance<T> {
-    if (rootInjector === undefined) {
-        rootInjector = Injector.fromProviders([]);
+function _bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentModule?: ModuleInstance<any>): ModuleInstance<T> {
+    if (!rootInjector) {
+        rootInjector = getRootInjector();
     }
+
+    console.log(`Bootstrapping ${module.prototype.constructor.name}`);
     
     const settings = getModuleMetadata(module);
     const imports: ModuleInstance<any>[] = [];
     
     let moduleInjector = createModuleInjector(module, rootInjector, settings.providers);
+    
+    if (!!settings.exports && settings.exports.length > 0) {
+        getRootInjector().addProviders(settings.exports);
+    }
 
     (settings.imports || []).forEach(imported => {
         let importedModule: Type<T>;
@@ -26,20 +35,17 @@ export function bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, par
         } else {
             importedModule = imported as Type<any>;
         }
+        console.log(`Searching import: ${importedModule.prototype.constructor.name}`);
 
-        // Skip provider imports if the module is already imported by a parent module
-        if (!!parentModule && parentModule.hasImported(importedModule)) {
-            return;
+        let importedInstance = !!parentModule ? parentModule.getImportedModuleInstance(importedModule) : null;
+        
+        if (importedInstance === null) {
+            // If the module is not yet available, bootstrap it under the same parentModule
+            importedInstance = _bootstrapModule(importedModule, rootInjector, parentModule);
         }
         
-        // If the module is not yet available, bootstrap it under the same parentModule
-        let importedInstance = bootstrapModule(importedModule, moduleInjector, parentModule);
+        // Push the instance to the list of imports
         imports.push(importedInstance);
-
-        const importedSettings = getModuleMetadata(importedModule);
-
-        // Add all exported providers to the current module importing them
-        moduleInjector.addProviders((importedSettings.exports || []));
     });
 
     const instance = moduleInjector.get<any>(module);
@@ -49,6 +55,7 @@ export function bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, par
         value: moduleInstance
     });
 
+    console.log(`Bootstrapped ${module.prototype.constructor.name}`);
     return moduleInstance;
 }
 
