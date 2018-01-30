@@ -25,4 +25,14 @@ export class DeviceManager {
     unregisterDevice(def: Device.Device|string): void {
         throw new Error('not yet implemented');
     }
+    
+    /**
+     * Unregisteres a device from the device manager
+     * Acutally an alias for `unregister`
+     * 
+     * @param def  The {@link Device.Device} definition or the name of the device
+     */
+    deregisterDevice(def: Device.Device|string): void {
+        this.unregisterDevice(def);
+    }
 }

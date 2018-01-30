@@ -103,7 +103,7 @@ export namespace Device {
             let errors = Device.validateParameters(cmd, params);
             
             if (errors !== null) {
-                throw new Error(errors.map(err => err.message).join(', '));
+                return _throw(new Error(errors.map(err => err.message).join(', ')));
             }
             
             return fromPromise(cmd.handler(params));
