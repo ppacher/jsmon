@@ -12,6 +12,7 @@ export namespace Device {
         Any = 'any'
     };
     
+    /** Definition for a device command parameter */
     export interface ParameterDefinition {
         /** A list of accepted parameter types */
         types: ParameterType[]
@@ -22,7 +23,8 @@ export namespace Device {
         /** Wether or not the parameter is optional. Defaults to false */
         optional?: boolean;
     }
-
+    
+    /** Definition of a command supported by the device */
     export interface CommandSchema {
         /** the name of the command */
         name: string;
@@ -34,7 +36,33 @@ export namespace Device {
         
         /** The handle function to invoke for the command */
         handler: (params: Map<string, any>) => Promise<any>;
-    } 
+    }
+
+    /** Possible states for the device health */
+    export enum DeviceHealthState {
+        /** The device is currently online and functional */
+        Online = 'online',
+        
+        /** The device is currently offline */
+        Offline = 'offline',
+        
+        /** The device is in some kind of error state */
+        Error = 'error',
+        
+        /** The state of the device is unknown (possibly 'offline' or 'error') */
+        Unknown = 'unknown'
+    }
+
+    /** 
+     * Definition of a HealthCheck function that returns the current state of
+     * a device. 
+     *
+     * Note that implementations are allowed to cache the value and return the last
+     * known state when polled on a regular interval
+     */
+    export interface HealthCheck {
+        (): DeviceHealthState;
+    }
     
     /**
      * @class Device
@@ -51,8 +79,11 @@ export namespace Device {
             /** A list of commands supported by the device */
             public commands: CommandSchema[],
             
+            /** An optional health check function, defaults to DeviceHealthState.Unknown */
+            private _checkHealth: HealthCheck = () => DeviceHealthState.Unknown,
+            
             /** An optional description of the device */
-            public description: string = ''
+            private _description: string = ''
         ) {}
         
         /**
@@ -76,6 +107,20 @@ export namespace Device {
             }
             
             return fromPromise(cmd.handler(params));
+        }
+        
+        /** Returns the description of the device or an empty string */
+        get description(): string {
+            return this._description || '';
+        }
+        
+        /** Returns the current health state of the device */
+        healthy(): DeviceHealthState {
+            if (this._checkHealth) {
+                return this._checkHealth();
+            }
+            
+            return DeviceHealthState.Unknown;
         }
         
         /**
