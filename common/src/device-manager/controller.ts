@@ -138,16 +138,17 @@ export namespace Device {
 
             let item: IteratorResult<any>;
             
+            const next = () => {
+                item = iterator.next();
+                return item.done;
+            }
+            
             // unfortunately typescript does not yet support
             // for .. of for iterators :/
-            item = iterator.next();
-            while(!item.done) {
+            while(!next()) {
                 const key = item.value[0];
                 const value = item.value[1];
-                
-                // Get the next value ASAP
-                item = iterator.next();
-                
+
                 const definition = schema.parameters[key];
 
                 if (definition == undefined) {
