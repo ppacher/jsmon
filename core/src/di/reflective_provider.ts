@@ -6,7 +6,6 @@ import {Type} from  './type';
 import {PARAMETERS, stringify} from '../utils';
 import {
     ClassProvider,
-    ConstructorProvider,
     FactoryProvider,
     TypeProvider,
     ValueProvider,
