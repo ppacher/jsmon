@@ -161,6 +161,7 @@ export class DeviceManager {
             cancelFns.push(cancelGet);
             
             const cancelPost = this._server.register('post', url, (req, res) => {
+                // TODO: parse and add parameter map
                 cmd.handler(new Map()).then((res) => {
                     res.send({result: res, error: 'none'});
                 }).catch(err => res.send(err));
