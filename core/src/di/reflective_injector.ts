@@ -3,9 +3,35 @@ import {ReflectiveKey} from './reflective_key';
 import {resolveReflectiveProvider, ResolvedReflectiveProvider, ReflectiveDependency} from './reflective_provider';
 import {Self, SkipSelf} from './annotations';
 
+/**
+ * @docs-internal
+ * 
+ * @description
+ * Instructs the {@link ReflectiveInjector} to throw an error when instantiating a
+ * given provides failes
+ *
+ */
 const _THROW_NOT_FOUND = new Object();
+
+export const THROW_NOT_FOUND = _THROW_NOT_FOUND;
+
+/**
+ * @docs-internal
+ *
+ * @description
+ * A constant value for "undefined" that is used inside the injector (as "undefined") might
+ * be a valid value
+ */
 const _UNDEFINED = new Object();
 
+/**
+ * @class ReflectiveInjector
+ * 
+ * @description
+ * Provides hierarchical dependecy injection functionality
+ * 
+ * TODO(ppacher): improve docs
+ */
 export class ReflectiveInjector {
     readonly parent: ReflectiveInjector|null;
     readonly name: string;
@@ -20,6 +46,11 @@ export class ReflectiveInjector {
         this.name = name;
     }
     
+    /** 
+     * Resolves one or more providers and adds them to the injector
+     * 
+     * @param p  A provider or a list of providers to add to the injector
+     */
     addProvider(p: Provider|Provider[]): void {
         if (!Array.isArray(p)) {
             p = [p];
@@ -28,6 +59,12 @@ export class ReflectiveInjector {
         this._providers = this._providers.concat(p.map(provider => resolveReflectiveProvider(provider)));
     }
     
+    /**
+     * Resolves a set of parameters and creates a new {@link ReflectiveInjector}
+     * 
+     * @param providers One or more providers for the new injector
+     * @param name      An optional name for the new injector
+     */
     static resolveAndCreate(providers: Provider|Provider[], name: string = ''): ReflectiveInjector {
         const inj = new ReflectiveInjector(null, name);
         inj.addProvider(providers);
@@ -35,6 +72,13 @@ export class ReflectiveInjector {
         return inj;
     }
 
+    /**
+     * Resolves a set of parameters and creates a new child {@link ReflectiveInjector} with
+     * the current injector set as a parent
+     * 
+     * @param providers One or more providers for the new injector
+     * @param name      An optional name for the new injector
+     */
     resolveAndCreateChild(providers: Provider|Provider[], name: string = ''): ReflectiveInjector {
         const child = new ReflectiveInjector(this, name);
         child.addProvider(providers);
@@ -42,11 +86,26 @@ export class ReflectiveInjector {
         return child;
     }
     
+    /**
+     * Returns (and may create) a new instance of the provider identified by `token`
+     * 
+     * @param token      A token specified the target of the Dependency Injection
+     * @param notFound   Either a value that should be returned if no provider is found
+     *                   or THROW_NOT_FOUND to throw an error
+     */
     get<T>(token: any, notFound: any|null = _THROW_NOT_FOUND): T {
         const key = ReflectiveKey.get(token);
         return this._getByKey(key, null, notFound);
     }
     
+    /**
+     * Returns (and may create) a new instance of the provider identified by {@link ReflectiveKey} `key`
+     * 
+     * @param token      The {@link ReflectiveKey} identifying the target of the Dependency Injection
+     * @param visibility The current visibility of the target. This may be {@link Skip}, {@link SkipSelf} or null
+     * @param notFound   Either a value that should be returned if no provider is found
+     *                   or THROW_NOT_FOUND to throw an error
+     */
     _getByKey(key: ReflectiveKey, visibility: Self|SkipSelf|null, notFound: any|null): any {
         if (key === ReflectiveInjector._INJECTOR_TOKEN) {
             return this;

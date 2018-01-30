@@ -66,7 +66,7 @@ export interface InjectDecorator {
 };
 
 /**
- * Type for the Injecto metadata
+ * Type for the Inject metadata
  */
 export interface Inject {
     token: any;
