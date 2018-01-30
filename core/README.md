@@ -8,7 +8,7 @@
 
 # Contributing
 
-In order to contribute to '@homebot/core' please follow the [contribution guidlines](../CONTRIBUTING.md).
+In order to contribute to `@homebot/core` please follow the [contribution guidlines](../CONTRIBUTING.md).
 
 ## Building
 
