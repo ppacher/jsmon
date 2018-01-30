@@ -1,4 +1,4 @@
-import {Injector, Type, Provider, getRootInjector} from '../di';
+import {ReflectiveInjector, Type, Provider, getRootInjector} from '../di';
 import {ANNOTATIONS} from '../utils/decorator';
 import {Module, ModuleSettings, ModuleInstance, ModuleWithExports} from './module';
 import {Logger, LOG_PREFIX} from '../logger';
@@ -7,12 +7,11 @@ export function bootstrapModule<T>(module: Type<T>): ModuleInstance<T> {
     return _bootstrapModule(module, null, undefined);
 }
 
-function _bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentModule?: ModuleInstance<any>): ModuleInstance<T> {
+function _bootstrapModule<T>(module: Type<T>, rootInjector?: ReflectiveInjector, parentModule?: ModuleInstance<any>): ModuleInstance<T> {
     if (!rootInjector) {
         rootInjector = getRootInjector();
     }
 
-    console.log(`Bootstrapping ${module.prototype.constructor.name}`);
     
     const settings = getModuleMetadata(module);
     const imports: ModuleInstance<any>[] = [];
@@ -20,7 +19,13 @@ function _bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentMod
     let moduleInjector = createModuleInjector(module, rootInjector, settings.providers);
     
     if (!!settings.exports && settings.exports.length > 0) {
-        getRootInjector().addProviders(settings.exports);
+        getRootInjector().addProvider([...settings.exports,
+            Logger,
+            {
+                provide: LOG_PREFIX,
+                useValue: 'root'
+            }
+        ]);
     }
 
     (settings.imports || []).forEach(imported => {
@@ -31,11 +36,10 @@ function _bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentMod
             importedModule = withExports.module;
             // if the module has been imported as a ModuleWithExports we must
             // add all providers to the module injector
-            moduleInjector.addProviders(withExports.exports || []);
+            moduleInjector.addProvider(withExports.exports || []);
         } else {
             importedModule = imported as Type<any>;
         }
-        console.log(`Searching import: ${importedModule.prototype.constructor.name}`);
 
         let importedInstance = !!parentModule ? parentModule.getImportedModuleInstance(importedModule) : null;
         
@@ -55,11 +59,10 @@ function _bootstrapModule<T>(module: Type<T>, rootInjector?: Injector, parentMod
         value: moduleInstance
     });
 
-    console.log(`Bootstrapped ${module.prototype.constructor.name}`);
     return moduleInstance;
 }
 
-function createModuleInjector(module: Type<any>, root: Injector, providers?: Provider[]): Injector {
+function createModuleInjector(module: Type<any>, root: ReflectiveInjector, providers?: Provider[]): ReflectiveInjector {
     return root.resolveAndCreateChild([
         {
             provide: module,
@@ -74,7 +77,7 @@ function createModuleInjector(module: Type<any>, root: Injector, providers?: Pro
             useValue: module.prototype.constructor.name,
         },
         ...(providers || [])
-    ]);
+    ], module.prototype.constructor.name);
 }
 
 function getModuleMetadata(module: Type<any>): ModuleSettings|undefined {

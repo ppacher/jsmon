@@ -1,5 +1,4 @@
 import {makeDecorator, makeParamDecorator} from '../utils/decorator';
-import {Token} from './token';
 
 /**
  * Type for the @Injectable decorator
@@ -62,8 +61,8 @@ export const SkipSelf: SkipSelfDecorator = makeParamDecorator('SkipSelf');
  * Type for the @Inject decorator
  */
 export interface InjectDecorator {
-    (token: Token<any>): any;
-    new (token: Token<any>): Inject;
+    (token: any): any;
+    new (token: any): Inject;
 };
 
 /**

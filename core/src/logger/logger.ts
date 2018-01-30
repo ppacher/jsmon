@@ -1,7 +1,7 @@
 import {Injectable, Optional, Inject} from '../di';
 import {LoggingAdapter, DefaultConsoleLoggingAdapter, LOG_LEVEL, LogLevel} from './adapter';
 
-export const LOG_PREFIX = Symbol('LogPrefix');
+export const LOG_PREFIX = 'LogPrefix';
 
 @Injectable()
 export class Logger {

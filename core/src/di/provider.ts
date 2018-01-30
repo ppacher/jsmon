@@ -1,16 +1,12 @@
 import {Type} from './type';
-import {Token} from './token';
-
-export interface BaseToken {
-    provide: Token<any>;
-    debs?: Token<any>[]|any[][];
-}
 
 /**
  * Provides a dependency injection provider using the
  * specified value
  */
-export interface ValueProvider extends BaseToken {
+export interface ValueProvider {
+    provide: any;
+
     useValue: any;
 }
 
@@ -18,7 +14,9 @@ export interface ValueProvider extends BaseToken {
  * Provides a dependency injection provider by
  * creating a new instance of the specified class
  */
-export interface ClassProvider extends BaseToken {
+export interface ClassProvider {
+    provide: any;
+
     useClass: Type<any>;
 }
 
@@ -27,11 +25,23 @@ export interface ClassProvider extends BaseToken {
  * the specified factory function passing a list of dependencies
  * (which in turn must be available using dependency injection)
  */
-export interface FactoryProvider extends BaseToken {
+export interface FactoryProvider {
+    provide: any;
+
     useFactory: (...args: any[]) => any;
+    
+    debs?: any[];
+}
+
+export interface TypeProvider extends Type<any> {}
+
+export interface ConstructorProvider {
+    provide: Type<any>;
+    
+    debs?: any[];
 }
 
 /**
  * Type use to provide a value to the dependecy injector
  */
-export type Provider = ValueProvider | ClassProvider | FactoryProvider | Type<any>;
+export type Provider = ValueProvider | ClassProvider | FactoryProvider | ConstructorProvider | TypeProvider;

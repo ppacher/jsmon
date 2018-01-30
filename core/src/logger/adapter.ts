@@ -5,7 +5,7 @@ import {Type, ClassProvider, ValueProvider, Injectable} from '../di';
  */
 export type LogLevel = 'error' | 'warn' | 'info' | 'verbose' | 'debug';
 
-export const LOG_LEVEL = Symbol('LogLevel');
+export const LOG_LEVEL = 'LogLevel';
 
 /**
  * Definition of a log message

@@ -1,5 +1,5 @@
 import {makeDecorator} from '../utils/decorator';
-import {Provider, Type, Injector} from '../di';
+import {Provider, Type, ReflectiveInjector} from '../di';
 
 export interface ModuleSettings {
     /** Providers for the module injector */
@@ -39,7 +39,7 @@ export const Module: ModuleDecorator = makeDecorator('Module', (settings) => ({s
 
 export class ModuleInstance<T> {
     constructor(public readonly instance: T,
-                public readonly injector: Injector,
+                public readonly injector: ReflectiveInjector,
                 public readonly imports: ReadonlyArray<ModuleInstance<any>>,
                 public readonly parent: ModuleInstance<any>|null = null) {}
     

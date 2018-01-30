@@ -1,8 +1,4 @@
 **core/**  
-     - di: ReflectedKey/extractToken
-     - di: tostring() for token
-     - di: fix current bug with root injector
-     - di: add some more docs (note on angular-di)
      - module: fix __module__ accessor to be immediate (currently not working
         in ctor)
      - utils: export makeXXXDecorator functions for plugins
