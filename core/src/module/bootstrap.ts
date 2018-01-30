@@ -12,7 +12,6 @@ function _bootstrapModule<T>(module: Type<T>, rootInjector?: ReflectiveInjector,
         rootInjector = getRootInjector();
     }
 
-    
     const settings = getModuleMetadata(module);
     const imports: ModuleInstance<any>[] = [];
     
@@ -31,11 +30,12 @@ function _bootstrapModule<T>(module: Type<T>, rootInjector?: ReflectiveInjector,
     (settings.imports || []).forEach(imported => {
         let importedModule: Type<T>;
         
-        if ('module' in imported) {
-            let withExports = imported as ModuleWithExports;
+        // if the module has been imported as a ModuleWithExports we must
+        // add all providers to the module injector
+        if ('module' in imported && 'exports' in imported) {
+            const withExports = imported as ModuleWithExports;
+            
             importedModule = withExports.module;
-            // if the module has been imported as a ModuleWithExports we must
-            // add all providers to the module injector
             moduleInjector.addProvider(withExports.exports || []);
         } else {
             importedModule = imported as Type<any>;
