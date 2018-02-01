@@ -138,7 +138,8 @@ export class DeviceManager {
                 state: device.healthy(),
                 commands: device.commands.map(cmd => ({
                     name: cmd.name,
-                }))
+                })),
+                sensors: device.getSensorSchemas()
             };
 
             res.send(response);
