@@ -48,6 +48,16 @@ export class HTTPServer {
             throw new Error(`Unsupported HTTP verb: ${verb}`);
         }
         
+        let h = (req: restify.Request, res: restify.Response, next: any) => {
+            try {
+                handler(req, res);
+            } catch (err) {
+                res.send(err);
+            }
+            
+            next(false);
+        }
+        
         let result: restify.Route = m.apply(this._server, [route, handler]);
 
         return () => {
