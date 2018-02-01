@@ -1,5 +1,7 @@
 import {Module, bootstrapModule} from '@homebot/core';
 import {HTTPServerModule, HTTPServer, DeviceManagerModule, DeviceManager, Device, NotificationModule, NotificationService} from '@homebot/common';
+import {Observable} from 'rxjs/Observable';
+import 'rxjs/add/observable/interval';
 
 @Module({
     imports: [
@@ -14,12 +16,22 @@ export class App {
 
         this._device.registerDevice(new Device.Device('dummy', [
             {
-                name: 'foo',
-                parameters: {},
-                handler: (req) => {
-                    this._notify.notify('Example', 'Start coding!');
-                    return Promise.resolve();
+                name: 'notify',
+                parameters: {
+                    'msg': [Device.ParameterType.String],
                 },
+                handler: (params) => {
+                    console.log('notifying');
+                    this._notify.notify('Example', params.get('msg'));
+                    return Promise.resolve(params.get('msg'));
+                },
+            }
+        ], [
+            {
+                name: 'tick',
+                type: Device.ParameterType.Number,
+                description: 'Ticks every interval',
+                onChange: Observable.interval(1000) as Observable<any>,
             }
         ]));
     } 

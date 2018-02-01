@@ -1,6 +1,11 @@
 import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {_throw} from 'rxjs/observable/throw';
 import {fromPromise} from 'rxjs/observable/fromPromise';
+import {subscribeOn} from 'rxjs/operator/subscribeOn';
+import {of} from 'rxjs/observable/of';
+
+import 'rxjs/add/operator/map';
 
 export namespace Device {
     /** Available types for command paramters */
@@ -53,6 +58,23 @@ export namespace Device {
         Unknown = 'unknown'
     }
 
+    /** Describes the schema of a sensor/state value exported by the device */
+    export interface SensorSchema {
+        /** Name of the sensor / state */
+        name: string;
+        
+        /** An optional description of the sensor name */
+        description?: string;
+        
+        /** Type of the sensor */
+        type: ParameterType;
+    }
+    
+    export interface SensorProvider extends SensorSchema {
+        /** Observable that should emit changes whenever the state of the sensor changes */
+        onChange: Observable<any>;
+    }
+
     /** 
      * Definition of a HealthCheck function that returns the current state of
      * a device. 
@@ -61,7 +83,7 @@ export namespace Device {
      * known state when polled on a regular interval
      */
     export interface HealthCheck {
-        (): DeviceHealthState;
+        (): Observable<DeviceHealthState>
     }
     
     /**
@@ -72,6 +94,9 @@ export namespace Device {
      * of a device
      */
     export class Device {
+        private _health: BehaviorSubject<DeviceHealthState> = new BehaviorSubject<DeviceHealthState>(DeviceHealthState.Unknown);
+        private _sensorValues: BehaviorSubject<{[key:string]: any}> = new BehaviorSubject<{[key:string]:any}>({});
+        
         constructor(
             /** The name of the device */
             public name: string,
@@ -79,12 +104,26 @@ export namespace Device {
             /** A list of commands supported by the device */
             public commands: CommandSchema[],
             
+            private _sensors: SensorProvider[],
+            
             /** An optional health check function, defaults to DeviceHealthState.Unknown */
-            private _checkHealth: HealthCheck = () => DeviceHealthState.Unknown,
+            private _checkHealth: HealthCheck = () => of(DeviceHealthState.Unknown),
             
             /** An optional description of the device */
             private _description: string = ''
-        ) {}
+        ) {
+            /** Subscribe to health values */
+            this._checkHealth()
+                .subscribe(state => this._health.next(state));
+            
+            this._sensors
+                .forEach(sensor => {
+                    let sensorSubcription = sensor.onChange
+                        .subscribe(value => {
+                            this._updateSensorValue(sensor, value);
+                        });
+                });
+        }
         
         /**
          * Executes a command with the provided arguments and returns
@@ -95,15 +134,20 @@ export namespace Device {
          */
         call(command: string, params: Map<string, any>): Observable<any> {
             const cmd = this.commands.find(c => c.name == command);
+            
+            console.log(`${this.name}: executing ${command} with parameters ${params}`);
 
             if (cmd === undefined) {
+                console.error(`${this.name}: unknown command ${command}`);
                 return _throw(new Error(`Command ${command} not supported by device ${this.name}`));
             }
             
             let errors = Device.validateParameters(cmd, params);
             
             if (errors !== null) {
-                return _throw(new Error(errors.map(err => err.message).join(', ')));
+                let err = new Error(errors.map(err => err.message).join(', '));
+                console.error(`${this.name}: invalid parameters: `, err);
+                return _throw(err);
             }
             
             return fromPromise(cmd.handler(params));
@@ -116,11 +160,50 @@ export namespace Device {
         
         /** Returns the current health state of the device */
         healthy(): DeviceHealthState {
-            if (this._checkHealth) {
-                return this._checkHealth();
+            return this._health.getValue();
+        }
+        
+        /** Returns a list of sensor definitions the device supports */
+        getSensorSchemas(): SensorSchema[] {
+            return this._sensors
+                .map(s => ({
+                    name: s.name,
+                    description: s.description || '',
+                    type: s.type,
+                }));
+        }
+
+        watchSensors(): Observable<{[key: string]: any}> {
+            return this._sensorValues.asObservable();
+        }
+        
+        watchSensor(name: string): Observable<any> {
+            if (this._sensors.find(s => s.name === name) === undefined) {
+                return _throw(new Error(`Unknown sensor name`));
             }
             
-            return DeviceHealthState.Unknown;
+            return this.watchSensors()
+                .map(values => values[name]);
+        }
+        
+        getSensorValues(): {[key: string]: any} {
+            return this._sensorValues.getValue();
+        }
+        
+        getSensorValue(name: string): any {
+            if (this._sensors.find(s => s.name === name) === undefined) {
+                throw new Error(`Unknown sensor name`);
+            }
+            
+            return this.getSensorValues()[name];
+        }
+    
+        private _updateSensorValue(sensor: SensorProvider, value: any): void {
+            let state = {...this._sensorValues.getValue()};
+
+            state[sensor.name] = value;
+            
+            this._sensorValues.next(state);
         }
         
         /**
@@ -176,8 +259,8 @@ export namespace Device {
                 const definition = schema.parameters[parameterName];
                 const optional = Array.isArray(definition) ? false : definition.optional;
 
-                if (!optional && args[parameterName] === undefined) {
-                    errors.push(new Error(`Missing required parameter ${parameterName} form command ${schema.name}`));
+                if (!optional && !args.has(parameterName) === undefined) {
+                    errors.push(new Error(`Missing required parameter ${parameterName} for command ${schema.name}`));
                 }
             });
             
@@ -188,4 +271,5 @@ export namespace Device {
             return errors;
         }
     };
+    
 }

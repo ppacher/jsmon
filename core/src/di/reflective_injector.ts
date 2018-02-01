@@ -101,7 +101,7 @@ export class ReflectiveInjector {
     /**
      * Returns (and may create) a new instance of the provider identified by {@link ReflectiveKey} `key`
      * 
-     * @param token      The {@link ReflectiveKey} identifying the target of the Dependency Injection
+     * @param key        The {@link ReflectiveKey} identifying the target of the Dependency Injection
      * @param visibility The current visibility of the target. This may be {@link Skip}, {@link SkipSelf} or null
      * @param notFound   Either a value that should be returned if no provider is found
      *                   or THROW_NOT_FOUND to throw an error

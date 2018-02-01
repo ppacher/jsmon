@@ -11,10 +11,9 @@ const libraryName = 'core'
 export default {
   input: `src/${libraryName}.ts`,
   output: [
-    { file: pkg.main, name: camelCase(libraryName), format: 'umd' },
-    { file: pkg.module, format: 'es' },
+    { file: 'dist/'+pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
+    { file: 'dist/'+pkg.module, format: 'es', sourcemap: true},
   ],
-  sourcemap: true,
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
   external: [],
   watch: {
@@ -29,7 +28,10 @@ export default {
     // Allow node_modules resolution, so you can use 'external' to control
     // which external modules to include in the bundle
     // https://github.com/rollup/rollup-plugin-node-resolve#usage
-    resolve(),
+    resolve({
+      module: true,
+      main: true,
+    }),
 
     // Resolve source maps to the original source
     sourceMaps(),

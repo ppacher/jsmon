@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "description": "",
   "keywords": [],
-  "main": "dist/es/common.js",
-  "module": "dist/common.es5.js",
-  "typings": "dist/types/common.d.ts",
+  "main": "common.umd.js",
+  "module": "common.esm.js",
+  "js:next": "common.esm.js",
+  "typings": "types/common.d.ts",
   "files": [
     "dist"
   ],
@@ -20,17 +21,11 @@
   },
   "scripts": {
     "lint": "tslint -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
-    "prebuild": "rimraf dist",
-    "build": "tsc",
+    "build": "rimraf dist && npx tsc && rollup -c ./rollup.config.js && cp ./package.json dist/",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "commit": "git-cz",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
-    "precommit": "lint-staged"
+    "report-coverage": "cat ./coverage/lcov.info | coveralls"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
@@ -73,7 +68,6 @@
     "mapCoverage": true
   },
   "devDependencies": {
-    "@homebot/core": "file:../core",
     "@types/jest": "^22.1.1",
     "@types/node": "^8.0.0",
     "@types/node-notifier": "0.0.28",
@@ -91,6 +85,11 @@
     "prompt": "^1.0.0",
     "replace-in-file": "^3.0.0-beta.2",
     "rimraf": "^2.6.1",
+    "rollup": "^0.55.3",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-node-resolve": "^3.0.2",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.10.0",
     "ts-jest": "^22.0.0",
     "ts-node": "^4.1.0",
     "tslint": "^5.8.0",
@@ -98,10 +97,15 @@
     "tslint-config-standard": "^7.0.0",
     "typedoc": "^0.9.0",
     "typescript": "^2.6.2",
-    "validate-commit-msg": "^2.12.2"
+    "validate-commit-msg": "^2.12.2",
+    "rxjs": "^5.5.6",
+    "@homebot/core": "file:../core/dist",
+    "node-notifier": "^5.2.1",
+    "restify": "^6.3.4"
   },
-  "dependencies": {
-    "@homebot/core": "file:../core",
+  "peerDependencies": {
+    "rxjs": "^5.5.6",
+    "@homebot/core": "file:../core/dist",
     "node-notifier": "^5.2.1",
     "restify": "^6.3.4"
   }

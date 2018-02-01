@@ -26,6 +26,8 @@ export class HTTPServer {
     
     constructor(private readonly log: Logger) {
         this._server = restify.createServer();
+        
+        this._server.use(restify.plugins.bodyParser({mapParams: false}));
     } 
     
     /** Listen starts listening on incoming requests */

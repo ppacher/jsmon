@@ -3,11 +3,10 @@
   "version": "0.0.0",
   "description": "",
   "keywords": [],
-  "main": "dist/es/core.js",
-  "typings": "dist/types/core.d.ts",
-  "files": [
-    "dist"
-  ],
+  "main": "core.umd.js",
+  "module": "core.esm.js",
+  "js:next": "core.esm.js",
+  "typings": "types/core.d.ts",
   "author": "Patrick Pacher <p.pacher@cybertrap.com>",
   "repository": {
     "type": "git",
@@ -19,16 +18,11 @@
   },
   "scripts": {
     "lint": "tslint -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
-    "prebuild": "rimraf dist",
-    "build": "tsc",
+    "build": "rimraf dist && npx tsc && npx rollup -c ./rollup.config.js && cp ./package.json ./dist",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
     "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "commit": "git-cz",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
     "precommit": "lint-staged"
   },
   "lint-staged": {
@@ -77,7 +71,7 @@
     "mapCoverage": true
   },
   "devDependencies": {
-    "@types/jest": "^22.0.0",
+    "@types/jest": "^22.1.1",
     "@types/node": "^8.0.0",
     "colors": "^1.1.2",
     "commitizen": "^2.9.6",
@@ -92,6 +86,10 @@
     "prompt": "^1.0.0",
     "replace-in-file": "^3.0.0-beta.2",
     "rimraf": "^2.6.1",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-node-resolve": "^3.0.2",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.10.0",
     "semantic-release": "^11.0.2",
     "ts-jest": "^22.0.0",
     "ts-node": "^4.1.0",

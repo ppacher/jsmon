@@ -1,5 +1,5 @@
 import {Injectable} from '@homebot/core';
-
+import {Request} from 'restify';
 import {Device} from './controller';
 
 import {HTTPServer, RemoveRouteFn} from '../http/server';
@@ -108,7 +108,14 @@ export class DeviceManager {
      * Returns the URL for a device command
      */
     getDeviceCommandURL(d: Device.Device, cmd: Device.CommandSchema): string {
-        return `${this.getDeviceBaseURL(d)}/${cmd.name}`;
+        return `${this.getDeviceBaseURL(d)}/command/${cmd.name}`;
+    }
+    
+    /**
+     * Returns the URL for a device sensor
+     */
+    getDeviceSensorURL(d: Device.Device, sensor: Device.SensorSchema): string {
+        return `${this.getDeviceBaseURL(d)}/sensors/${sensor.name}`;
     }
 
     /** Returns the base URL for the device manager */
@@ -117,9 +124,9 @@ export class DeviceManager {
     }
     
     /**
-     * Registers all routes for a given decoy
+     * Registers all routes for a given device
      * 
-     * @param device  The decoy to register routes for
+     * @param device  The device to register routes for
      * @return A function to remove all routes registered
      */
     private _registerDeviceRoutes(device: Device.Device): RemoveRouteFn {
@@ -137,6 +144,31 @@ export class DeviceManager {
             res.send(response);
         });
         
+        let allSensors = this._server.register('get', this.getDeviceSensorURL(device, {name:''} as any), (req, res) => {
+            const values = device.getSensorValues();
+            const response = device.getSensorSchemas()
+                .map(sensor => {
+                    return  {...sensor, value: values[sensor.name]};
+                });
+            
+            res.send(response);
+        });
+        cancelFns.push(allSensors);
+        
+        // Setup routes for sensors
+        device.getSensorSchemas().forEach(sensor => {
+            const url = this.getDeviceSensorURL(device, sensor);
+
+            const cancelGet = this._server.register('get', url, (req, res) => {
+                const response = {...sensor, value: device.getSensorValue(sensor.name)};
+                
+                res.send(response);
+            });
+            
+            cancelFns.push(cancelGet);
+        });
+        
+        // Setup routes for commands
         device.commands.forEach((cmd) => {
             const url = this.getDeviceCommandURL(device, cmd);
 
@@ -161,10 +193,12 @@ export class DeviceManager {
             cancelFns.push(cancelGet);
             
             const cancelPost = this._server.register('post', url, (req, res) => {
-                // TODO: parse and add parameter map
-                cmd.handler(new Map()).then((res) => {
-                    res.send({result: res, error: 'none'});
-                }).catch(err => res.send(err));
+                let parameters = this._parseRequestParameters(cmd, req);
+
+                device.call(cmd.name, parameters)
+                    .subscribe(
+                        (result) => res.send(result),
+                        (err) => res.send(err));
             });
             cancelFns.push(cancelPost);
         });
@@ -174,5 +208,25 @@ export class DeviceManager {
         return () => {
             cancelFns.forEach(cancel => cancel());
         };
+    }
+    
+    private _parseRequestParameters(cmd: Device.CommandSchema, req: Request): Map<string, any> {
+        const params = new Map<string, any>();
+        
+        if (req.getContentType() !== 'application/json') {
+            throw new Error(`Invalid content type. Accpected application json`);
+        }
+        
+        if (typeof req.body !== 'object') {
+            throw new Error(`Invalid request parameter type. Expected a JSON object`);
+        }
+        
+        Object.keys(req.body).forEach(key => {
+            let value = req.body[key];
+
+            params.set(key, value);
+        });
+        
+        return params;
     }
 }
