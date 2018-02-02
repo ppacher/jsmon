@@ -1,13 +1,31 @@
-import {Injectable} from '@homebot/core';
+import {
+    Injectable,
+    Type,
+    ReflectiveInjector,
+    Provider,
+    isPromiseLike,
+    isObservableLike,
+    stringify,
+    getDiMetadataName
+} from '@homebot/core';
 import {Request} from 'restify';
-import {Device} from './controller';
+import {
+    SensorProvider,
+    Sensor,
+    Command,
+    CommandSchema,
+    SensorSchema,
+    getDeviceMetadata,
+    getPropertyMetadata
+} from './device';
+import {DeviceController} from './device-controller';
 
 import {HTTPServer, RemoveRouteFn} from '../http/server';
 
 const _BASE_URL = '/devices';
 
 interface DeviceRegistration {
-    device: Device.Device;
+    device: DeviceController;
     unregisterRoute: RemoveRouteFn;
 }
 
@@ -22,7 +40,9 @@ export class DeviceManager {
     private _disposeRoutes: RemoveRouteFn;
     
     // TODO(ppacher): add injection token for _BASE_URL
-    constructor(private _server: HTTPServer) {
+    constructor(private _server: HTTPServer,
+                private _injector: ReflectiveInjector) {
+                
         this._disposeRoutes = this._server.register('get', `${this._BASE_URL}/`, (req, resp) => {
             let response = Array.from(this._devices.values())
                 .map(device => {
@@ -41,11 +61,68 @@ export class DeviceManager {
     } 
     
     /**
+     * Setup and register a new device controller
+     * 
+     * @param name          The name of the device to setup
+     * @param deviceClass   The device class
+     * @param description   An optional description for the device. If set, it will override the
+     *                      description from the device metadata decorator
+     * @param providers     An optional set of one or more providers for the device injector
+     */
+    setupDevice(name: string, deviceClass: Type<any>, description?: string, providers?: Provider|Provider[]): DeviceController {
+        const metadata = getDeviceMetadata(deviceClass);
+        const commands = getPropertyMetadata(deviceClass);
+        const injector = this._setupDeviceInjector(deviceClass, providers); 
+        
+        description = description || (metadata.description || '');
+        
+        const instance = injector.get(deviceClass);
+        const commandSchemas: CommandSchema[] = Object.keys(commands)
+            .filter(key => !!commands[key] && commands[key].length > 0)
+            .filter(key => commands[key].find(def => def instanceof Command || getDiMetadataName(def) === 'Command') !== undefined)
+            .map(key => {
+                const def = commands[key].find(def => def instanceof Command || getDiMetadataName(def) === 'Command') as Command;
+                
+                /* TODO(ppacher): currently not working
+                
+                if (!isObservableLike(instance[key])) {
+                    throw new Error(`Sensors must be of type ObservableLike`);
+                }
+                */
+
+                return {
+                    name: def.name,
+                    parameters: def.parameters,
+                    handler: instance[key],
+                    description: def.description,
+                };
+            });
+        
+        const sensorProviders: SensorProvider[] = Object.keys(commands)
+            .filter(key => !!commands[key] && commands[key].length > 0)
+            .filter(key => commands[key].find(def => def instanceof Sensor || getDiMetadataName(def) === 'Sensor') !== undefined)
+            .map(key => {
+                const def = commands[key].find(def => def instanceof Sensor || getDiMetadataName(def) === 'Sensor') as Sensor;
+                
+                return {
+                    ...def,
+                    onChange: instance[key]
+                };
+            });
+        
+        const controller = new DeviceController(name, commandSchemas, sensorProviders, undefined, description);
+        
+        this.registerDeviceController(controller);
+
+        return controller;
+    }
+    
+    /**
      * Registers a new device at the device manager
      * 
      * @param def  The {@link Device.Device} definition of the new device
      */
-    registerDevice(def: Device.Device): void {
+    registerDeviceController(def: DeviceController): void {
         if (this._devices.has(def.name)) {
             throw new Error(`Failed to register device ${def.name}. Name already used`);
         }
@@ -65,10 +142,10 @@ export class DeviceManager {
      * 
      * @param def  The {@link Device.Device} definition or the name of the device
      */
-    unregisterDevice(def: Device.Device|string): void {
+    unregisterDeviceController(def: DeviceController|string): void {
         let name: string;
 
-        if (def instanceof Device.Device) {
+        if (def instanceof DeviceController) {
             name = def.name;
         } else {
             name = def;
@@ -91,8 +168,8 @@ export class DeviceManager {
      * 
      * @param def  The {@link Device.Device} definition or the name of the device
      */
-    deregisterDevice(def: Device.Device|string): void {
-        this.unregisterDevice(def);
+    deregisterDeviceController(def: DeviceController|string): void {
+        this.unregisterDeviceController(def);
     }
     
     /**
@@ -100,21 +177,21 @@ export class DeviceManager {
      * 
      * @param d The device to generate the base URL for
      */ 
-    getDeviceBaseURL(d: Device.Device): string {
+    getDeviceBaseURL(d: DeviceController): string {
         return `${this._BASE_URL}/${d.name}`;
     }
     
     /**
      * Returns the URL for a device command
      */
-    getDeviceCommandURL(d: Device.Device, cmd: Device.CommandSchema): string {
+    getDeviceCommandURL(d: DeviceController, cmd: CommandSchema): string {
         return `${this.getDeviceBaseURL(d)}/command/${cmd.name}`;
     }
     
     /**
      * Returns the URL for a device sensor
      */
-    getDeviceSensorURL(d: Device.Device, sensor: Device.SensorSchema): string {
+    getDeviceSensorURL(d: DeviceController, sensor: SensorSchema): string {
         return `${this.getDeviceBaseURL(d)}/sensors/${sensor.name}`;
     }
 
@@ -129,7 +206,7 @@ export class DeviceManager {
      * @param device  The device to register routes for
      * @return A function to remove all routes registered
      */
-    private _registerDeviceRoutes(device: Device.Device): RemoveRouteFn {
+    private _registerDeviceRoutes(device: DeviceController): RemoveRouteFn {
         let cancelFns: RemoveRouteFn[] = [];
         const getter = this._server.register('get', this.getDeviceBaseURL(device), (req, res) => {
             const response = {
@@ -138,6 +215,8 @@ export class DeviceManager {
                 state: device.healthy(),
                 commands: device.commands.map(cmd => ({
                     name: cmd.name,
+                    description: cmd.description,
+                    // TODO: add parameters
                 })),
                 sensors: device.getSensorSchemas()
             };
@@ -194,7 +273,14 @@ export class DeviceManager {
             cancelFns.push(cancelGet);
             
             const cancelPost = this._server.register('post', url, (req, res) => {
-                let parameters = this._parseRequestParameters(cmd, req);
+                let parameters: Map<string, any>;
+                
+                try {
+                    parameters = this._parseRequestParameters(cmd, req);
+                } catch (err) {
+                    res.send(400, {'error': err.message});
+                    return;
+                }
 
                 device.call(cmd.name, parameters)
                     .subscribe(
@@ -211,11 +297,21 @@ export class DeviceManager {
         };
     }
     
-    private _parseRequestParameters(cmd: Device.CommandSchema, req: Request): Map<string, any> {
+    private _parseRequestParameters(cmd: CommandSchema, req: Request): Map<string, any> {
         const params = new Map<string, any>();
         
-        if (req.getContentType() !== 'application/json') {
+        const hasParams = !!cmd.parameters && Object.keys(cmd.parameters).length > 0;
+        
+        if (req.getContentType() !== 'application/json' && hasParams) {
             throw new Error(`Invalid content type. Accpected application json`);
+        }
+        
+        if (!!req.body && !hasParams) {
+            throw new Error('Command does not accept parameters');
+        }
+
+        if (!hasParams) {
+            return params;
         }
         
         if (typeof req.body !== 'object') {
@@ -229,5 +325,16 @@ export class DeviceManager {
         });
         
         return params;
+    }
+    
+    private _setupDeviceInjector(deviceClass: Type<any>, providers: Provider|Provider[]): ReflectiveInjector {
+        if (!Array.isArray(providers)) {
+            providers = [providers];
+        }
+        
+        return this._injector.resolveAndCreateChild([
+            deviceClass,
+            ...providers,
+        ]);
     }
 }

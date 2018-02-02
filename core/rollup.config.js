@@ -1,7 +1,6 @@
 import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 import sourceMaps from 'rollup-plugin-sourcemaps'
-import camelCase from 'lodash.camelcase'
 import typescript from 'rollup-plugin-typescript2'
 
 const pkg = require('./package.json')
@@ -11,11 +10,13 @@ const libraryName = 'core'
 export default {
   input: `src/${libraryName}.ts`,
   output: [
-    { file: 'dist/'+pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: true },
+    { file: 'dist/'+pkg.main, name: libraryName, format: 'umd', sourcemap: true },
     { file: 'dist/'+pkg.module, format: 'es', sourcemap: true},
   ],
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
-  external: [],
+  external: [
+    'lodash'
+  ],
   watch: {
     include: 'src/**',
   },
