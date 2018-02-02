@@ -16,8 +16,6 @@ import {
 
 import {Observable} from 'rxjs/Observable';
 
-import 'rxjs/add/observable/interval';
-import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/combineLatest';
 
@@ -28,9 +26,6 @@ import 'rxjs/add/operator/combineLatest';
         DeviceManagerModule.forRoot(),
         MPDModule,
     ],
-    exports: [
-        MPDConfig.new(),
-    ]
 })
 export class App {
     constructor(private _device: DeviceManager,
