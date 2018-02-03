@@ -19,6 +19,11 @@ import {
     getPropertyMetadata
 } from './device';
 import {DeviceController} from './device-controller';
+import {Subject} from 'rxjs/Subject';
+import {Observable} from 'rxjs/Observable';
+
+import {_throw} from 'rxjs/observable/throw';
+import 'rxjs/add/operator/takeUntil';
 
 import {HTTPServer, RemoveRouteFn} from '../http/server';
 
@@ -38,6 +43,88 @@ export class DeviceManager {
     private readonly _BASE_URL = _BASE_URL;
     
     private _disposeRoutes: RemoveRouteFn;
+    
+    /** Subject used to emit newly registered device controllers */
+    private readonly _registrations = new Subject<DeviceController>();
+    
+    /** Subject used to emit device controller that have been unregistered */
+    private readonly _unregistrations = new Subject<DeviceController>();
+    
+    /** Emits a device controller whenever a new device has been registered */
+    get registrations(): Observable<DeviceController> { 
+        return this._registrations.asObservable();
+    }
+    
+    /** Emits a device controller whenever a device has been unregistered */
+    get unregistrations(): Observable<DeviceController> { 
+        return this._unregistrations.asObservable();
+    }
+    
+    /** Returns a list of currently registered devices */
+    getRegisteredDevices(): DeviceController[] {
+        return Array.from(this._devices.values());
+    }
+    
+    /**
+     * Returns an observable that emits whenever on of the specified
+     * devices is registered
+     *
+     * @param devices A list of device names to emit when registered
+     */
+    onDeviceRegistration(devices: string[]): Observable<DeviceController> {
+        return this.registrations
+            .filter(dev => devices.includes(dev.name));
+    }
+    
+    /** 
+     * Returns an observable that emits when ever on of the specified
+     * devices is unregistered
+     *
+     * @param devices A list of device names to emit when unregistered
+     */
+    onDeviceUnregistration(devices: string[]): Observable<DeviceController> {
+        return this.unregistrations
+            .filter(dev => devices.includes(dev.name));
+    }
+    
+    /**
+     * Returns an observable that emits whenever on of the given
+     * device sensor receives a new value.
+     * 
+     * The returned observable is automatically completed once
+     * the device is unregistered
+     *
+     * @param device The name of the device to watch sensors
+     */
+    watchSensors(device: string): Observable<{[key: string]:any}> {
+        let meta = this._devices.get(device);
+        if (meta === undefined) {
+            return _throw(new Error(`Unknown device ${device}`));
+        }
+        
+        return meta.device.watchSensors()
+            .takeUntil(this.onDeviceUnregistration([device]));
+    }
+    
+    /**
+     * Returns an observable that emits whenever the given sensor
+     * value changes for the selected device
+     * 
+     * The returned observable is automatically completed once
+     * the device is unregistered
+     * 
+     * @param device The name of the device
+     * @param sensor The name of the sensor within the device
+     */
+    watchSensor(device: string, sensor: string): Observable<any> {
+        let meta = this._devices.get(device);
+        if (meta === undefined) {
+            return _throw(new Error(`Unknown device ${device}`))
+        }
+        
+        return meta.device.watchSensor(sensor)
+            .takeUntil(this.onDeviceUnregistration([device]));
+    }
     
     // TODO(ppacher): add injection token for _BASE_URL
     constructor(private _server: HTTPServer,
@@ -135,6 +222,7 @@ export class DeviceManager {
         });
         
         console.log(`Registered device ${def.name} with ${def.commands.length} cmds`);
+        this._registrations.next(def);
     }
     
     /**
@@ -156,6 +244,7 @@ export class DeviceManager {
             this._devices.delete(name);
             meta.unregisterRoute();
             
+            this._unregistrations.next(meta.device);
             return;
         }
 
@@ -183,6 +272,9 @@ export class DeviceManager {
     
     /**
      * Returns the URL for a device command
+     *
+     * @param d The device controller
+     * @param cmd the command schema definition
      */
     getDeviceCommandURL(d: DeviceController, cmd: CommandSchema): string {
         return `${this.getDeviceBaseURL(d)}/command/${cmd.name}`;
@@ -190,6 +282,9 @@ export class DeviceManager {
     
     /**
      * Returns the URL for a device sensor
+     *
+     * @param d The device controller
+     * @param sensors the sensor schema definition
      */
     getDeviceSensorURL(d: DeviceController, sensor: SensorSchema): string {
         return `${this.getDeviceBaseURL(d)}/sensors/${sensor.name}`;
