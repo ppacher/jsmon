@@ -78,7 +78,7 @@ export class Injector {
     _instantiate<T>(p: ResolvedProvider<T>): T {
         const deps = p.dependencies.map(d => this._getByResolvedDependency(d));
         
-        if (deps.some(d => d === _UNDEFINED)) {
+        if (deps.some((d, index) => d === _UNDEFINED && p.dependencies[index].optional === false)) {
             let args: string[] = p.dependencies.map((dep, index) => {
                 if (deps[index] !== _UNDEFINED) {
                     return dep.key.displayName;
