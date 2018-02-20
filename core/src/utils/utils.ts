@@ -30,7 +30,6 @@ export function stringify(token: any): string {
  */
 export function isObservableLike(value: any): boolean {
   if (!('prototype' in value)) {
-    console.log('Does not have a prototype')
     return false
   }
   Object.keys(value.prototype).forEach(p => console.log('prototype', p))

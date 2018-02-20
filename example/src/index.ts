@@ -1,4 +1,4 @@
-import {Module, bootstrapModule} from '@homebot/core';
+import {Module, bootstrapModule, ReflectiveInjector} from '@homebot/core';
 import {
     HTTPServerModule,
     HTTPServer,
@@ -14,6 +14,11 @@ import {
     MPDDevice
 } from '@homebot/common/multimedia/mpd';
 
+import {
+    HistoryService,
+    HistoryModule
+} from '@homebot/common/storage/history';
+
 import {Observable} from 'rxjs/Observable';
 
 import 'rxjs/add/operator/distinctUntilChanged';
@@ -23,15 +28,22 @@ import 'rxjs/add/operator/combineLatest';
     imports: [
         HTTPServerModule,
         NotificationModule,
-        DeviceManagerModule.forRoot(),
+        DeviceManagerModule,
         MPDModule,
+        HistoryModule
     ],
 })
 export class App {
     constructor(private _device: DeviceManager,
                 private _server: HTTPServer,
-                private _notify: NotificationService) {
+                private _notify: NotificationService,
+                private _injector: ReflectiveInjector) {
+                
         this._server.listen(9080);
+        
+        //this._injector.addProvider(HistoryService);
+        console.log(`Got injector: ${this._injector.toString()}`);
+        let history = this._injector.get(HistoryService);
         
         // Create a new device for MPD that connects to 127.0.0.1:6600 (defaults of MPDConfig.new())
         // This will expose any sensors and commands under http://localhost:9080/devices/mpd:localhost/

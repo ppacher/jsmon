@@ -18,45 +18,6 @@ export interface Injectable {};
  */
 export const Injectable: InjectableDecorator = makeDecorator('Injectable');
 
-
-/**
- * Type for the @Self decorator
- */
-export interface SelfDecorator {
-    (): any;
-    new (): Self;
-};
-
-/**
- * Type of the Self metadata
- */
-export interface Self {};
-
-/**
- * Self decorator
- */
-export const Self: SelfDecorator = makeParamDecorator('Self');
-
-
-/**
- * Type for the @SkipSelf decorator
- */
-export interface SkipSelfDecorator {
-    (): any;
-    new (): SkipSelf;
-};
-
-/**
- * Type of the SkipSelf metadata
- */
-export interface SkipSelf {};
-
-/**
- * Self decorator
- */
-export const SkipSelf: SkipSelfDecorator = makeParamDecorator('SkipSelf');
-
-
 /**
  * Type for the @Inject decorator
  */

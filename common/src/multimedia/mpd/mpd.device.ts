@@ -8,6 +8,11 @@ import {interval} from 'rxjs/observable/interval';
 
 import * as mpc from 'mpc-js';
 
+function mapSubject<T, R>(b: BehaviorSubject<T>, fn: (val: T) => R): Observable<R> {
+    return b.asObservable()
+        .map(fn);
+}
+
 @Device({
    description: 'MPD server' 
 })
@@ -19,8 +24,7 @@ export class MPDDevice {
     
     @Sensor('title', ParameterType.String, 'The title of the current song')
     get currentSongTitle() {
-        return this._currentSong.asObservable()
-            .map(song => song  ? song.title : '');
+        return mapSubject(this._currentSong, song => song ? song.title : '');
     }
     
     @Sensor('artist', ParameterType.String, 'The artist of the current song')

@@ -24,7 +24,7 @@ export interface RemoveRouteFn {
 export class HTTPServer {
     private _server: restify.Server|undefined = undefined;
     
-    constructor(private readonly log: Logger) {
+    constructor() {
         this._server = restify.createServer();
         
         this._server.use(restify.plugins.bodyParser({mapParams: false}));
@@ -37,7 +37,6 @@ export class HTTPServer {
         }
         
         this._server.listen(where);
-        this.log.info(`[http] listening on ${where}`);
     }
     
     /** Registers a new listener for the given HTTP verb and URL */

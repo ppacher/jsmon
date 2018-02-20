@@ -121,16 +121,3 @@ export function makeMetadataCtor(props?: (...args: any[]) => any): any {
     }
   }
 }
-
-export function getDiMetadataName(value: any): string {
-  // BUG(ppacher): the following work-around fixes a bug where
-  // instanceof Device does not work for classes within the @homebot/common
-  // package. No clue why ...
-  // (we may have two version of homebot/common in the path...)
-  let diMetadataName = ''
-  if (value.constructor) {
-    diMetadataName = value.constructor.prototype.diMetadataName
-  }
-
-  return diMetadataName
-}
