@@ -1,49 +1,25 @@
-import {Module, bootstrapModule, ReflectiveInjector} from '@homebot/core';
-import {
-    HTTPServerModule,
-    HTTPServer,
-    DeviceManagerModule,
-    DeviceManager,
-    NotificationModule,
-    NotificationService,
-} from '@homebot/common';
-
-import {
-    MPDModule,
-    MPDConfig,
-    MPDDevice
-} from '@homebot/common/multimedia/mpd';
-
-import {
-    HistoryService,
-    HistoryModule
-} from '@homebot/common/storage/history';
+import {App, bootstrapApp, Injector, DeviceManager, DeviceManagerModule} from '@homebot/core';
+import {HTTPServerPlugin, HTTPServer} from 'homebot-httpserver';
+import {MPDPlugin, MPDConfig, MPDDevice} from 'homebot-mpd';
 
 import {Observable} from 'rxjs/Observable';
 
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/combineLatest';
 
-@Module({
-    imports: [
-        HTTPServerModule,
-        NotificationModule,
+@App({
+    plugins: [
+        HTTPServerPlugin,
         DeviceManagerModule,
-        MPDModule,
-        HistoryModule
+        MPDPlugin,
     ],
 })
-export class App {
+export class ExampleApp {
     constructor(private _device: DeviceManager,
                 private _server: HTTPServer,
-                private _notify: NotificationService,
-                private _injector: ReflectiveInjector) {
+                private _injector: Injector) {
                 
         this._server.listen(9080);
-        
-        //this._injector.addProvider(HistoryService);
-        console.log(`Got injector: ${this._injector.toString()}`);
-        let history = this._injector.get(HistoryService);
         
         // Create a new device for MPD that connects to 127.0.0.1:6600 (defaults of MPDConfig.new())
         // This will expose any sensors and commands under http://localhost:9080/devices/mpd:localhost/
@@ -60,9 +36,9 @@ export class App {
                     .filter(([title, artist, album]) => !!artist && !!album)
                     .distinctUntilChanged()
                     .subscribe(([title, artist, album]) => {
-                        this._notify.notify(title, `${artist} - ${album}`);
+                        console.log(title, `${artist} - ${album}`);
                     });
     }
 }
 
-bootstrapModule(App);
+bootstrapApp(ExampleApp);

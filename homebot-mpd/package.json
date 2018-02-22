@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/core",
+  "name": "homebot-mpd",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,10 +11,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@homebot/core": "file:../core/dist",
+    "mpc-js": "^1.2.1",
+    "mpc-js-core": "^1.2.1",
+    "rxjs": "^5.5.6",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "reflect-metadata": "^0.1.12",
-    "rxjs": "^5.5.6"
+    "@homebot/core": "file:../core/dist"
   }
 }

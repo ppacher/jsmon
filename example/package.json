@@ -14,8 +14,9 @@
     "@types/node": "^9.4.6"
   },
   "dependencies": {
-    "@homebot/common": "file:../common/dist",
     "@homebot/core": "file:../core/dist",
+    "homebot-httpserver": "file:../homebot-httpserver/dist",
+    "homebot-mpd": "file:../homebot-mpd/dist",
     "restify": "^6.3.4",
     "rxjs": "^5.5.6",
     "ts-node": "^4.1.0",
