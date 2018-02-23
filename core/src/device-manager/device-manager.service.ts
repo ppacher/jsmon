@@ -35,8 +35,6 @@ export class DeviceManager {
     /** The base URl of the device manager */
     private readonly _BASE_URL = _BASE_URL;
     
-    //private _disposeRoutes: RemoveRouteFn;
-    
     /** Subject used to emit newly registered device controllers */
     private readonly _registrations = new Subject<DeviceController>();
     
@@ -119,27 +117,7 @@ export class DeviceManager {
             .takeUntil(this.onDeviceUnregistration([device]));
     }
     
-    // TODO(ppacher): add injection token for _BASE_URL
-    constructor(private _injector: Injector) {
-                
-        /*
-        this._disposeRoutes = this._server.register('get', `${this._BASE_URL}/`, (req, resp) => {
-            let response = Array.from(this._devices.values())
-                .map(device => {
-                    return {
-                        name: device.device.name,
-                        description: device.device.description,
-                        state: device.device.healthy(),
-                        commands: device.device.commands.map(cmd => ({
-                            name: cmd.name,
-                        }))
-                    };
-                });
-                
-            resp.send(response);
-        });
-        */
-    } 
+    constructor(private _injector: Injector) {} 
     
     /**
      * Setup and register a new device controller
