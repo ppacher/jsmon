@@ -1,5 +1,5 @@
 import {App, bootstrapApp, Injector, DeviceManager, DeviceManagerModule} from '@homebot/core';
-import {HTTPServerPlugin, HTTPServer} from 'homebot-httpserver';
+import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from 'homebot-httpserver';
 import {MPDPlugin, MPDConfig, MPDDevice} from 'homebot-mpd';
 
 import {Observable} from 'rxjs/Observable';
@@ -7,17 +7,23 @@ import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/distinctUntilChanged';
 import 'rxjs/add/operator/combineLatest';
 
+const ApiConfig = new DeviceHttpApiConfig();
+
 @App({
     plugins: [
         HTTPServerPlugin,
         DeviceManagerModule,
         MPDPlugin,
+        DeviceHttpApiPlugin
     ],
+    providers: [
+        DeviceHttpApiConfig.provideConfig(ApiConfig)
+    ]
 })
 export class ExampleApp {
     constructor(private _device: DeviceManager,
                 private _server: HTTPServer,
-                private _injector: Injector) {
+                private _httpAPI: DeviceHttpApi) {
                 
         this._server.listen(9080);
         
