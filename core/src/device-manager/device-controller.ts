@@ -31,6 +31,8 @@ export class DeviceController {
     constructor(
         /** The name of the device */
         public name: string,
+        
+        public instance: any,
 
         /** A list of commands supported by the device */
         public commands: CommandSchema[],
@@ -41,7 +43,7 @@ export class DeviceController {
         private _checkHealth: HealthCheck = () => of(DeviceHealthState.Unknown),
         
         /** An optional description of the device */
-        private _description: string = ''
+        private _description: string = '',
     ) {
         /** Subscribe to health values */
         this._checkHealth()
@@ -76,18 +78,14 @@ export class DeviceController {
         let errors = DeviceController.validateParameters(cmd, params);
         
         if (errors !== null) {
-            let err = new Error(errors.map(err => err.message).join(', '));
+            let err = errors.map(err => err.message).join(', ');
             console.error(`${this.name}: invalid parameters: `, err);
             return _throw(err);
         }
         
-        const result = cmd.handler(params);
-
-        if (!isPromiseLike(result)) {
-            return _throw(new Error('Handlers need to return promises'));
-        }
-        
-        return fromPromise(result);
+        return fromPromise(
+            cmd.handler.bind(this.instance)(params)
+        );
     }
     
     /** Returns the description of the device or an empty string */
@@ -202,7 +200,42 @@ export class DeviceController {
                 continue;
             }
             
-            const isValidType = types.some(ptype => typeof value === ptype);
+            const arrayTypes = [
+                ParameterType.Array,
+                ParameterType.BooleanArray,
+                ParameterType.NumberArray,
+                ParameterType.ObjectArray,
+                ParameterType.StringArray
+            ];
+            const isArrayType = (p: ParameterType) =>  arrayTypes.includes(p);
+            const isValidArray = (p: ParameterType) => {
+                if (!Array.isArray(value)) {
+                    return false;
+                }
+                
+                switch (p) {
+                    case ParameterType.Array:
+                        return true;
+                    case ParameterType.BooleanArray:
+                        return value.some(v => !(typeof v === 'boolean'));
+                    case ParameterType.NumberArray:
+                        return value.some(v => !(typeof v === 'number'));
+                    case ParameterType.ObjectArray:
+                        return value.some(v => !(typeof v === 'object'));
+                    case ParameterType.StringArray:
+                        return value.some(v => !(typeof v === 'string'));
+                }
+                
+                return false;
+            };
+
+            const isValidType = types.some(ptype => {
+                if (isArrayType(ptype)) {
+                    return isValidArray(ptype);
+                }
+
+                return typeof value === ptype;
+            });
             
             if (!isValidType) {
                 errors.push(new Error(`Invalid type for parameter ${key} on command ${schema.name}`));

@@ -8,12 +8,18 @@ import {
 } from '../utils';
 import {Type} from '../di';
 
+// TODO: missing: array
 /** Available types for command paramters */
 export enum ParameterType {
     String = 'string',
     Number = 'number',
     Boolean = 'boolean',
     Object = 'object',
+    Array = 'array',
+    StringArray = 'string-array',
+    NumberArray = 'number-array',
+    BooleanArray = 'boolean-array',
+    ObjectArray = 'object-array',
     Any = 'any'
 };
 
@@ -171,16 +177,63 @@ export interface Command {
  */
 export interface CommandDecorator {
     (settings: CommandDecoratorSettings): any;
+    (name: string): any;
+    (name: string, description: string): any;
+    (name: string, description: string, params: ParameterDefinition): any;
+    (name: string, params: ParameterDefinition): any;
+
     new (settings: CommandDecoratorSettings): Command;
+    new (name: string): Command;
+    new (name: string, description: string): Command;
+    new (name: string, description: string, params: ParameterDefinition): Command;
+    new (name: string, params: ParameterDefinition): Command;
 }
 
 /**
  * The Command decorator
  */
-export const Command: CommandDecorator = makePropDecorator('Commands', (settings: CommandDecoratorSettings) => ({
-    name: settings.name,
-    description: settings.description,
-}));
+export const Command: CommandDecorator = makePropDecorator('Commands', (...args: any[]) => {
+    if (args.length === 1) {
+        if (typeof args[0] === 'string') {
+            return {
+                name: args[0],
+            };
+        }
+        
+        if (typeof args[0] === 'object') {
+            let a = args[0] as CommandDecoratorSettings;
+
+            return {
+                name: a.name,
+                description: a.description,
+                parameters: a.parameters,
+            };
+        }
+    }
+    
+    const name = args[0];
+    if (args.length === 2) {
+        if (typeof args[1] === 'string') {
+            return {
+                name: name,
+                description: args[1],
+            };
+        }
+        
+        if (typeof args[1] === 'object') {
+            return {
+                name: name,
+                parameters: args[1]
+            };
+        }
+    }
+
+    return {
+        name: name,
+        description: args[1],
+        parameters: args[2],
+    };
+});
 
 /**
  * Type of the sensor decorator

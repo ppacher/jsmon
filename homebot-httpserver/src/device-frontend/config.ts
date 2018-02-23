@@ -3,7 +3,7 @@ import {Provider, DeviceController} from '@homebot/core';
 export class DeviceHttpApiConfig {
     constructor(
         public readonly BASE_URL: string = '/api/devices',
-        public getDeviceRoute?: (d: DeviceController) => string
+        public getDeviceRoute?: (d: DeviceController) => string,
     ) {
         if (this.getDeviceRoute === undefined) {
             this.getDeviceRoute = this.defaultGetDeviceRoute;

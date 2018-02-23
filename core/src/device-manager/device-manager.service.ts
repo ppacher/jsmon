@@ -18,19 +18,12 @@ import {Observable} from 'rxjs/Observable';
 import {_throw} from 'rxjs/observable/throw';
 import 'rxjs/add/operator/takeUntil';
 
-//import {HTTPServer, RemoveRouteFn} from '../http/server';
-
 const _BASE_URL = '/devices';
-
-interface DeviceRegistration {
-    device: DeviceController;
-    //unregisterRoute: RemoveRouteFn;
-}
 
 @Injectable()
 export class DeviceManager {
     /** A list of devices currently registered in the manager */
-    private readonly _devices = new Map<string, DeviceRegistration>();
+    private readonly _devices = new Map<string, DeviceController>();
     
     /** The base URl of the device manager */
     private readonly _BASE_URL = _BASE_URL;
@@ -53,7 +46,7 @@ export class DeviceManager {
     
     /** Returns a list of currently registered devices */
     getRegisteredDevices(): DeviceController[] {
-        return Array.from(this._devices.values()).map(reg => reg.device);
+        return Array.from(this._devices.values());
     }
     
     /**
@@ -88,12 +81,12 @@ export class DeviceManager {
      * @param device The name of the device to watch sensors
      */
     watchSensors(device: string): Observable<{[key: string]:any}> {
-        let meta = this._devices.get(device);
-        if (meta === undefined) {
+        let dev = this._devices.get(device);
+        if (dev === undefined) {
             return _throw(new Error(`Unknown device ${device}`));
         }
         
-        return meta.device.watchSensors()
+        return dev.watchSensors()
             .takeUntil(this.onDeviceUnregistration([device]));
     }
     
@@ -108,12 +101,12 @@ export class DeviceManager {
      * @param sensor The name of the sensor within the device
      */
     watchSensor(device: string, sensor: string): Observable<any> {
-        let meta = this._devices.get(device);
-        if (meta === undefined) {
+        let dev = this._devices.get(device);
+        if (dev === undefined) {
             return _throw(new Error(`Unknown device ${device}`))
         }
         
-        return meta.device.watchSensor(sensor)
+        return dev.watchSensor(sensor)
             .takeUntil(this.onDeviceUnregistration([device]));
     }
     
@@ -142,15 +135,6 @@ export class DeviceManager {
             .map(key => {
                 const def: Command = (commands[key].find(def => def instanceof Command) as Command)!;
 
-
-                
-                /* TODO(ppacher): currently not working
-                
-                if (!isObservableLike(instance[key])) {
-                    throw new Error(`Sensors must be of type ObservableLike`);
-                }
-                */
-
                 return {
                     name: def.name,
                     parameters: def.parameters || {},
@@ -171,7 +155,7 @@ export class DeviceManager {
                 };
             });
         
-        const controller = new DeviceController(name, commandSchemas, sensorProviders, undefined, description);
+        const controller = new DeviceController(name, instance, commandSchemas, sensorProviders, undefined, description);
         
         this.registerDeviceController(controller);
 
@@ -188,12 +172,7 @@ export class DeviceManager {
             throw new Error(`Failed to register device ${def.name}. Name already used`);
         }
         
-        //const cancel = this._registerDeviceRoutes(def);
-        
-        this._devices.set(def.name, {
-            device: def,
-            //unregisterRoute: cancel,
-        });
+        this._devices.set(def.name, def);
         
         console.log(`Registered device ${def.name} with ${def.commands.length} cmds and ${def.getSensorSchemas().length} sensors`);
         this._registrations.next(def);
@@ -214,11 +193,10 @@ export class DeviceManager {
         }
         
         if (this._devices.has(name)) {
-            const meta = this._devices.get(name)!;
+            const dev = this._devices.get(name)!;
             this._devices.delete(name);
-            //meta.unregisterRoute();
-            
-            this._unregistrations.next(meta.device);
+
+            this._unregistrations.next(dev);
             return;
         }
 
@@ -234,135 +212,6 @@ export class DeviceManager {
     deregisterDeviceController(def: DeviceController|string): void {
         this.unregisterDeviceController(def);
     }
-    
-    /**
-     * Registers all routes for a given device
-     * 
-     * @param device  The device to register routes for
-     * @return A function to remove all routes registered
-     */
-    /*
-    private _registerDeviceRoutes(device: DeviceController): RemoveRouteFn {
-        let cancelFns: RemoveRouteFn[] = [];
-        const getter = this._server.register('get', this.getDeviceBaseURL(device), (req, res) => {
-            const response = {
-                name: device.name,
-                description: device.description,
-                state: device.healthy(),
-                commands: device.commands.map(cmd => ({
-                    name: cmd.name,
-                    description: cmd.description,
-                    // TODO: add parameters
-                })),
-                sensors: device.getSensorSchemas()
-            };
-
-            res.send(response);
-        });
-        
-        let allSensors = this._server.register('get', this.getDeviceSensorURL(device, {name:''} as any), (req, res) => {
-            const values = device.getSensorValues();
-            const response = device.getSensorSchemas()
-                .map(sensor => {
-                    return  {...sensor, value: values[sensor.name]};
-                });
-            
-            res.send(response);
-        });
-        cancelFns.push(allSensors);
-        
-        // Setup routes for sensors
-        device.getSensorSchemas().forEach(sensor => {
-            const url = this.getDeviceSensorURL(device, sensor);
-
-            const cancelGet = this._server.register('get', url, (req, res) => {
-                const response = {...sensor, value: device.getSensorValue(sensor.name)};
-                
-                res.send(response);
-            });
-            
-            cancelFns.push(cancelGet);
-        });
-        
-        // Setup routes for commands
-        device.commands.forEach((cmd) => {
-            const url = this.getDeviceCommandURL(device, cmd);
-
-            const cancelGet = this._server.register('get', url, (req, res) => {
-                const response = Object.keys(cmd.parameters)
-                    .map(name => {
-                        let def = cmd.parameters[name];
-                        let types = Array.isArray(def) ? def : def.types;
-                        let optional = Array.isArray(def) ? false : def.optional;
-                        let help = Array.isArray(def) ? '' : def.help || '';
-                        
-                        return {
-                            name: name,
-                            types: types,
-                            optional: optional,
-                            help: help,
-                        };
-                    });
-                    
-                res.send(response);
-            });
-            cancelFns.push(cancelGet);
-            
-            const cancelPost = this._server.register('post', url, (req, res) => {
-                let parameters: Map<string, any>;
-                
-                try {
-                    parameters = this._parseRequestParameters(cmd, req);
-                } catch (err) {
-                    res.send(400, {'error': err.message});
-                    return;
-                }
-
-                device.call(cmd.name, parameters)
-                    .subscribe(
-                        (result) => res.send(result),
-                        (err) => res.send(err));
-            });
-            cancelFns.push(cancelPost);
-        });
-        
-        cancelFns.push(getter);
-
-        return () => {
-            cancelFns.forEach(cancel => cancel());
-        };
-    }
-    
-    private _parseRequestParameters(cmd: CommandSchema, req: Request): Map<string, any> {
-        const params = new Map<string, any>();
-        
-        const hasParams = !!cmd.parameters && Object.keys(cmd.parameters).length > 0;
-        
-        if (req.getContentType() !== 'application/json' && hasParams) {
-            throw new Error(`Invalid content type. Accpected application json`);
-        }
-        
-        if (!!req.body && !hasParams) {
-            throw new Error('Command does not accept parameters');
-        }
-
-        if (!hasParams) {
-            return params;
-        }
-        
-        if (typeof req.body !== 'object') {
-            throw new Error(`Invalid request parameter type. Expected a JSON object`);
-        }
-        
-        Object.keys(req.body).forEach(key => {
-            let value = req.body[key];
-
-            params.set(key, value);
-        });
-        
-        return params;
-    }
-    */
     
     private _setupDeviceInjector(deviceClass: Type<any>, providers: Provider|Provider[]): Injector {
         if (!Array.isArray(providers)) {

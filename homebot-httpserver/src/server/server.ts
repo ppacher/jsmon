@@ -28,6 +28,7 @@ export class HTTPServer {
         this._server = restify.createServer();
         
         this._server.use(restify.plugins.bodyParser({mapParams: false}));
+        this._server.use(restify.plugins.queryParser());
     } 
     
     /** Listen starts listening on incoming requests */

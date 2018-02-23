@@ -1,4 +1,4 @@
-import {Inject} from '@homebot/core';
+import {Inject, Command} from '@homebot/core';
 import {Device, Sensor, ParameterType} from '@homebot/core/device-manager';
 import {MPD_CONFIG, MPDConfig} from './config';
 
@@ -65,6 +65,46 @@ export class MPDDevice {
         return this._status.asObservable()
             .map(status => status  ? status.elapsed : -1);
     }
+
+    @Command({
+        name: 'find',
+        description: 'search for songs, artists and albums',
+        parameters: {
+            type: {
+                types: [ParameterType.String],
+                help: 'Type of MPD tag to search for',
+                optional: false,
+            },
+            what: {
+                types: [ParameterType.String],
+                help: 'What to search for',
+                optional: false,
+            }
+        }
+    })
+    find(params: Map<string, any>): Promise<mpc.Song[]> {
+        return this._mpd.database.find([[params.get('type'), params.get('what')]]);
+    }
+    
+    @Command({
+        name: 'play',
+        description: 'Start playback',
+        parameters: {
+            pos: {
+                types: [ParameterType.Number],
+                optional: true,
+                help: 'start playback at the given position',
+            }
+        }
+    })
+    play(p: Map<string, any>): Promise<void> { return this._mpd.playback.play(p.get('pos')); }
+
+    @Command('pause', 'Pause playback')
+    pause(): Promise<void> { return this._mpd.playback.pause(true); }
+    
+    @Command('resume', 'Resume playback')
+    resume(): Promise<void> { return this._mpd.playback.pause(false); }
+    
     
     constructor(@Inject(MPD_CONFIG) private _config: MPDConfig) {
         this._mpd = new mpc.MPC();

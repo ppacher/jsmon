@@ -1,5 +1,5 @@
 {
-  "name": "homebot-httpserver",
+  "name": "homebot-sysinfo",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,13 +12,13 @@
   "license": "ISC",
   "devDependencies": {
     "@homebot/core": "file:../core/dist",
-    "@types/jsonpath": "^0.2.0",
-    "@types/restify": "^5.0.7",
-    "jsonpath": "^1.0.0",
-    "restify": "^6.3.4",
+    "@types/systeminformation": "^3.23.0",
+    "rxjs": "^5.5.6",
+    "systeminformation": "^3.37.4",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "file:../core/dist"
+    "@homebot/core": "file:../core/dist",
+    "systeminformation": "^3.37.4"
   }
 }

@@ -76,7 +76,7 @@ export class Injector {
     }
     
     _instantiate<T>(p: ResolvedProvider<T>): T {
-        const deps = p.dependencies.map(d => this._getByResolvedDependency(d));
+        let deps = p.dependencies.map(d => this._getByResolvedDependency(d));
         
         if (deps.some((d, index) => d === _UNDEFINED && p.dependencies[index].optional === false)) {
             let args: string[] = p.dependencies.map((dep, index) => {
@@ -88,6 +88,9 @@ export class Injector {
             
             throw new Error(`Cannot create ${p.key.displayName}(${args.join(', ')})`);
         }
+        
+        // at this point, all _UNDEFINED dependencies are optional and need to be replaced
+        deps = deps.map(d => d === _UNDEFINED ? undefined : d);
 
         const instance = p.factory(...deps);
 
