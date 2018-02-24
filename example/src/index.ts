@@ -2,7 +2,7 @@ import {App, bootstrapApp, Injector, DeviceManager, DeviceManagerModule} from '@
 import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from 'homebot-httpserver';
 import {MPDPlugin, MPDConfig, MPDDevice} from 'homebot-mpd';
 import {SysInfoDevice} from 'homebot-sysinfo';
-import {DarkSkyWeatherService, DarkSkyNetWeatherPlugin, DarkSkyAPIConfig} from 'homebot-darksyknet';
+import {DarkSkyWeatherService, DarkSkyNetWeatherPlugin, DarkSkyAPIConfig, DarkSkyWeatherDevice} from 'homebot-darksyknet';
 
 import {Observable} from 'rxjs/Observable';
 
@@ -27,10 +27,10 @@ export class ExampleApp {
                 private _weather: DarkSkyWeatherService,
                 private _httpAPI: DeviceHttpApi) {
         
-        this._weather.fetch().subscribe(data => console.log(data));
         this._server.listen(9080);
         
-        let info = this._device.setupDevice('sysinfo', SysInfoDevice);
+        this._device.setupDevice('sysinfo', SysInfoDevice);
+        this._device.setupDevice('weather', DarkSkyWeatherDevice);
         
         // Create a new device for MPD that connects to 127.0.0.1:6600 (defaults of MPDConfig.new())
         // This will expose any sensors and commands under http://localhost:9080/devices/mpd:localhost/

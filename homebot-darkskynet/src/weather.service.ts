@@ -4,6 +4,8 @@ import {Observable} from 'rxjs/Observable';
 import {readFile} from 'fs';
 import {resolve} from 'path';
 
+import {WeatherResponse} from './data';
+
 import {map} from 'rxjs/operators';
 
 export interface Location {
@@ -55,7 +57,7 @@ export class DarkSkyWeatherService {
         }
     }
     
-    fetch({exclude, unit, language, location}: FetchConfig = {}): Observable<Object> {
+    fetch({exclude, unit, language, location}: FetchConfig = {}): Observable<WeatherResponse> {
         exclude = exclude || this.config.defaultExclude;
         unit = unit || this.config.defaultUnits;
         language = language || this.config.defaultLanguage;
