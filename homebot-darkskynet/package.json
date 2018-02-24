@@ -1,0 +1,22 @@
+{
+  "name": "homebot-darksyknet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && cp package.json dist/ && cp src/mock.json dist/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@homebot/core": "file:../core/dist",
+    "@types/node": "^9.4.6",
+    "rxjs": "^5.5.6",
+    "typescript": "^2.7.2"
+  },
+  "peerDependencies": {
+    "@homebot/core": "file:../core/dist"
+  }
+}

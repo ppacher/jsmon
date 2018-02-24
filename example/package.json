@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@homebot/core": "file:../core/dist",
+    "homebot-darksyknet": "file:../homebot-darkskynet/dist",
     "homebot-httpserver": "file:../homebot-httpserver/dist",
     "homebot-mpd": "file:../homebot-mpd/dist",
     "homebot-sysinfo": "file:../homebot-sysinfo/dist",

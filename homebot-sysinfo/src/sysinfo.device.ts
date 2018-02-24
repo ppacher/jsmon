@@ -4,17 +4,22 @@ import {Observable} from 'rxjs/Observable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {fromPromise} from 'rxjs/observable/fromPromise';
 import {interval} from 'rxjs/observable/interval';
-import {share} from 'rxjs/operator/share';
+import {of} from 'rxjs/observable/of';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/catch';
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/share';
 
 import {Systeminformation} from 'systeminformation';
 
 function poll<T>(p: () => Promise<T>): Observable<T> {
-    return share.apply(
-        interval(5000)
-            .flatMap(() => fromPromise(p()))
-    );
+    return interval(5000)
+            .flatMap(
+                () => fromPromise(p())
+                        .catch(err => of(new Error(err)))
+                        .filter(s => !(s instanceof Error)) as Observable<T>
+            ).share();
 }
 
 @Device({

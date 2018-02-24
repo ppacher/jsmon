@@ -2,6 +2,7 @@ import {App, bootstrapApp, Injector, DeviceManager, DeviceManagerModule} from '@
 import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from 'homebot-httpserver';
 import {MPDPlugin, MPDConfig, MPDDevice} from 'homebot-mpd';
 import {SysInfoDevice} from 'homebot-sysinfo';
+import {DarkSkyWeatherService, DarkSkyNetWeatherPlugin, DarkSkyAPIConfig} from 'homebot-darksyknet';
 
 import {Observable} from 'rxjs/Observable';
 
@@ -13,14 +14,20 @@ import 'rxjs/add/operator/combineLatest';
         HTTPServerPlugin,
         DeviceManagerModule,
         MPDPlugin,
-        DeviceHttpApiPlugin
+        DeviceHttpApiPlugin,
+        DarkSkyNetWeatherPlugin
     ],
+    providers: [
+        DarkSkyAPIConfig.provide(new DarkSkyAPIConfig('', {latitude: 37.8267, longitude: -122.4233}))
+    ]
 })
 export class ExampleApp {
     constructor(private _device: DeviceManager,
                 private _server: HTTPServer,
+                private _weather: DarkSkyWeatherService,
                 private _httpAPI: DeviceHttpApi) {
-                
+        
+        this._weather.fetch().subscribe(data => console.log(data));
         this._server.listen(9080);
         
         let info = this._device.setupDevice('sysinfo', SysInfoDevice);
