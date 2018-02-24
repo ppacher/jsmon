@@ -121,7 +121,7 @@ export class DeviceManager {
      *                      description from the device metadata decorator
      * @param providers     An optional set of one or more providers for the device injector
      */
-    setupDevice(name: string, deviceClass: Type<any>, description?: string, providers?: Provider|Provider[]): DeviceController {
+    setupDevice<T>(name: string, deviceClass: Type<T>, description?: string, providers?: Provider|Provider[]): DeviceController<T> {
         const metadata = getDeviceMetadata(deviceClass);
         const commands = getPropertyMetadata(deviceClass);
         const injector = this._setupDeviceInjector(deviceClass, providers || []); 

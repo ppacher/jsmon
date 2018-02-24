@@ -24,18 +24,18 @@ import 'rxjs/add/operator/filter';
  * Describes how the device manager should handle and register commands
  * of a device
  */
-export class DeviceController {
+export class DeviceController<T = any> {
     private _health: BehaviorSubject<DeviceHealthState> = new BehaviorSubject<DeviceHealthState>(DeviceHealthState.Unknown);
     private _sensorValues: BehaviorSubject<{[key:string]: any}> = new BehaviorSubject<{[key:string]:any}>({});
     
     constructor(
         /** The name of the device */
-        public name: string,
+        public readonly name: string,
         
-        public instance: any,
+        public readonly instance: T,
 
         /** A list of commands supported by the device */
-        public commands: CommandSchema[],
+        public readonly commands: ReadonlyArray<CommandSchema>,
         
         private _sensors: SensorProvider[],
         
