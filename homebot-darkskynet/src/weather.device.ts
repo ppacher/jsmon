@@ -24,6 +24,30 @@ export class DarkSkyWeatherDevice {
     @Sensor({name: 'currentTemperature', type: ParameterType.Number})
     readonly currentTemperature = get(this._updates, r => r.currently.temperature);
     
+    @Sensor({name: 'currentSummary', type: ParameterType.String})
+    readonly currentSummary = get(this._updates, r => r.currently.summary);
+    
+    @Sensor({name: 'currentIcon', type: ParameterType.String})
+    readonly currentIcon = get(this._updates, r => r.currently.icon);
+    
+    @Sensor({name: 'nearestStormDistance', type: ParameterType.Number})
+    readonly nearestStormDistance = get(this._updates, r => r.currently.nearestStormDistance);
+    
+    @Sensor({name: 'humidity', type: ParameterType.Number})
+    readonly humidity = get(this._updates, r => r.currently.humidity);
+    
+    @Sensor({name: 'pressure', type: ParameterType.Number})
+    readonly pressure = get(this._updates, r => r.currently.pressure);
+    
+    @Sensor({name: 'windSpeed', type: ParameterType.Number})
+    readonly windSpeed = get(this._updates, r => r.currently.windSpeed);
+    
+    @Sensor({name: 'cloudCover', type: ParameterType.Number})
+    readonly cloudCover = get(this._updates, r => r.currently.cloudCover);
+    
+    @Sensor({name: 'visibility', type: ParameterType.Number})
+    readonly visibility = get(this._updates, r => r.currently.visibility);
+    
     constructor(private _weather: DarkSkyWeatherService) {}
 
     private _setup(): Observable<WeatherResponse> {
