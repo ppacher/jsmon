@@ -12,7 +12,7 @@ function get<T>(o: Observable<WeatherResponse>, fn: (r: WeatherResponse) => T): 
 }
 
 @Device({
-    description: 'Weather conditions',
+    description: 'Weather conditions powered by DarkSky.net',
 })
 export class DarkSkyWeatherDevice {
 
@@ -35,7 +35,7 @@ export class DarkSkyWeatherDevice {
     
     @Sensor({name: 'humidity', type: ParameterType.Number})
     readonly humidity = get(this._updates, r => r.currently.humidity);
-    
+
     @Sensor({name: 'pressure', type: ParameterType.Number})
     readonly pressure = get(this._updates, r => r.currently.pressure);
     
@@ -54,6 +54,7 @@ export class DarkSkyWeatherDevice {
         const fetch = this._weather.fetch()
                 .pipe(
                     catchError(err => of(new Error(err))),
+                    // TODO: add logging for errors
                     filter(res => !(res instanceof Error))
                 ) as Observable<WeatherResponse>;
 
@@ -61,7 +62,8 @@ export class DarkSkyWeatherDevice {
             .pipe(
                 startWith(-1), // start instant
                 flatMap(() => fetch), // load data and discard/filter errors
-                share() // share the observable so we only load the data once
+                share() // share the observable so we only load the data once for all subscriptions
+                        // and as long as there is at least one subscriber
             );
     }
 }
