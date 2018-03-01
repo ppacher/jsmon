@@ -43,7 +43,7 @@ export class FireTVDevice {
     readonly currentApp = this._app.asObservable();
     
     @Sensor({
-        name: 'running_aps',
+        name: 'running_apps',
         type: ParameterType.String
     })
     readonly runningApps = this._runningApps.asObservable();
