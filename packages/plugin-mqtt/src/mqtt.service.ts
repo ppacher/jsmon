@@ -28,6 +28,7 @@ export class MqttService {
         this._client = connect(this._url);
 
         this._client.on('connect', () => {
+            console.log(`[mqtt] successfully connected`);
             this._connected.next();
         });
 

@@ -3,6 +3,7 @@ import {resolve} from 'path';
 
 import {DarkSkyAPIConfig, FieldSet, Units} from '@homebot/plugin-darkskynet';
 import {MPDConfig} from '@homebot/plugin-mpd';
+import * as firetv from '@homebot/plugin-firetv';
 
 export interface WeatherConfig {
     apiKey: string;
@@ -11,6 +12,10 @@ export interface WeatherConfig {
     units: Units;
     language: string;
     excludes: FieldSet[];
+}
+
+export interface FireTVConfig {
+    host: string;
 }
 
 export interface MusicConfig {
@@ -23,6 +28,7 @@ export interface MusicConfig {
 export interface Config {
     weather: WeatherConfig;
     mpd: MusicConfig;
+    firetv: FireTVConfig;
 }
 
 export function loadConfig(path: string): Config {
@@ -58,4 +64,8 @@ export function getMPDConfig(c: Config): MPDConfig {
         c.mpd.username,
         c.mpd.password,
     );
+}
+
+export function getFireTVConfig(c: Config): firetv.FireTVConfig {
+    return new firetv.FireTVConfig(c.firetv.host);
 }

@@ -27,6 +27,7 @@ skipLibs=false
 
 if [ "$1" == "--skip-libs" ]; then
     skipLibs=true
+    shift
 fi
 
 if [ $skipLibs == false ]; then
@@ -37,7 +38,9 @@ if [ $skipLibs == false ]; then
     buildPackage plugin-sysinfo
     buildPackage plugin-graphql
     buildPackage plugin-darkskynet
+    buildPackage plugin-firetv
 fi
 
-
-buildApp example --config config.json
+for app in "$@"; do
+    buildApp $app
+done

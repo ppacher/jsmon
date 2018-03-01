@@ -49,6 +49,7 @@ export class MqttDeviceAPI {
     private _publishSensor(d: DeviceController, sensor: string, value: any): void {
         const schema = d.getSensorSchemas().find(s => s.name === sensor);
 
+        console.log(`[mqtt] publishing sensor value for ${sensor}`);
         // TODO throw error if schema is undefined
 
         const msg: api.SensorValueMessage = {

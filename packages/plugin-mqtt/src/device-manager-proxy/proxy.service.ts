@@ -16,6 +16,7 @@ export class MqttDeviceManagerProxy {
     }
     
     public discover(): void {
+        console.log(`Initiating device discovery`);
         this._mqtt.publish('homebot/discovery', 'discover');
     }
     
@@ -26,7 +27,10 @@ export class MqttDeviceManagerProxy {
         const isKnownDevice = (name: string) => registeredDevices.find(d => d.name === name);
 
         if (!isKnownDevice(device.name)) {
+            console.log(`Registered a new device for ${device.name}`);
             this._registerDevice(device);
+        } else {
+            console.log(`Device ${device.name} already handled`);
         }
     }
     
@@ -49,9 +53,15 @@ export class MqttDeviceManagerProxy {
                     type: sensor.type,
                     description: sensor.description,
                     onChange: this._mqtt.subscribe(`homebot/device/${d.name}/sensor/${sensor.name}`)
-                        .pipe(map(([topic, v]: [string, Buffer]) => JSON.parse(v.toString()).value))
+                        .pipe(map(([topic, v]: [string, Buffer]) => {
+                            const parsed = JSON.parse(v.toString());
+                            console.log(`${d.name}:${sensor.name} => ${parsed.value}`);
+                            return  parsed.value;
+                        }))
                 }
             })
-        )
+        );
+
+        this._manager.registerDeviceController(controller);
     }
 }

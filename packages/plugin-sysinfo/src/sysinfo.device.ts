@@ -14,7 +14,7 @@ import 'rxjs/add/operator/share';
 import {Systeminformation} from 'systeminformation';
 
 function poll<T>(p: () => Promise<T>): Observable<T> {
-    return interval(5000)
+    return interval(10000)
             .flatMap(
                 () => fromPromise(p())
                         .catch(err => of(new Error(err)))

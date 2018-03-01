@@ -8,6 +8,9 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 
 import {interval} from 'rxjs/observable/interval';
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/share';
+import 'rxjs/add/operator/distinctUntilChanged';
 
 import * as mpc from 'mpc-js';
 
@@ -63,7 +66,10 @@ export class MPDDevice {
     @Sensor('elapsed', ParameterType.Number, 'The time elapsed in the current song')
     get elapsed() {
         return this._status.asObservable()
-            .map(status => status  ? status.elapsed : -1);
+            .map(status => status  ? status.elapsed : -1)
+            .map(val => isNaN(val) ? -1 : val)
+            .distinctUntilChanged()
+            .do(elapsed => console.log(`New elapsed: ${elapsed}`));
     }
 
     @Command({
@@ -155,7 +161,7 @@ export class MPDDevice {
         connect();
 
         // TODO: unsubscribe
-        interval(1000)
+        interval(5000)
             .subscribe(() => {
                 this._handlePlayerChange();
                 this._updateStatus();
@@ -166,6 +172,7 @@ export class MPDDevice {
         subsystems.forEach(sys => {
             switch(sys) {
                 case 'player':
+                    console.log(`Player change`);
                     this._handlePlayerChange();
                     this._updateStatus();
                     return;

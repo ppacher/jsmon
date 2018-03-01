@@ -1,13 +1,13 @@
 import {App, bootstrapApp, Injector, Trigger, DeviceManager, DeviceManagerModule} from '@homebot/core';
-import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from '@homebot/plugin-httpserver';
 import {MPDPlugin, MPDConfig, MPDDevice} from '@homebot/plugin-mpd';
 import {SysInfoDevice} from '@homebot/plugin-sysinfo';
 import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyWeatherDevice} from '@homebot/plugin-darkskynet';
 import {UseGraphQLSchema, GraphQLHTTPEndpoint, GraphQLSchemaBuilder} from '@homebot/plugin-graphql';
 
 import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
+import {FireTVDevice, FireTVConfig} from '@homebot/plugin-firetv';
 
-import {loadConfig, getWeatherConfig, getMPDConfig, Config} from './config';
+import {loadConfig, getWeatherConfig, getMPDConfig, getFireTVConfig, Config} from './config';
 
 import {Observable} from 'rxjs/Observable';
 import {combineLatest, debounceTime} from 'rxjs/operators';
@@ -18,28 +18,26 @@ import * as minimist from 'minimist';
 
 @App({
     plugins: [
-        HTTPServerPlugin,
         DeviceManagerModule,
         MPDPlugin,
-        DeviceHttpApiPlugin,
         MqttPlugin,
         MqttDeviceApiPlugin,
-        MqttDeviceManagerProxyPlugin
     ],
 })
 export class ExampleApp {
     constructor(private _device: DeviceManager,
-                private _server: HTTPServer,
-                private _injector: Injector,
-                private _httpAPI: DeviceHttpApi) {
+                private _injector: Injector) {
             
         const config = this._getConfig();
         const weatherConfig = getWeatherConfig(config);
         const mpdConfig = getMPDConfig(config);
-        
-        this._server.listen(9080);
+        const fireTVConfig = getFireTVConfig(config);
         
         this._device.setupDevice('sysinfo', SysInfoDevice);
+        
+        if (fireTVConfig !== undefined) {
+            this._device.setupDevice('firetv', FireTVDevice, 'Sleeping Room', FireTVConfig.provide(fireTVConfig))
+        }
         
         if (weatherConfig !== undefined) {
             this._device.setupDevice('weather', DarkSkyWeatherDevice, 'Current weather conditions', [
@@ -64,7 +62,7 @@ export class ExampleApp {
             let songNotifier = new Trigger(combinedSensor, (current, last) => current.join(' - ') !== last.join(' - '), val => console.log(val.join(' - ')));
         } 
 
-        this._setupGraphQL();
+        //this._setupGraphQL();
     }
 
     private _setupGraphQL(): void {

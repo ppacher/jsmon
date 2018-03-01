@@ -1,0 +1,1 @@
+am start -c android.intent.category.LEANBACK_LAUNCHER -a android.intent.action.VIEW -d http://www.netflix.com/title/70202141 -f 0x10808000 -e source 30 com.netflix.ninja/.MainActivity

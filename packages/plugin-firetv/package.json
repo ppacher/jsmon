@@ -1,0 +1,21 @@
+{
+  "name": "@homebot/plugin-firetv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && cp package.json dist/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^9.4.6",
+    "adbkit": "^2.11.0",
+    "typescript": "^2.7.2"
+  },
+  "peerDependencies": {
+    "@homebot/core": "1.0.0"
+  }
+}

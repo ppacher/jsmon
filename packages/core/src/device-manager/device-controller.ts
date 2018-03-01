@@ -9,6 +9,7 @@ import {isPromiseLike} from '../utils/utils';
 import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, SensorSchema, SensorProvider} from './device';
 
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/do';
 
 // BUG(ppacher): we need to include rx operators in homebot/common
 // including them in example doesn't work -_-
@@ -53,6 +54,7 @@ export class DeviceController<T = any> {
             .forEach(sensor => {
                 let sensorSubcription = sensor.onChange
                     .subscribe(value => {
+                        console.log(`Received update for device=${this.name} on sensor ${sensor.name} with value ${value}`);
                         this._updateSensorValue(sensor, value);
                     });
             });
@@ -122,6 +124,7 @@ export class DeviceController<T = any> {
         return this.watchSensors()
             .map(values => values[name])
             .distinctUntilChanged()
+            .do(val => console.log(`[${this.name}:${name}] new value ${val}`))
             .debounceTime(100);
     }
     
