@@ -27,12 +27,26 @@ export class FireTVConfig {
 export class FireTVDevice {
     private _device: FireTV;
     private _state: BehaviorSubject<FireTVState> = new BehaviorSubject(FireTVState.DISCONNECTED);
+    private _app: BehaviorSubject<string|null> = new BehaviorSubject<string|null>(null);
+    private _runningApps: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
 
     @Sensor({
         name: 'state',
         type: ParameterType.String
     })
     readonly state = this._state.asObservable();
+
+    @Sensor({
+        name: 'app',
+        type: ParameterType.String
+    })
+    readonly currentApp = this._app.asObservable();
+    
+    @Sensor({
+        name: 'running_aps',
+        type: ParameterType.String
+    })
+    readonly runningApps = this._runningApps.asObservable();
 
     constructor(private _config: FireTVConfig) {
         this._device = new FireTV(this._config.host);
@@ -53,5 +67,19 @@ export class FireTVDevice {
                 switchMap(() => this._device.getPowerState()),
             )       
             .subscribe(state => this._state.next(state));
+        
+        interval(5000) 
+            .pipe(
+                startWith(-1),
+                switchMap(() => this._device.currentApp()),
+            )       
+            .subscribe(app => this._app.next(app));
+        
+        interval(5000) 
+            .pipe(
+                startWith(-1),
+                switchMap(() => this._device.getRunningApps()),
+            )       
+            .subscribe(apps => this._runningApps.next(apps || []));
     }
 }
