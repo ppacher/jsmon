@@ -1,6 +1,6 @@
 import {Injectable} from '@homebot/core';
 import {GraphQLSchemaBuilder} from './schema';
-import {HTTPServer} from 'homebot-httpserver';
+import {HTTPServer} from '@homebot/plugin-httpserver';
 import {graphiqlRestify, graphqlRestify} from 'apollo-server-restify';
 
 @Injectable()

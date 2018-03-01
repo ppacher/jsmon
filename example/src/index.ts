@@ -1,11 +1,11 @@
 import {App, bootstrapApp, Injector, Trigger, DeviceManager, DeviceManagerModule} from '@homebot/core';
-import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from 'homebot-httpserver';
-import {MPDPlugin, MPDConfig, MPDDevice} from 'homebot-mpd';
-import {SysInfoDevice} from 'homebot-sysinfo';
-import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyWeatherDevice} from 'homebot-darksyknet';
-import {UseGraphQLSchema, GraphQLHTTPEndpoint, GraphQLSchemaBuilder} from 'homebot-graphql';
+import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from '@homebot/plugin-httpserver';
+import {MPDPlugin, MPDConfig, MPDDevice} from '@homebot/plugin-mpd';
+import {SysInfoDevice} from '@homebot/plugin-sysinfo';
+import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyWeatherDevice} from '@homebot/plugin-darkskynet';
+import {UseGraphQLSchema, GraphQLHTTPEndpoint, GraphQLSchemaBuilder} from '@homebot/plugin-graphql';
 
-import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from 'homebot-mqtt';
+import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
 
 import {loadConfig, getWeatherConfig, getMPDConfig, Config} from './config';
 

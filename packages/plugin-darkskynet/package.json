@@ -1,5 +1,5 @@
 {
-  "name": "homebot-darksyknet",
+  "name": "@homebot/plugin-darkskynet",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,13 +11,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@homebot/core": "1.0.0",
+    "@types/node": "^9.4.6",
+    "@types/request": "^2.47.0",
     "request": "^2.83.0",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@types/node": "^9.4.6",
-    "@types/request": "^2.47.0",
-    "@homebot/core": "file:../core/dist",
-    "rxjs": "^5.5.6"
+    "@homebot/core": "1.0.0",
+    "rxjs": "^5.5.6",
+    "request": "^2.83.0"
   }
 }

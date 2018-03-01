@@ -1,8 +1,8 @@
 import {readFileSync} from 'fs';
 import {resolve} from 'path';
 
-import {DarkSkyAPIConfig, FieldSet, Units} from 'homebot-darksyknet';
-import {MPDConfig} from 'homebot-mpd';
+import {DarkSkyAPIConfig, FieldSet, Units} from '@homebot/plugin-darkskynet';
+import {MPDConfig} from '@homebot/plugin-mpd';
 
 export interface WeatherConfig {
     apiKey: string;
