@@ -11,12 +11,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@homebot/core": "file:../core/dist",
-    "@types/node": "^9.4.6",
-    "rxjs": "^5.5.6",
+    "request": "^2.83.0",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "file:../core/dist"
+    "@types/node": "^9.4.6",
+    "@types/request": "^2.47.0",
+    "@homebot/core": "file:../core/dist",
+    "rxjs": "^5.5.6"
   }
 }

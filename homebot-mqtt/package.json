@@ -1,5 +1,5 @@
 {
-  "name": "homebot-mpd",
+  "name": "homebot-mqtt",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,8 +11,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "mpc-js": "^1.2.1",
-    "mpc-js-core": "^1.2.1",
+    "@types/mqtt": "^2.5.0",
+    "@types/node": "^9.4.6",
+    "mqtt": "^2.15.3",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {

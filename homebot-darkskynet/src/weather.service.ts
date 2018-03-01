@@ -1,12 +1,11 @@
 import {Injectable, Provider, Optional} from '@homebot/core';
 import {bindNodeCallback} from 'rxjs/observable/bindNodeCallback';
 import {Observable} from 'rxjs/Observable';
-import {readFile} from 'fs';
-import {resolve} from 'path';
+import {get, Response} from 'request';
 
 import {WeatherResponse} from './data';
 
-import {map} from 'rxjs/operators';
+import {map, tap} from 'rxjs/operators';
 
 export interface Location {
     latitude: number;
@@ -63,9 +62,19 @@ export class DarkSkyWeatherService {
         language = language || this.config.defaultLanguage;
         location = location || this.config.defaultLocation;
 
-        const load = bindNodeCallback(readFile);
+        let url = `https://api.darksky.net/forecast/${this.config.apiKey}/${location.latitude},${location.longitude}?lang=${language}&units=${unit}`;
+        if (exclude.length > 0) {
+            url += '&exclude=' + exclude.join(',');
+        }
 
-        return load(resolve(__dirname, './mock.json'))
-            .pipe(map((b:Buffer) => JSON.parse(b.toString())));
+        const fetch = bindNodeCallback((uri: string, cb: (err: any, res: WeatherResponse) => void) => {
+            get(uri, (err, res) => {
+                const parsed = JSON.parse(res.body);
+                return cb(err, parsed);
+            });
+        });
+
+        return fetch(url);
     }
+    
 }

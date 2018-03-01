@@ -13,14 +13,16 @@ export class Injector {
     
     constructor(private parent?: Injector) {}
     
-    public provide(p: Provider): void {
-        const resolved = resolveProvider(p);
+    public provide(p: Provider|Provider[]): void {
+        let providers: Provider[];
 
-        if (this._providers.has(resolved.key)) {
-            return;
+        if (Array.isArray(p)) {
+            providers = p;
+        } else {
+            providers = [p];
         }
-        
-        this._providers.set(resolved.key, resolved);
+
+        providers.forEach(p => this._resolveProvider(p));
     }
     
     public get<T>(token: Type<T>|any, notFound: any = _THROW_NOT_FOUND): T {
@@ -111,5 +113,15 @@ export class Injector {
         let s = Array.from(this._providers.values()).map(p => p.key.displayName).join(', ');
         
         return `Injector(providers=${s})`;
+    }
+    
+    private _resolveProvider(p: Provider) {
+        const resolved = resolveProvider(p);
+
+        if (this._providers.has(resolved.key)) {
+            return;
+        }
+        
+        this._providers.set(resolved.key, resolved);
     }
 }

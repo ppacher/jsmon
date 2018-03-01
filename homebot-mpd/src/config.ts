@@ -9,6 +9,13 @@ export class MPDConfig {
         public readonly password?: string,  
     ) {} 
     
+    static provide(cfg: MPDConfig) {
+        return {
+            provide: MPD_CONFIG,
+            useValue: cfg,
+        };
+    }
+    
     static new(address?: string, port?: number, username?: string, password?: string): Provider {
         return {
             provide: MPD_CONFIG,

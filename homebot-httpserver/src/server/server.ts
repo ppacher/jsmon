@@ -24,6 +24,10 @@ export interface RemoveRouteFn {
 export class HTTPServer {
     private _server: restify.Server;
     
+    get server(): restify.Server {
+        return this._server;
+    }
+    
     constructor() {
         this._server = restify.createServer();
         
