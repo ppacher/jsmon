@@ -2,7 +2,9 @@ import {Injectable, DeviceManager, DeviceController, ParameterDefinition} from '
 import * as api from '@homebot/core/device-manager/api';
 import {MqttService} from '../mqtt.service';
 
-import {map} from 'rxjs/operators';
+import {_throw} from 'rxjs/observable/throw';
+import {map, catchError, publishBehavior} from 'rxjs/operators';
+import {toPromise} from 'rxjs/operator/toPromise';
 
 @Injectable()
 export class MqttDeviceManagerProxy {
@@ -43,9 +45,39 @@ export class MqttDeviceManagerProxy {
                     name: cmd.name,
                     parameters: cmd.parameters as any,
                     handler: (params: Map<string, any>) => {
-                        return new Promise<any>((_, reject) => reject('not supported'));
+                        console.log(`[mqtt] sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
+                        
+                        let body: {[key: string]: any} = {};
+
+                        Array.from(params.keys()).forEach(key => {
+                            body[key] = params.get(key);
+                        });
+
+                        const payload = JSON.stringify(body);
+                        return toPromise.apply(
+                            this._mqtt.call(`homebot/device/${d.name}/command/${cmd.name}`, payload, 5*1000)
+                                .pipe(
+                                    map(b => b.toString()),
+                                    map(d => JSON.parse(d)),
+                                    catchError((err: any) => {
+                                        let msg = err.toString();
+
+                                        if (err instanceof Error) {
+                                            msg = err.message;
+                                        } else
+                                        if ('message' in err) {
+                                            msg = err.message;
+                                        } else
+                                        if ('error' in err) {
+                                            msg = err.error;
+                                        }
+                                        
+                                        return _throw(msg);
+                                    })
+                                )
+                        );
                     }
-                }
+                };
             }),
             d.sensors.map(sensor => {
                 return {
@@ -53,11 +85,13 @@ export class MqttDeviceManagerProxy {
                     type: sensor.type,
                     description: sensor.description,
                     onChange: this._mqtt.subscribe(`homebot/device/${d.name}/sensor/${sensor.name}`)
-                        .pipe(map(([topic, v]: [string, Buffer]) => {
-                            const parsed = JSON.parse(v.toString());
-                            console.log(`${d.name}:${sensor.name} => ${parsed.value}`);
-                            return  parsed.value;
-                        }))
+                        .pipe(
+                            map(([topic, v]: [string, Buffer]) => {
+                                const parsed = JSON.parse(v.toString());
+                                return  parsed.value;
+                            }),
+                            publishBehavior(sensor.value)
+                        )
                 }
             })
         );

@@ -25,6 +25,29 @@ export class MqttDeviceAPI {
                     .takeUntil(until)
                     .subscribe(value => this._publishSensor(d, s.name, value));
             });
+            
+        d.commands.forEach(cmd => {
+            this._mqtt.handle(`homebot/device/${d.name}/command/${cmd.name}`, (b: Buffer) => {
+                let payload = b.toString();
+                let body = {};
+
+                if (payload !== '') {
+                    body = JSON.parse(payload);
+                }
+                
+                let params: Map<string, any> = new Map();
+                Object.keys(body).forEach(key => {
+                    params.set(key, body[key]);
+                });
+                
+                console.log(`[mqtt] received RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
+
+                return cmd.handler.apply(d.instance, [params])
+                    .then(res => {
+                        return new Buffer(JSON.stringify(res));
+                    });
+            });
+        });
 
         this._publishDevice(d);
     }
@@ -33,7 +56,12 @@ export class MqttDeviceAPI {
         const msg: api.DeviceMessage = {
             name: d.name,
             description: d.description,
-            sensors: d.getSensorSchemas(),
+            sensors: d.getSensorSchemas().map(s => {
+                return {
+                    ...s,
+                    value: d.getSensorValue(s.name),   
+                };
+            }),
             commands: d.commands.map(cmd => {
                 return {
                     name: cmd.name,

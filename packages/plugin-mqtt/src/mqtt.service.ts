@@ -3,11 +3,19 @@ import {Client, connect, Packet} from 'mqtt';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import {Observer} from 'rxjs/Observer';
+import {Subscription} from 'rxjs/Subscription';
+import {take} from 'rxjs/operators';
 
 export const MQTT_BROKER_URL = 'mqtt-broker-url';
 
 export interface MessageHandler {
     (topic: string, b: Buffer): void;
+}
+
+export interface ProcedureCall {
+    body: string|Buffer;
+
+    responseTopic: string;
 }
 
 @Injectable()
@@ -36,6 +44,101 @@ export class MqttService {
             this._messageCallbacks.forEach(handler => {
                 handler(topic, payload);
             });
+        });
+    }
+    
+    public handle(topic: string, cb: (b: Buffer) => Promise<Buffer>): Subscription {
+        return this.subscribe(topic)
+            .subscribe(([topic, payload]) => {
+                let call: ProcedureCall;
+                try {
+                    call = JSON.parse(payload.toString());
+                } catch (err) {
+                    // TODO(ppacher): add logging
+                    return;
+                }
+
+                try {
+                    const body: Buffer = call.body instanceof Buffer ? call.body : new Buffer(call.body);
+                    cb(body)
+                        .then(res => {
+                            this.publish(call.responseTopic, res);
+                        })
+                        .catch(err => {
+                            let msg: string = err.toString();
+
+                            if (err instanceof Error) {
+                                msg = err.message;
+                            } 
+
+                            this.publish(call.responseTopic, JSON.stringify({
+                                error: msg
+                            }));
+                        });
+                    
+                }  catch (err) {
+                    this.publish(call.responseTopic, JSON.stringify({
+                        error: err.toString(),
+                    }));
+                }
+            });
+    }
+
+    public call(topic: string, payload: Buffer|string, timeout?: number): Observable<Buffer> {
+        return new Observable(observer => {
+            let responseTopic = this._generateUUID();
+            
+            let timer;
+            
+            let cancel = () => {
+                if (timer !== undefined) {
+                    clearTimeout(timer);
+                    timer = undefined;
+                }
+            };
+            
+            if (timeout !== undefined) {
+                timer = setTimeout(() => {
+                    observer.error(new Error('Timeout'));
+                    observer.complete();
+
+                    innerSubscription.unsubscribe();
+                    timer = undefined;
+                }, timeout);
+            }
+
+            let innerSubscription = this.subscribe(responseTopic)
+                .pipe(
+                    take(1)
+                )
+                .subscribe(([topic, response]: [string, Buffer]) => {
+                    observer.next(response)
+                    cancel();
+                },
+                err => {
+                    observer.error(err);
+                    cancel();
+                },
+                () => {
+                    observer.complete();  
+                    cancel();
+                });
+                
+            const call: ProcedureCall = {
+                body: payload,
+                responseTopic: responseTopic,
+            };
+            const data = JSON.stringify(call);
+
+            this.publish(topic, data);
+
+            return () => {
+                if (innerSubscription !== undefined) {
+                    innerSubscription.unsubscribe();
+                }
+                
+                cancel();
+            };
         });
     }
     
@@ -88,17 +191,17 @@ export class MqttService {
     // Taken from github.com/sclausen/ngx-mqtt
     public static filterMatchesTopic(filter: string, topic: string): boolean {
         if (filter[0] === '#' && topic[0] === '$') {
-          return false;
+            return false;
         }
         // Preparation: split and reverse on '/'. The JavaScript split function is sane.
         const fs = (filter || '').split('/').reverse();
         const ts = (topic || '').split('/').reverse();
         // This function is tail recursive and compares both arrays one element at a time.
         const match = (): boolean => {
-          // Cutting of the last element of both the filter and the topic using pop().
-          const f = fs.pop();
-          const t = ts.pop();
-          switch (f) {
+            // Cutting of the last element of both the filter and the topic using pop().
+            const f = fs.pop();
+            const t = ts.pop();
+            switch (f) {
             // In case the filter level is '#', this is a match no matter whether
             // the topic is undefined on this level or not ('#' matches parent element as well!).
             case '#': return true;
@@ -108,8 +211,16 @@ export class MqttService {
             // both must be defined and the filter tail must match the topic
             // tail (which is determined by the recursive call of match()).
             default: return f === t && (f === undefined ? true : match());
-          }
+            }
         };
         return match();
-      }
+    }
+
+    private _generateUUID(): string {
+        const part = () => Math.random()
+            .toString(36)
+            .substr(2, 15);
+
+        return part() + part();
+    }
 }

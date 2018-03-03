@@ -7,6 +7,6 @@ export interface SensorValueMessage extends SensorSchema {
 export interface DeviceMessage {
     name: string;
     description?: string;
-    sensors: SensorSchema[];
+    sensors: SensorValueMessage[];
     commands: Command[];
 }

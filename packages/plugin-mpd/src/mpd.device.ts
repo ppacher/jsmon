@@ -89,6 +89,10 @@ export class MPDDevice {
         }
     })
     find(params: Map<string, any>): Promise<mpc.Song[]> {
+        if (this._mpd === undefined || !this._mpd.isReady) {
+            return Promise.reject('Not connected');
+        }
+
         return this._mpd.database.find([[params.get('type'), params.get('what')]]);
     }
     
@@ -103,13 +107,31 @@ export class MPDDevice {
             }
         }
     })
-    play(p: Map<string, any>): Promise<void> { return this._mpd.playback.play(p.get('pos')); }
+    play(p: Map<string, any>): Promise<void> { 
+        if (this._mpd === undefined || !this._mpd.isReady) {
+            return Promise.reject('Not connected');
+        }
+
+        return this._mpd.playback.play(p.get('pos'));
+    }
 
     @Command('pause', 'Pause playback')
-    pause(): Promise<void> { return this._mpd.playback.pause(true); }
+    pause(): Promise<void> { 
+        if (this._mpd === undefined || !this._mpd.isReady) {
+            return Promise.reject('Not connected');
+        }
+
+        return this._mpd.playback.pause(true);
+    }
     
     @Command('resume', 'Resume playback')
-    resume(): Promise<void> { return this._mpd.playback.pause(false); }
+    resume(): Promise<void> { 
+        if (this._mpd === undefined || !this._mpd.isReady) {
+            return Promise.reject('Not connected');
+        }
+
+        return this._mpd.playback.pause(false);
+    }
     
     
     constructor(@Inject(MPD_CONFIG) private _config: MPDConfig) {

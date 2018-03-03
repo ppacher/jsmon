@@ -84,9 +84,9 @@ export class DeviceController<T = any> {
             console.error(`${this.name}: invalid parameters: `, err);
             return _throw(err);
         }
-        
+
         return fromPromise(
-            cmd.handler.bind(this.instance)(params)
+            cmd.handler.apply(this.instance, [params])
         );
     }
     

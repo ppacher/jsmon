@@ -1,14 +1,43 @@
-**core/**  
-     - module: fix __module__ accessor to be immediate (currently not working
-        in ctor)
-     - utils: export makeXXXDecorator functions for plugins
+# firetv
 
-**common/**   
-    - http-server: add support for SSL/TLS
-    - http-server: add more logging
-    - todo: mqtt modules
-    - shell: rename linux adapter as it works well on windows
+- firetv: add commands
+- firetv: add device discovery module
+- firetv: add health checks
 
-**gerneral**   
-    - remove startkit README
-    - fix CONTRIBUTION and code-of-conduct
+# HTTP server
+
+- httpserver: support better configuration
+- httpserver: support to TLS
+
+
+# mqtt
+
+- mqtt: request sensor values
+- mqtt: update device controllers if required
+
+# graphql 
+
+- graphql: add device enpoint module
+
+# core and general
+
+- core: Plugin.forRoot() support
+- core: Plugin dependencies
+- core: disposable DeviceController
+- logger: implement one
+- general: add docs/comments/descriptions
+- general: add test cases
+- general: add readme
+
+# sysinfo
+
+- sysinfo: distinct until changed
+
+# darksky
+
+- darksky: add health checks
+
+# mpd
+
+- mpd: add health checks (rudimentary ones are available)
+- mpd: add more commands
