@@ -174,7 +174,6 @@ export class DeviceManager {
         
         this._devices.set(def.name, def);
         
-        console.log(`Registered device ${def.name} with ${def.commands.length} cmds and ${def.getSensorSchemas().length} sensors`);
         this._registrations.next(def);
     }
     

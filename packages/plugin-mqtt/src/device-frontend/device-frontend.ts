@@ -1,4 +1,4 @@
-import {Injectable, DeviceManager, DeviceController, SensorSchema} from '@homebot/core';
+import {Injectable, DeviceManager, DeviceController, SensorSchema, Logger} from '@homebot/core';
 import * as api from '@homebot/core/device-manager/api';
 import {MqttService} from '../mqtt.service';
 
@@ -7,6 +7,7 @@ export class MqttDeviceAPI {
     constructor(
         private _manager: DeviceManager,
         private _mqtt: MqttService,
+        private _log: Logger
     ){
         this._mqtt.subscribe('homebot/discovery')
             .subscribe(([topic, payload]) => this._handleDiscoveryRequest(topic, payload));
@@ -40,7 +41,7 @@ export class MqttDeviceAPI {
                     params.set(key, body[key]);
                 });
                 
-                console.log(`[mqtt] received RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
+                this._log.info(`[mqtt] received RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
 
                 return cmd.handler.apply(d.instance, [params])
                     .then(res => {
@@ -77,7 +78,7 @@ export class MqttDeviceAPI {
     private _publishSensor(d: DeviceController, sensor: string, value: any): void {
         const schema = d.getSensorSchemas().find(s => s.name === sensor);
 
-        console.log(`[mqtt] publishing sensor value for ${sensor}`);
+        this._log.debug(`[mqtt] publishing sensor value for ${sensor}`);
         // TODO throw error if schema is undefined
 
         const msg: api.SensorValueMessage = {

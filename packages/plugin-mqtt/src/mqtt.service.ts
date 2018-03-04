@@ -1,4 +1,4 @@
-import {Injectable, Inject, Optional} from '@homebot/core';
+import {Injectable, Inject, Optional, Logger} from '@homebot/core';
 import {Client, connect, Packet} from 'mqtt';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
@@ -32,11 +32,12 @@ export class MqttService {
 
     constructor(
         @Inject(MQTT_BROKER_URL) @Optional() private _url: string,
+        private _log: Logger,
     ) {
         this._client = connect(this._url);
 
         this._client.on('connect', () => {
-            console.log(`[mqtt] successfully connected`);
+            this._log.info(`[mqtt] successfully connected`);
             this._connected.next();
         });
 

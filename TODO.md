@@ -24,7 +24,6 @@
 - core: Plugin.forRoot() support
 - core: Plugin dependencies
 - core: disposable DeviceController
-- logger: implement one
 - general: add docs/comments/descriptions
 - general: add test cases
 - general: add readme

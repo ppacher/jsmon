@@ -54,7 +54,6 @@ export class DeviceController<T = any> {
             .forEach(sensor => {
                 let sensorSubcription = sensor.onChange
                     .subscribe(value => {
-                        console.log(`Received update for device=${this.name} on sensor ${sensor.name} with value ${value}`);
                         this._updateSensorValue(sensor, value);
                     });
             });
@@ -70,10 +69,7 @@ export class DeviceController<T = any> {
     call(command: string, params: Map<string, any>): Observable<any> {
         const cmd = this.commands.find(c => c.name == command);
         
-        console.log(`${this.name}: executing ${command} with parameters ${params}`);
-
         if (cmd === undefined) {
-            console.error(`${this.name}: unknown command ${command}`);
             return _throw(new Error(`Command ${command} not supported by device ${this.name}`));
         }
         
@@ -81,7 +77,6 @@ export class DeviceController<T = any> {
         
         if (errors !== null) {
             let err = errors.map(err => err.message).join(', ');
-            console.error(`${this.name}: invalid parameters: `, err);
             return _throw(err);
         }
 
@@ -124,7 +119,6 @@ export class DeviceController<T = any> {
         return this.watchSensors()
             .map(values => values[name])
             .distinctUntilChanged()
-            .do(val => console.log(`[${this.name}:${name}] new value ${val}`))
             .debounceTime(100);
     }
     

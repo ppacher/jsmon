@@ -4,3 +4,4 @@ export * from './plugin';
 export * from './utils';
 export * from './device-manager';
 export * from './trigger';
+export * from './logger';

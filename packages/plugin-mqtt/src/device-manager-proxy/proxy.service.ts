@@ -1,4 +1,4 @@
-import {Injectable, DeviceManager, DeviceController, ParameterDefinition} from '@homebot/core';
+import {Injectable, DeviceManager, DeviceController, ParameterDefinition, Logger} from '@homebot/core';
 import * as api from '@homebot/core/device-manager/api';
 import {MqttService} from '../mqtt.service';
 
@@ -10,7 +10,8 @@ import {toPromise} from 'rxjs/operator/toPromise';
 export class MqttDeviceManagerProxy {
     constructor(
         private _mqtt: MqttService,
-        private _manager: DeviceManager
+        private _manager: DeviceManager,
+        private _log: Logger
     ) {
         this._mqtt.subscribe('homebot/device/+')
             .subscribe(([topic, payload]) => this._handleDiscovery(topic, payload));
@@ -18,7 +19,7 @@ export class MqttDeviceManagerProxy {
     }
     
     public discover(): void {
-        console.log(`Initiating device discovery`);
+        this._log.info(`Initiating device discovery`);
         this._mqtt.publish('homebot/discovery', 'discover');
     }
     
@@ -29,10 +30,10 @@ export class MqttDeviceManagerProxy {
         const isKnownDevice = (name: string) => registeredDevices.find(d => d.name === name);
 
         if (!isKnownDevice(device.name)) {
-            console.log(`Registered a new device for ${device.name}`);
+            this._log.info(`Registered a new device for ${device.name}`);
             this._registerDevice(device);
         } else {
-            console.log(`Device ${device.name} already handled`);
+            this._log.info(`Device ${device.name} already handled`);
         }
     }
     
@@ -45,7 +46,7 @@ export class MqttDeviceManagerProxy {
                     name: cmd.name,
                     parameters: cmd.parameters as any,
                     handler: (params: Map<string, any>) => {
-                        console.log(`[mqtt] sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
+                        this._log.info(`[mqtt] sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
                         
                         let body: {[key: string]: any} = {};
 

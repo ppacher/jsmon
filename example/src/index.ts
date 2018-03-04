@@ -1,4 +1,4 @@
-import {App, bootstrapApp, Injector, Trigger, DeviceManager, DeviceManagerModule} from '@homebot/core';
+import {App, bootstrapApp, Injector, Trigger, DeviceManager, DeviceManagerModule, Logger} from '@homebot/core';
 import {MPDPlugin, MPDConfig, MPDDevice} from '@homebot/plugin-mpd';
 import {SysInfoDevice} from '@homebot/plugin-sysinfo';
 import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyWeatherDevice} from '@homebot/plugin-darkskynet';
@@ -23,6 +23,9 @@ import * as minimist from 'minimist';
         MqttPlugin,
         MqttDeviceApiPlugin,
     ],
+    providers: [
+        Logger
+    ]
 })
 export class ExampleApp {
     constructor(private _device: DeviceManager,
