@@ -1,27 +1,31 @@
 {
-  "name": "@homebot/plugin-firetv",
+  "name": "@homebot/platform-darkskynet",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && cp package.json dist/",
+    "start": "tsc && cp package.json dist/ && cp src/mock.json dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@homebot/core": "1.0.0",
     "@types/node": "^9.4.6",
-    "adbkit": "^2.11.0",
+    "@types/request": "^2.47.0",
+    "request": "^2.83.0",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "1.0.0"
+    "@homebot/core": "1.0.0",
+    "rxjs": "^5.5.6",
+    "request": "^2.83.0"
   },
   "homebot": {
+    "plugin": "DarkSkyNetWeatherPlugin",
     "skills": [
-      "FireTV"
-    ],
-    "plugin": "FireTVPlugin"
+      "Weather"
+    ]
   }
 }

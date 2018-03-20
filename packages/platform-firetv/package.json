@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/plugin-sysinfo",
+  "name": "@homebot/platform-firetv",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,19 +11,17 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/systeminformation": "^3.23.0",
-    "systeminformation": "^3.37.4",
+    "@types/node": "^9.4.6",
+    "adbkit": "^2.11.0",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "1.0.0",
-    "rxjs": "^5.5.6",
-    "systeminformation": "^3.37.4"
+    "@homebot/core": "1.0.0"
   },
   "homebot": {
-    "plugin": "SysInfoPlugin",
     "skills": [
-      "Sysinfo"
-    ]
+      "FireTV"
+    ],
+    "plugin": "FireTVPlugin"
   }
 }

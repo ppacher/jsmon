@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/plugin-mpd",
+  "name": "@homebot/platform-sysinfo",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,19 +11,19 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "mpc-js": "^1.2.1",
-    "mpc-js-core": "^1.2.1",
-    "@homebot/core": "1.0.0",
+    "@types/systeminformation": "^3.23.0",
+    "systeminformation": "^3.37.4",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
     "@homebot/core": "1.0.0",
-    "rxjs": "^5.5.6"
+    "rxjs": "^5.5.6",
+    "systeminformation": "^3.37.4"
   },
   "homebot": {
-    "plugin": "MPDPlugin",
+    "plugin": "SysInfoPlugin",
     "skills": [
-      "MPD"
+      "Sysinfo"
     ]
   }
 }
