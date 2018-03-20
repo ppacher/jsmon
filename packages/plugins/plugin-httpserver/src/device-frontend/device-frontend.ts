@@ -30,11 +30,11 @@ export class DeviceHttpApi {
         // Whenever a new device is registered, setup the corresponding device
         // routes
         this._manager.registrations
-            .subscribe(device => this._setupDeviceRoute(device));
+            .subscribe((device: DeviceController<any>) => this._setupDeviceRoute(device));
 
         // Whenever a device is unregistered we need to remove all routes from the HTTP server
         this._manager.unregistrations
-            .subscribe(device => {
+            .subscribe((device: DeviceController<any>) => {
                 if (this._devices.has(device)) {
                     this._devices.get(device)!();
                 }
@@ -61,7 +61,7 @@ export class DeviceHttpApi {
             (req, res) => this._getDeviceSensors(d, req, res)
         ));
 
-        d.getSensorSchemas().forEach(sensor => {
+        d.getSensorSchemas().forEach((sensor: SensorSchema) => {
             let sensorUrl = `${sensorsUrl}/${sensor.name}`;
 
             cancelFns.push(this._server.register('get', sensorUrl, 
@@ -73,7 +73,7 @@ export class DeviceHttpApi {
             (req, res) => this._getDeviceCommands(d, req, res)
         ));
 
-        d.commands.forEach(cmd => {
+        d.commands.forEach((cmd: CommandSchema) => {
             const cmdUrl = `${cmdsUrl}/${cmd.name}`;
             cancelFns.push(this._server.register('get', cmdUrl, 
                 (req, res) => this._getDeviceCommand(d, cmd, req, res)
@@ -95,7 +95,7 @@ export class DeviceHttpApi {
 
     private _getDeviceSensors(d: DeviceController, req: Request, res: Response): void {
         const values = d.getSensorValues();
-        const response = d.getSensorSchemas().map(sensor => ({
+        const response = d.getSensorSchemas().map((sensor: SensorSchema) => ({
             ...sensor,
             value: values[sensor.name],
         }));
@@ -140,7 +140,7 @@ export class DeviceHttpApi {
     }
 
     private _getDeviceCommands(d: DeviceController, req: Request, res: Response): void {
-        const response = d.commands.map(cmd => this._getCommandDescriptor(cmd));
+        const response = d.commands.map((cmd: CommandSchema) => this._getCommandDescriptor(cmd));
         
         res.send(response);
     }
@@ -161,7 +161,7 @@ export class DeviceHttpApi {
 
         d.call(cmd.name, parameters)
             .subscribe(
-                (result) => {
+                (result: any) => {
                     let path = req.query['path'];
                     let response;
                     try {
@@ -178,7 +178,7 @@ export class DeviceHttpApi {
 
                     res.sendRaw(''+response);
                 },
-                (err) => res.send({error: err}));
+                (err: any) => res.send({error: err}));
     }
 
     /**
@@ -189,7 +189,7 @@ export class DeviceHttpApi {
      */
     private _getDevices(req: Request, res: Response): void {
         const response = this._manager.getRegisteredDevices()
-            .map(device => this._getDeviceDescriptor(device));
+            .map((device: DeviceController) => this._getDeviceDescriptor(device));
         
         res.send(response);
     }
@@ -199,7 +199,7 @@ export class DeviceHttpApi {
             name: d.name,
             description: d.description,
             state: d.healthy(),
-            commands: d.commands.map(cmd => ({
+            commands: d.commands.map((cmd: CommandSchema) => ({
                 name: cmd.name,
                 description: cmd.description,
                 // TODO: add parameters

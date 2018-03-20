@@ -32,13 +32,13 @@ fi
 
 if [ $skipLibs == false ]; then
     buildPackage core
-    buildPackage plugin-httpserver
-    buildPackage plugin-mpd
-    buildPackage plugin-mqtt
-    buildPackage plugin-sysinfo
-    buildPackage plugin-graphql
-    buildPackage plugin-darkskynet
-    buildPackage plugin-firetv
+    buildPackage plugins/plugin-httpserver
+    buildPackage plugins/plugin-mqtt
+    buildPackage plugins/plugin-graphql
+    buildPackage platforms/platform-mpd
+    buildPackage platforms/platform-darkskynet
+    buildPackage platforms/platform-sysinfo
+    buildPackage platforms/platform-firetv
 fi
 
 for app in "$@"; do
