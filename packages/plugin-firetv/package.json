@@ -17,5 +17,11 @@
   },
   "peerDependencies": {
     "@homebot/core": "1.0.0"
+  },
+  "homebot": {
+    "skills": [
+      "FireTV"
+    ],
+    "plugin": "FireTVPlugin"
   }
 }

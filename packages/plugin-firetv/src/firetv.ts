@@ -95,6 +95,10 @@ export class FireTV {
                     }
                     
                     return FireTVState.PAUSED;
+                }),
+                map(res => {
+                    console.log(`Current state` + res);
+                    return res;
                 })
             );
     }

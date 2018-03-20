@@ -19,5 +19,11 @@
     "@homebot/core": "1.0.0",
     "rxjs": "^5.5.6",
     "systeminformation": "^3.37.4"
+  },
+  "homebot": {
+    "plugin": "SysInfoPlugin",
+    "skills": [
+      "Sysinfo"
+    ]
   }
 }

@@ -5,8 +5,9 @@ import {FireTVState} from './states';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 import {interval} from 'rxjs/observable/interval';
+import {of} from 'rxjs/observable/of';
 
-import {switchMap, map, distinctUntilChanged, startWith} from 'rxjs/operators';
+import {switchMap, map, distinctUntilChanged, startWith, catchError} from 'rxjs/operators';
 
 export class FireTVConfig {
     constructor(
@@ -65,6 +66,10 @@ export class FireTVDevice {
             .pipe(
                 startWith(-1),
                 switchMap(() => this._device.getPowerState()),
+                catchError(err => {
+                    console.log(`Error: ` + err);
+                    return of(FireTVState.DISCONNECTED);
+                }),
             )       
             .subscribe(state => this._state.next(state));
         
