@@ -99,13 +99,14 @@ export class SkillLoader {
         if (found) {
             return config!;
         } else {
-            throw new Error('Failed to find node module');
+            throw new Error(`Failed to find node module for ${name} in any of ${paths.join(", ")}`);
         }
     }
     
     _tryParsePackage(path: string): PluginModule|undefined {
         let packagePath = resolve(path, 'package.json');
         if (!existsSync(packagePath)) {
+            console.log(`${path} does not contain a package.json file`);
             return undefined;
         }
 
@@ -124,8 +125,11 @@ export class SkillLoader {
                     skills: skills,
                 };
             }
-        } catch(err) {}
+        } catch(err) {
+            console.error(`${path} cought error during parsing: `, err);
+        }
         
+        console.log(`${path}: failed to load module`);
         return undefined;
     }
 }

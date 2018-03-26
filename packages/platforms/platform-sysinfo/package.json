@@ -12,12 +12,15 @@
   "license": "ISC",
   "devDependencies": {
     "@types/systeminformation": "^3.23.0",
+    "@homebot/core": "1.0.0",
     "systeminformation": "^3.37.4",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
     "@homebot/core": "1.0.0",
-    "rxjs": "^5.5.6",
+    "rxjs": "^5.5.6"
+  },
+  "dependencies": {
     "systeminformation": "^3.37.4"
   },
   "homebot": {

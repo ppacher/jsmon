@@ -18,9 +18,14 @@ import * as minimist from 'minimist';
 export class ExampleApp {
     constructor(private _device: DeviceManager,
                 private _injector: Injector) {
-        let loader = new SkillLoader(this._injector, this._device, ['/home/ppc/homebot/packages']);
         
         let args = minimist(process.argv.slice(2));
+        let pluginDirs = args['plugin-dir'];
+        if (pluginDirs !== undefined && !Array.isArray(pluginDirs)) {
+            pluginDirs = [pluginDirs];
+        }
+        
+        let loader = new SkillLoader(this._injector, this._device, pluginDirs);
         let cfg = loadSkillConfig(args.config);
         
         cfg.forEach(plugin => {
