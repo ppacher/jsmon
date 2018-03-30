@@ -50,9 +50,11 @@ export class MqttDeviceManagerProxy {
                         
                         let body: {[key: string]: any} = {};
 
-                        Array.from(params.keys()).forEach(key => {
-                            body[key] = params.get(key);
-                        });
+                        if (!!params) {
+                            Array.from(params.keys()).forEach(key => {
+                                body[key] = params.get(key);
+                            });
+                        }
 
                         const payload = JSON.stringify(body);
                         return toPromise.apply(
