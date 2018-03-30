@@ -1,4 +1,4 @@
-import {resolve} from 'path';
+import {resolve, dirname} from 'path';
 import {readFileSync, existsSync} from 'fs';
 
 import {SkillFactory, SkillFactories, Skill, SkillParameters, SkillType, EnabledSkill} from './factory';
@@ -72,10 +72,14 @@ export class SkillLoader {
     }
     
     async findModule(name: string): Promise<PluginModule> {
+        let nodeModulePath = require.resolve(name);
+        if (nodeModulePath) {
+            nodeModulePath = dirname(nodeModulePath);
+        }
         let paths = [
             ...this._pluginDirs.map(dir => resolve(dir, name)),
             // use NodeJS lookup strategy
-            name,
+            nodeModulePath,
         ];
     
         let config: PluginModule;

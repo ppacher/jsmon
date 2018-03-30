@@ -21,8 +21,12 @@ export class ExampleApp {
         
         let args = minimist(process.argv.slice(2));
         let pluginDirs = args['plugin-dir'];
-        if (pluginDirs !== undefined && !Array.isArray(pluginDirs)) {
-            pluginDirs = [pluginDirs];
+        if (pluginDirs === undefined) {
+            pluginDirs = [];
+        } else {
+            if (!Array.isArray(pluginDirs)) {
+                pluginDirs = [pluginDirs];
+            }
         }
         
         let loader = new SkillLoader(this._injector, this._device, pluginDirs);
