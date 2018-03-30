@@ -1,0 +1,22 @@
+{
+  "name": "@homebot/platform-host-discovery",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && cp package.json dist/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@homebot/core": "^1.0.0",
+    "rxjs": "^5.5.8",
+    "typescript": "^2.7.2"
+  },
+  "peerDependencies": {
+    "@homebot/core": "^1.0.0",
+    "rxjs": "^5.5.8"
+  }
+}
