@@ -255,7 +255,7 @@ export class DeviceHttpApi {
         return {
             name: cmd.name,
             description: cmd.description,
-            parameters: Object.keys(cmd.parameters).map(key => {
+            parameters: Object.keys(cmd.parameters || {}).map(key => {
                 const def = cmd.parameters[key];
                 return {
                     name: key,
