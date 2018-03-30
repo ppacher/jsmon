@@ -48,6 +48,28 @@ export class FireTVDevice {
         type: ParameterType.String
     })
     readonly runningApps = this._runningApps.asObservable();
+    
+    @Command({
+        name: 'powerOn',
+        description: 'Power on the FireTV'
+    })
+    powerOn(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            this._device.turnOn()
+                .subscribe(() => resolve(`Successfully turned on`), err => reject(err));
+        });
+    }
+    
+    @Command({
+        name: 'powerOff',
+        description: 'Power off the FireTV'
+    })
+    powerOff(): Promise<string>{
+        return new Promise((resolve, reject) => {
+            this._device.turnOff()
+                .subscribe(() => resolve('Successfully turned off'), err => reject(err));
+        });
+    }
 
     constructor(private _config: FireTVConfig) {
         this._device = new FireTV(this._config.host);
