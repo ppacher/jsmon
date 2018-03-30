@@ -1,5 +1,5 @@
 {
-  "name": "test-plugin",
+  "name": "plugin-scaffold",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,9 +12,9 @@
   "license": "ISC",
   "devDependencies": {
     "typescript": "^2.7.2",
-    "@homebot/core": "file:../core/dist"
+    "@homebot/core": "^1.0.0"
   },
   "peerDependencies": {
-    "@homebot/core": "file:../core/dist"
+    "@homebot/core": "^1.0.0"
   }
 }
