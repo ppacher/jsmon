@@ -35,7 +35,7 @@ class KeyRegistry {
         // TODO: remove once we release it
         Array.from(this._keys.values()).map(val => {
             if (val.displayName === key.displayName) {
-                throw new Error(`ProviderKey: duplicated display name!`);
+                throw new Error(`ProviderKey: duplicated display name: ${val.displayName}`);
             }
         });
         
