@@ -202,6 +202,70 @@ describe('MqttService', () => {
                 
                 mockClient.fakePublish('foo/bar', new Buffer(JSON.stringify(payload)));
             });
-        })
+        });
+
+        it('should publish RPC correctly', () => {
+            let publishSpy = jest.spyOn(mockClient, 'publish');
+            
+            service.call('foo/bar', 'payload').subscribe().unsubscribe();
+            
+            expect(publishSpy).toHaveBeenCalled();
+            expect(publishSpy.mock.calls[0][0]).toBe('foo/bar');
+            
+            let payload: ProcedureCall = JSON.parse(publishSpy.mock.calls[0][1]);
+            expect(payload.responseTopic).toBeDefined();
+            expect(payload.body).toBe('payload');
+        });
+        
+        it('should subscribe for the result', () => {
+            let publishSpy = jest.spyOn(mockClient, 'publish');
+            let subscribeSpy = jest.spyOn(mockClient, 'subscribe');
+            
+            service.call('foo/bar', 'payload').subscribe().unsubscribe();
+            
+            let payload: ProcedureCall = JSON.parse(publishSpy.mock.calls[0][1]);
+            
+            expect(subscribeSpy).toHaveBeenCalled();
+            expect(subscribeSpy.mock.calls[0][0]).toBe(payload.responseTopic);
+        });
+        
+        it('should wait for and emit the result', () => {
+            return new Promise((resolve, reject) => {
+                let publishSpy = jest.spyOn(mockClient, 'publish');
+                
+                let res = new Buffer('foobar') ;
+                
+                let observer = jest.fn().mockImplementation((response) => {
+                    expect(response).toBe(res);
+                    resolve();   
+                });
+                
+                service.call('foo/bar', 'payload').subscribe(res => observer(res));
+                
+                expect(publishSpy).toHaveBeenCalled();
+                let payload: ProcedureCall = JSON.parse(publishSpy.mock.calls[0][1]);
+                
+                mockClient.fakePublish(payload.responseTopic, res)
+            });
+        });
+        
+        it('should support timeouts', () => {
+            return new Promise((resolve, reject) => {
+                let publishSpy = jest.spyOn(mockClient, 'publish');
+                
+                let res = new Buffer('foobar') ;
+                
+                let observer = jest.fn().mockImplementation((response) => {
+                    expect(response).toBeInstanceOf(Error);
+                    expect((response as Error).message).toBe('Timeout');
+                    resolve();   
+                });
+                
+                service.call('foo/bar', 'payload', 1).subscribe(() => {}, err => observer(err));
+                
+                expect(publishSpy).toHaveBeenCalled();
+                let payload: ProcedureCall = JSON.parse(publishSpy.mock.calls[0][1]);
+            });
+        });
     });
 });

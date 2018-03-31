@@ -35,6 +35,7 @@
       "ts",
       "js"
     ],
-    "collectCoverage": true
+    "collectCoverage": true,
+    "coverageReporters": ["json", "lcov", "text", "html"]
   }
 }
