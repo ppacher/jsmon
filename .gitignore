@@ -5,3 +5,4 @@ coverage
 cybertrap-graphql-proxy/
 config.json
 _data/
+package-lock.json
