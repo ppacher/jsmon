@@ -1,5 +1,9 @@
-import {Injector, Provider, Logger} from '@homebot/core';
-import {MQTT_BROKER_URL, MQTT_CLIENT_CONNECT, MqttConnectFn, MqttService} from '../mqtt.service';
+import {Logger} from '@homebot/core';
+import {
+    MqttConnectFn,
+    MqttService,
+    ProcedureCall
+} from '../mqtt.service';
 
 class MockMqttClient {
     registeredEventListeners: Map<string, Function> = new Map();
@@ -8,17 +12,9 @@ class MockMqttClient {
         this.registeredEventListeners.set(topic, cb);
     }
 
-    subscribe(topic: string, cb: (err, granted) => void) {
-
-    }
-    
-    unsubscribe(topic: string) {
-
-    }
-    
-    publish(topic: string, payload: Buffer) {
-
-    }
+    subscribe(topic: string, cb: (err, granted) => void) {}
+    unsubscribe(topic: string) {}
+    publish(topic: string, payload: Buffer) {}
     
     fakePublish(topic: string, payload: Buffer): void {
         let cb = this.registeredEventListeners.get('message');
@@ -128,5 +124,84 @@ describe('MqttService', () => {
 
             expect(publishSpy).toHaveBeenCalledWith('foo/bar', 'payload');
         });
+    });
+    
+    describe('remote procedure calls', () => {
+        let service: MqttService;
+
+        beforeEach(() => {
+            service = new MqttService(undefined, new Logger(undefined), () => mockClient as any);
+        });
+        
+        it('should support RPC handlers', () => {
+            let handler = jest.fn().mockImplementation(() => {
+                return Promise.resolve('success');
+            });
+            
+            let sub = service.handle('foo/bar', handler);
+
+            let body = new Buffer('my body');
+
+            let payload: ProcedureCall = {
+                responseTopic: 'response',
+                body: body,
+            };
+            
+            mockClient.fakePublish('foo/bar', new Buffer(JSON.stringify(payload)));
+
+            expect(handler).toHaveBeenCalledWith(body);
+        });
+        
+        it('should send the response to the response topic', () => {
+            return new Promise((resolve, reject) => {
+                let handler = jest.fn().mockImplementation(() => {
+                    return Promise.resolve('success');
+                });
+                let publishSpy = jest.spyOn(mockClient, 'publish')
+                    .mockImplementation((topic, payload) => {
+                        expect(topic).toBe('response');
+                        expect(payload.toString()).toBe('success');
+                        resolve();          
+                    });
+                
+                let sub = service.handle('foo/bar', handler);
+
+                let body = new Buffer('my body');
+
+                let payload: ProcedureCall = {
+                    responseTopic: 'response',
+                    body: body,
+                };
+                
+                mockClient.fakePublish('foo/bar', new Buffer(JSON.stringify(payload)));
+            });
+        });
+        
+        it('should catch errors and publish an error response', () => {
+            return new Promise((resolve, reject) => {
+                let handler = jest.fn().mockImplementation(() => {
+                    return Promise.reject('some error');
+                });
+                let publishSpy = jest.spyOn(mockClient, 'publish')
+                    .mockImplementation((topic, payload) => {
+                        expect(topic).toBe('response');
+                        expect(JSON.parse(payload.toString())).toEqual({
+                            error: 'some error'
+                        })
+                        resolve();          
+                    });
+                
+                let sub = service.handle('foo/bar', handler);
+
+                let body = new Buffer('my body');
+
+                let payload: ProcedureCall = {
+                    responseTopic: 'response',
+                    body: body,
+                };
+                
+                mockClient.fakePublish('foo/bar', new Buffer(JSON.stringify(payload)));
+            });
+        })
     });
 });
