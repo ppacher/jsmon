@@ -1,6 +1,6 @@
 {
   "name": "@homebot/core",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Rapid home-automation development framework",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,9 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "keywords": ["homebot"],
+  "keywords": [
+    "homebot"
+  ],
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
@@ -34,8 +36,15 @@
       "ts",
       "js"
     ],
-    "roots": ["<rootDir>/src/" ],
+    "roots": [
+      "<rootDir>/src/"
+    ],
     "collectCoverage": true,
-    "coverageReporters": ["text", "lcov", "json", "html"]
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json",
+      "html"
+    ]
   }
 }

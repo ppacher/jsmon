@@ -1,6 +1,6 @@
 {
   "name": "@homebot/platform-mpd",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,14 +12,14 @@
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@homebot/core": "1.0.0",
+    "@homebot/core": "0.0.1",
     "@types/jest": "^22.2.2",
     "jest": "^22.4.3",
     "ts-jest": "^22.4.2",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "1.0.0",
+    "@homebot/core": "0.0.1",
     "rxjs": "^5.5.6"
   },
   "dependencies": {

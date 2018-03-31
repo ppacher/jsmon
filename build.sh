@@ -11,7 +11,7 @@ fi
 buildPlugin() {
     echo "Building $1"
     pushd ${base}/packages/plugins/$1
-    
+    npm install || exit
     npm start || exit
 
     if [ $publish == true ]; then 
@@ -25,6 +25,7 @@ buildPlatform() {
     echo "Building $1"
     pushd ${base}/packages/platforms/$1
     
+    npm install || exit
     npm start || exit
 
     if [ $publish == true ]; then 
@@ -38,6 +39,7 @@ buildPackage() {
     echo "Building $1"
     pushd ${base}/packages/$1
     
+    npm install || exit
     npm start || exit
 
     if [ $publish == true ]; then 

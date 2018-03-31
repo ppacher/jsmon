@@ -1,6 +1,6 @@
 {
   "name": "@homebot/plugin-httpserver",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -22,6 +22,9 @@
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "@homebot/core": "1.0.0"
+    "@homebot/core": "0.0.1"
+  },
+  "dependencies": {
+    "@homebot/core": "0.0.1"
   }
 }
