@@ -93,7 +93,7 @@ export class MqttDeviceManagerProxy {
                                 const parsed = JSON.parse(v.toString());
                                 return  parsed.value;
                             }),
-                            publishBehavior(sensor.value)
+                            //publishBehavior(sensor.value)
                         )
                 }
             })

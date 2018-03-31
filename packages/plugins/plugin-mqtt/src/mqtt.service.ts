@@ -1,5 +1,5 @@
 import {Injectable, Inject, Optional, Logger} from '@homebot/core';
-import {Client, connect, Packet} from 'mqtt';
+import {Client, connect, Packet, IClientOptions} from 'mqtt';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import {Observer} from 'rxjs/Observer';
@@ -7,9 +7,18 @@ import {Subscription} from 'rxjs/Subscription';
 import {take} from 'rxjs/operators';
 
 export const MQTT_BROKER_URL = 'mqtt-broker-url';
+export const MQTT_CLIENT_CONNECT = 'mqtt-client-connect';
+
+export interface MqttConnectFn {
+    (brokerUrl?: string, opts?: IClientOptions): Client;
+}
 
 export interface MessageHandler {
     (topic: string, b: Buffer): void;
+}
+
+export interface CommandHandler {
+    (b: Buffer): Promise<Buffer>;
 }
 
 export interface ProcedureCall {
@@ -33,8 +42,9 @@ export class MqttService {
     constructor(
         @Inject(MQTT_BROKER_URL) @Optional() private _url: string,
         private _log: Logger,
+        @Inject(MQTT_CLIENT_CONNECT) @Optional() connectClient: MqttConnectFn = connect
     ) {
-        this._client = connect(this._url);
+        this._client = connectClient(this._url);
 
         this._client.on('connect', () => {
             this._log.info(`[mqtt] successfully connected`);
@@ -48,7 +58,7 @@ export class MqttService {
         });
     }
     
-    public handle(topic: string, cb: (b: Buffer) => Promise<Buffer>): Subscription {
+    public handle(topic: string, cb: CommandHandler): Subscription {
         return this.subscribe(topic)
             .subscribe(([topic, payload]) => {
                 let call: ProcedureCall;

@@ -1,46 +1,62 @@
 #!/bin/bash
 
-npm install rxjs
+publish=false
+base=$(dirname $0)
 
-base=$(pwd)
+if [ "$1" == "--publish" ]; then
+    publish=true
+    shift
+fi
+
+buildPlugin() {
+    echo "Building $1"
+    pushd ${base}/packages/plugins/$1
+    
+    npm start || exit
+
+    if [ $publish == true ]; then 
+        npm publish -f ./dist
+    fi 
+
+    popd
+}
+
+buildPlatform() {
+    echo "Building $1"
+    pushd ${base}/packages/platforms/$1
+    
+    npm start || exit
+
+    if [ $publish == true ]; then 
+        npm publish -f ./dist
+    fi 
+
+    popd
+}
 
 buildPackage() {
-    cd ${base}/packages/$1
+    echo "Building $1"
+    pushd ${base}/packages/$1
+    
+    npm start || exit
 
-    npm start
+    if [ $publish == true ]; then 
+        npm publish -f ./dist
+    fi 
 
-    cd ${base}
+    popd
 }
 
-buildApp() {
-    cd ${base}/$1
-
-    shift
-
-    npm install
-    npm start -- $@
-
-    cd ${base}
-}
-
-skipLibs=false
-
-if [ "$1" == "--skip-libs" ]; then
-    skipLibs=true
-    shift
-fi
-
-if [ $skipLibs == false ]; then
-    buildPackage core
-    buildPackage plugins/plugin-httpserver
-    buildPackage plugins/plugin-mqtt
-    buildPackage plugins/plugin-graphql
-    buildPackage platforms/platform-mpd
-    buildPackage platforms/platform-darkskynet
-    buildPackage platforms/platform-sysinfo
-    buildPackage platforms/platform-firetv
-fi
-
-for app in "$@"; do
-    buildApp $app
+for pkg in $@ ; do 
+    if [[ $pkg == plugin* ]]; then
+        buildPlugin $pkg
+        continue
+    fi
+    
+    if [[ $pkg == platform* ]]; then
+        buildPlatform $pkg
+        continue
+    fi
+    
+    buildPackage $pkg
 done
