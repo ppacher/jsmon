@@ -70,6 +70,7 @@ export class MqttDeviceAPI {
                 sensors: device.getSensorSchemas().map(s => {
                     return {
                         ...s,
+                        value: device.getSensorValue(s.name)
                     };
                 }),
                 commands: device.commands.map(cmd => {
@@ -106,8 +107,13 @@ export class MqttDeviceAPI {
      * @param value         The value of the sensor to publish 
      */
     publishSensorValue(deviceOrName: DeviceController|string, sensor: string, value: any): void {
+        if (value === undefined) {
+            return;
+        }
         const name = deviceOrName instanceof DeviceController ? deviceOrName.name : deviceOrName;
         const payload = JSON.stringify(value);
+        
+        console.log(`[mqtt] publishing sensor value for ${name}.${sensor} => ${payload}`)
 
         this._mqtt.publish(`homebot/device/${name}/sensor/${sensor}/value`, payload);
     }

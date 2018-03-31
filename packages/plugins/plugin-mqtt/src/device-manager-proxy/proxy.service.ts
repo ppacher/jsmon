@@ -56,6 +56,9 @@ export class MqttDeviceManagerProxy {
                     type: sensor.type,
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
+                        .pipe(
+                            publishBehavior(sensor.value)
+                        )
                 }
             })
         );

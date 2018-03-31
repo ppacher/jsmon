@@ -72,7 +72,8 @@ describe('MqttDeviceAPI', () => {
                     {
                         description: 'sensor1',
                         name: 'sensor1',
-                        type: ParameterType.String
+                        type: ParameterType.String,
+                        value: 'foobar'
                     }
                 ],
             };
