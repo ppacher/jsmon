@@ -42,6 +42,13 @@ export class MqttDeviceAPI {
         
         this._subscribeDiscovery();
     }
+
+    /**
+     * Publish a device discovery request on MQTT
+     */
+    initiateDiscovery(): void {
+        this._mqtt.publish('homebot/discovery', null);
+    }
     
     /**
      * Announces the availablility of a device on MQTT
@@ -112,7 +119,7 @@ export class MqttDeviceAPI {
      * @returns An {@link Observable} that emits the current sensor value when received
      */
     watchSensor(deviceName: string, sensorName: string): Observable<any> {
-        return this._mqtt.subscribe(`homebot/device/${name}/sensor/${name}/value`)
+        return this._mqtt.subscribe(`homebot/device/${deviceName}/sensor/${sensorName}/value`)
             .pipe(
                 map(([topic, buffer]) => JSON.parse(buffer.toString()))
             );
