@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
-  "author": "",
+  "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@types/graphql": "^0.12.4",
@@ -22,5 +23,18 @@
     "@homebot/core": "1.0.0",
     "@homebot/plugin-httpserver": "1.0.0",
     "restify": "^6.3.4"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "roots": ["<rootDir>/src/" ],
+    "collectCoverage": true,
+    "coverageReporters": ["text", "lcov", "json", "html"]
   }
 }

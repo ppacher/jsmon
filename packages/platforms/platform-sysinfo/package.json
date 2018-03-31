@@ -5,15 +5,19 @@
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
-  "author": "",
+  "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@types/systeminformation": "^3.23.0",
     "@homebot/core": "1.0.0",
+    "@types/jest": "^22.2.2",
+    "@types/systeminformation": "^3.23.0",
+    "jest": "^22.4.3",
     "systeminformation": "^3.37.4",
+    "ts-jest": "^22.4.2",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
@@ -27,6 +31,26 @@
     "plugin": "SysInfoPlugin",
     "skills": [
       "Sysinfo"
+    ]
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "roots": [
+      "<rootDir>/src/"
+    ],
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json",
+      "html"
     ]
   }
 }

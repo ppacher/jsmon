@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
-  "author": "",
+  "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@homebot/core": "^1.0.0",
@@ -36,6 +37,9 @@
       "js"
     ],
     "collectCoverage": true,
+    "roots": [
+      "<rootDir>/src/"
+    ],
     "coverageReporters": [
       "json",
       "lcov",

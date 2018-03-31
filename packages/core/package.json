@@ -1,14 +1,15 @@
 {
   "name": "@homebot/core",
   "version": "1.0.0",
-  "description": "",
+  "description": "Rapid home-automation development framework",
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["homebot"],
+  "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^22.2.2",
