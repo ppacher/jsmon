@@ -3,7 +3,9 @@ import * as api from '@homebot/core/device-manager/api';
 
 import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs/Observable';
-import {map} from 'rxjs/operators';
+import {map, catchError} from 'rxjs/operators';
+import {_throw} from 'rxjs/observable/throw';
+import {toPromise} from 'rxjs/operator/toPromise';
 
 import {MqttService, CommandHandler} from './mqtt.service';
 
@@ -107,7 +109,7 @@ export class MqttDeviceAPI {
         const name = deviceOrName instanceof DeviceController ? deviceOrName.name : deviceOrName;
         const payload = JSON.stringify(value);
 
-        this._mqtt.publish(`homebot/device/${name}/sensor/${name}/value`, payload);
+        this._mqtt.publish(`homebot/device/${name}/sensor/${sensor}/value`, payload);
     }
     
     /**
@@ -123,6 +125,42 @@ export class MqttDeviceAPI {
             .pipe(
                 map(([topic, buffer]) => JSON.parse(buffer.toString()))
             );
+    }
+    
+    call(device: string, cmd: string, params: Map<string, any>|{[key: string]: any}): Promise<any> {
+        let body: {[key: string]: any} = {};
+        
+        if (params instanceof Map) {
+            Array.from(params.keys()).forEach(key => {
+                body[key] = params.get(key);
+            });
+        } else {
+            body = params;
+        }
+
+        const payload = JSON.stringify(body);
+        return toPromise.apply(
+            this._mqtt.call(`homebot/device/${device}/command/${cmd}`, payload, 5*1000)
+                .pipe(
+                    map(b => b.toString()),
+                    map(d => JSON.parse(d)),
+                    catchError((err: any) => {
+                        let msg = err.toString();
+
+                        if (err instanceof Error) {
+                            msg = err.message;
+                        } else
+                        if ('message' in err) {
+                            msg = err.message;
+                        } else
+                        if ('error' in err) {
+                            msg = err.error;
+                        }
+                        
+                        return _throw(msg);
+                    })
+                )
+        );
     }
     
     /**

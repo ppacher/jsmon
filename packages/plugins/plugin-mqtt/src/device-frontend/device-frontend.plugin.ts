@@ -1,12 +1,12 @@
 import {Plugin} from '@homebot/core';
-import {MqttDeviceAPI} from './device-frontend';
+import {MqttDeviceManagerAPI} from './device-frontend';
 
 @Plugin({
     providers: [
-        MqttDeviceAPI
+        MqttDeviceManagerAPI
     ],
     bootstrapService: [
-        MqttDeviceAPI
+        MqttDeviceManagerAPI
     ]
 })
 export class MqttDeviceApiPlugin {}
