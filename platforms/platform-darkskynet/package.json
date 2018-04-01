@@ -1,32 +1,39 @@
 {
-  "name": "@homebot/core",
+  "name": "@homebot/platform-darkskynet",
   "version": "0.0.1",
-  "description": "Rapid home-automation development framework",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && cp package.json dist/",
+    "start": "tsc && cp package.json dist/ && cp src/mock.json dist/",
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "keywords": [
-    "homebot"
-  ],
+  "keywords": [],
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
+    "@homebot/core": "0.0.1",
+    "@homebot/platform": "0.0.1",
     "@types/jest": "^22.2.2",
-    "@types/js-yaml": "^3.10.1",
-    "@types/node": "^9.4.7",
-    "jest": "^22.4.3",
-    "reflect-metadata": "^0.1.12",
-    "ts-jest": "^22.4.2",
+    "@types/node": "^9.4.6",
+    "@types/request": "^2.47.0",
     "rxjs": "^5.5.6",
+    "jest": "^22.4.3",
+    "request": "^2.83.0",
+    "ts-jest": "^22.4.2",
     "typescript": "^2.7.2"
   },
   "peerDependencies": {
-    "reflect-metadata": "^0.1.12",
-    "js-yaml": "^3.11.0",
-    "rxjs": "^5.5.6"
+    "@homebot/core": "0.0.1",
+    "@homebot/platform": "0.0.1",
+    "rxjs": "^5.5.6",
+    "request": "^2.83.0"
+  },
+  "homebot": {
+    "plugin": "DarkSkyNetWeatherPlugin",
+    "skills": [
+      "Weather"
+    ]
   },
   "jest": {
     "transform": {
