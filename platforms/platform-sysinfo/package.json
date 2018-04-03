@@ -16,8 +16,8 @@
     "@homebot/platform": "0.0.1",
     "@types/jest": "^22.2.2",
     "@types/systeminformation": "^3.23.0",
-    "rxjs": "^5.5.6",
     "jest": "^22.4.3",
+    "rxjs": "^5.5.6",
     "systeminformation": "^3.37.4",
     "ts-jest": "^22.4.2",
     "typescript": "^2.7.2"
@@ -31,10 +31,7 @@
     "systeminformation": "^3.37.4"
   },
   "homebot": {
-    "plugin": "SysInfoPlugin",
-    "skills": [
-      "Sysinfo"
-    ]
+    "entry": "platform.js"
   },
   "jest": {
     "transform": {

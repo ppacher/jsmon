@@ -23,7 +23,6 @@ export class MqttProxyApp {
                 private _server: HTTPServer) {
         this._server.listen(9080);
     }
-
 }
 
 bootstrapApp(MqttProxyApp);

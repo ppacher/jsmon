@@ -1,7 +1,31 @@
-import {SkillSpecFile, SkillsSpec, EnabledSkill} from './factory';
+import {PlatformParameters} from './factory';
 import {resolve} from 'path';
 import {readFileSync} from 'fs';
 import {safeLoad} from 'js-yaml';
+
+
+export interface EnabledSkill {
+    // The name of the skill class to load
+    type: string;
+    
+    name?: string;
+    // Description of the skill/device
+    description?: string;
+    // Parameters for the skill
+    params: PlatformParameters;
+    plugin: string;
+};
+
+export interface SkillsSpec {
+    plugin: string;
+    path?: string;
+    enable: EnabledSkill[];
+};
+
+export interface SkillSpecFile {
+    version: string;
+    plugins: SkillsSpec[];
+}
 
 export enum SkillSpecFileVersion {
     V1_Alpha = 'v1-alpha'

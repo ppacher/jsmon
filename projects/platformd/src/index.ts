@@ -1,5 +1,5 @@
 import {App, bootstrapApp, Injector, } from '@homebot/core';
-import {SkillLoader, loadSkillConfig, DeviceManager, DeviceManagerModule, DeviceController, Logger} from '@homebot/platform';
+import {PlatformLoader, loadSkillConfig, DeviceManager, DeviceManagerModule, DeviceController, Logger} from '@homebot/platform';
 import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
 
 import * as minimist from 'minimist';
@@ -15,7 +15,7 @@ import * as minimist from 'minimist';
         Logger
     ]
 })
-export class ExampleApp {
+export class PlatformDaemon {
     constructor(private _device: DeviceManager,
                 private _injector: Injector) {
         
@@ -29,17 +29,19 @@ export class ExampleApp {
             }
         }
         
-        let loader = new SkillLoader(this._injector, this._device, pluginDirs);
+        let loader = new PlatformLoader(this._injector, this._device, pluginDirs);
         let cfg = loadSkillConfig(args.config);
         
         cfg.forEach(plugin => {
             plugin.enable.forEach(skill => {
-                loader.bootstrapSkill(plugin.plugin, skill)
-                    .then((instance: DeviceController<any>) => console.log('Created skill ' + instance.name + ' with description ' + instance.description));
+
+                loader.bootstrapPlatform(plugin.plugin, skill.type, skill.params)
+                    .then(instances => 
+                        instances.forEach(instance => console.log('Created skill ' + instance.name + ' with description ' + instance.description)));
             });
         });
 
     }
 }
 
-bootstrapApp(ExampleApp);
+bootstrapApp(PlatformDaemon);

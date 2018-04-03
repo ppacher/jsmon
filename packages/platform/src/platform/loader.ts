@@ -1,7 +1,19 @@
 import {resolve, dirname} from 'path';
 import {readFileSync, existsSync} from 'fs';
 
-import {SkillFactory, SkillFactories, Skill, SkillParameters, SkillType, EnabledSkill} from './factory';
+import {isPromiseLike} from '@homebot/core/utils';
+
+import {
+    DeviceSpec,
+    HomeBotPlatformExtension,
+    PlatformFactories,
+    PlatformFactory,
+    PlatformParameters,
+    PlatformSpec,
+    ServiceSpec
+} from './factory';
+import {EnabledSkill} from './config';
+
 import {
     bootstrapPlugin,
     Type,
@@ -12,12 +24,12 @@ import {DeviceManager, DeviceController} from '../devices';
 
 export interface PluginModule {
     path: string;
-    skills: SkillFactories;
-    plugin: Type<any>;
+    factories: PlatformFactories,
 };
 
-export class SkillLoader {
-    private _pluginCache: Map<string, PluginModule> = new Map();
+export class PlatformLoader {
+    private _platformModuleCache: Map<string, PluginModule> = new Map();
+    private _pluginCache: Map<string, any> = new Map();
 
     constructor(private _injector: Injector,
                 private _deviceManager: DeviceManager,
@@ -27,42 +39,67 @@ export class SkillLoader {
         this._pluginDirs = this._pluginDirs.map(dir => resolve(dir));
     }
     
-    async bootstrapSkill<T extends Type<any> = any>(plugin: string, config: EnabledSkill): Promise<DeviceController<T> | T> {
-        let skill = await this.createSkill<T>(plugin, config.type, config.params);
+    async bootstrapPlatform<T extends Type<any> = any>(platformName: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
+        console.log(`Bootstrapping platform ${platformName} with feature ${featureName}`)
+        let spec = await this.createPlatform<T>(platformName, featureName, parameters);
         
-        switch (skill.type) {
-            case SkillType.Device: 
-                return this._deviceManager.setupDevice(config.name || config.type, skill.token, config.description || '', skill.providers);
-            case SkillType.Service:
-                return this._injector.get(skill.token);
-            default:
-                throw new Error(`Unsupported skill type: ${skill.type} for skill ${config.type} (${config.name || config.type})`);
-        }
-    }
-    
-    async createSkill<T extends Type<any> = any>(plugin: string, skill: string, params: SkillParameters): Promise<Skill<T>> {
-        let module = await this.loadModule(plugin);
-
-        const factory = module.skills[skill];
-        if (factory === undefined) {
-            throw new Error(`Plugin ${plugin} does not provide skill ${skill}`);
-        }
+        let result: any[] = [];
         
-        let result = factory.create(params);
+        (spec.devices || []).forEach(dev => {
+            let instance = this._deviceManager.setupDevice(dev.name, dev.class, dev.description || '', dev.providers || []);
+            
+            result.push(instance);
+        });
+        
+        (spec.services || []).forEach(svc => {
+            let childInjector = new Injector(this._injector);
+            childInjector.provide(svc.class);
+            childInjector.provide(svc.providers || []);
+            
+            let instance = childInjector.get(svc.class);
+            result.push(instance);
+        });
         
         return result;
     }
     
-    async loadModule(name: string): Promise<PluginModule> {
-        if (this._pluginCache.has(name)) {
-            return this._pluginCache.get(name)!;
+    async createPlatform<T extends Type<any> = any>(platformName: string, featureName: string, params: PlatformParameters): Promise<PlatformSpec> {
+        let module = await this.loadModule(platformName);
+
+        const factory = module.factories[featureName];
+        if (factory === undefined) {
+            throw new Error(`Plugin ${platformName} does not provide skill ${featureName}`);
+        }
+
+        let promiseOrSpec = factory(params);
+        
+        if (isPromiseLike(promiseOrSpec)) {
+            return await (promiseOrSpec as Promise<PlatformSpec>);
         }
         
-        let config = await this.findModule(name);
+        return (promiseOrSpec as PlatformSpec);
+    }
+    
+    async loadModule(name: string): Promise<PluginModule> {
+        if (this._platformModuleCache.has(name)) {
+            return this._platformModuleCache.get(name)!;
+        }
         
-        this._pluginCache.set(name, config);
+        let config = await this._findModule(name);
         
-        let desc = bootstrapPlugin(config.plugin);
+        this._platformModuleCache.set(name, config);
+
+        return config;
+    }
+
+    async bootstrapPlugin(platformName: string, plugin: Type<any>) {
+        let pluginKey = `${platformName}-${plugin.name}`;
+        if (this._pluginCache.has(pluginKey)) {
+            return;
+        }
+        
+        let desc = bootstrapPlugin(plugin);
+        console.log(desc);
 
         if (!!desc.providers) {
             this._injector.provide(desc.providers);
@@ -71,25 +108,30 @@ export class SkillLoader {
         if (!!desc.bootstrapService) {
             desc.bootstrapService.forEach(svc => this._injector.get(svc));
         }
-
-        return config;
+        
+        this._injector.provide(plugin);
+        let instance = this._injector.get(plugin);
+        
+        this._pluginCache.set(pluginKey, instance);
     }
     
-    async findModule(name: string): Promise<PluginModule> {
-        let nodeModulePath = require.resolve(name);
-        if (nodeModulePath) {
+    async _findModule(name: string): Promise<PluginModule> {
+        let nodeModulePath = null;
+        
+        try {
+            nodeModulePath = require.resolve(name);
             nodeModulePath = dirname(nodeModulePath);
-        }
+        } catch(err) {}
+
         let paths = [
             ...this._pluginDirs.map(dir => resolve(dir, name)),
             // use NodeJS lookup strategy
-            nodeModulePath,
+            ...(nodeModulePath ? [nodeModulePath] : [])
         ];
     
         let config: PluginModule;
 
         let found = paths.some(p => {
-
             if (existsSync(p)) {
                 let result = this._tryParsePackage(p);
                 
@@ -120,17 +162,19 @@ export class SkillLoader {
 
         try {
             let data = readFileSync(packagePath);
-            let content = JSON.parse(data.toString());
+            let content = JSON.parse(data.toString()) as HomeBotPlatformExtension;
             if (content.homebot !== undefined) {
-                let exports = require(path);
-                let skills: SkillFactories = {};
-
-                content.homebot.skills.forEach((skill: string) => skills[skill] = exports.skills[skill]);
-
+                let entryFile = resolve(path, (content.homebot.entry || content.main));
+                let exports = require(entryFile);
+                if (exports.homebot === undefined) {
+                    return undefined;
+                }
+                
+                let factories = exports.homebot;
+                
                 return {
                     path: path,
-                    plugin: exports[content.homebot.plugin],
-                    skills: skills,
+                    factories: factories,
                 };
             }
         } catch(err) {

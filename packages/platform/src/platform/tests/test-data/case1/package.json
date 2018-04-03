@@ -1,0 +1,5 @@
+{
+    "homebot": {
+        "entry": "entry.ts"
+    }
+}
