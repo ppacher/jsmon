@@ -34,5 +34,21 @@ describe('ConfigLoader', () => {
             
             expectV1Valid(c);
         });
+        
+        it('should load a YAML file', () => {
+            let cfg = new ConfigLoader(v1YAML);
+            
+            let c = cfg.load();
+            
+            expectV1Valid(c);
+        });
+        
+        it('should load a JS file', () => {
+            let cfg = new ConfigLoader(v1JS);
+            
+            let c = cfg.load();
+            
+            expectV1Valid(c);
+        });
     });
 });
