@@ -39,8 +39,7 @@ export class PlatformLoader {
         this._pluginDirs = this._pluginDirs.map(dir => resolve(dir));
     }
     
-    async bootstrapPlatform<T extends Type<any> = any>(platformName: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
-        console.log(`Bootstrapping platform ${platformName} with feature ${featureName}`)
+    async bootstrap<T extends Type<any> = any>(platformName: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
         let spec = await this.createPlatform<T>(platformName, featureName, parameters);
         
         let result: any[] = [];

@@ -17,13 +17,13 @@ information for the platform loader.
     "scripts": {
         "...": "..."
     },
-    "homebot-platform": {
+    "homebot": {
         "entry": "platforms.js"
     }
 }
 ```
 
-The `homebot-platform` object within the `package.json` file is used by the loader to check if a NodeJS module
+The `homebot` object within the `package.json` file is used by the loader to check if a NodeJS module
 provides a platform for HomeBot. 
 The optional `entry` property specifies the entry file for the loader to use. If it's omitted, the `main` property of the JSON file will be used. The reason for this separation is that modules can provide generic services to be used by non-platform projects (ie. not using the `@homebot/platform` module) without the need to satisfy all `peerDependencies` (as they are not included/exported by the file specified in `main`).
 

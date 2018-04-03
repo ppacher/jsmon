@@ -6,5 +6,4 @@ import {DeviceManager} from './device-manager.service';
         DeviceManager
     ]
 })
-export class DeviceManagerModule {
-}
+export class DeviceManagerModule {}

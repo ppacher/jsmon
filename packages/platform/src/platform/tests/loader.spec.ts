@@ -135,7 +135,7 @@ describe('PlatformLoader', () => {
         it('should create and register each device and service from the platform spec', async () => {
             let deviceSpy = jest.spyOn(manager, 'setupDevice');
 
-            let result = await loader.bootstrapPlatform('case1', 'case1', {});
+            let result = await loader.bootstrap('case1', 'case1', {});
             
             expect(result).toBeDefined();
             expect(result.length).toBe(2);
