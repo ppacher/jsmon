@@ -4,6 +4,7 @@ import {existsSync, readFileSync} from 'fs';
 import {resolve, extname} from 'path';
 import {Observable} from 'rxjs/Observable';
 import {share, map, startWith} from 'rxjs/operators';
+import {_throw} from 'rxjs/observable/throw';
 import {safeLoad} from 'js-yaml';
 import {Watcher, FileWatcher} from './watcher';
 
@@ -15,10 +16,12 @@ export interface FeatureDefinition {
      */
     name?: string;
 
+    type: string;
+
     /**
      * An object or list of parameters to pass to the platform feature factory
      */
-    parameters: PlatformParameters;
+    params: PlatformParameters;
 }
 
 /**
@@ -38,9 +41,7 @@ export interface PlatformDefinition {
      * Refer to the documentation of the used plugins/platforms to get a list
      * of feature names
      */
-    enable: {
-        [featureName: string]: FeatureDefinition;
-    };
+    enable: FeatureDefinition[];
 }
 
 export interface ConfigV1 {
@@ -101,6 +102,10 @@ export class Config {
         });
     }
     
+    get platforms(): [string, PlatformDefinition][] {
+        return [...this._platforms];
+    }
+    
     /**
      * Iterate over all platform definitions and invoke a give callback
      * 
@@ -132,7 +137,7 @@ export class ConfigLoader {
     
     readonly onUpdate: Observable<Config>;
 
-    constructor(pathToConfig: string, watcherCls: Type<Watcher> = FileWatcher) {
+    constructor(pathToConfig: string, watcherCls: Type<Watcher>|null = FileWatcher) {
         let resolvedPath = resolve(pathToConfig);
 
         if (!existsSync(resolvedPath)) {
@@ -141,16 +146,16 @@ export class ConfigLoader {
         
         this._path = resolvedPath;
         switch(extname(this._path).toLowerCase()) {
-            case 'json':
+            case '.json':
                 this._type = 'json';
                 break;
 
-            case 'yaml':
-            case 'yml':
+            case '.yaml':
+            case '.yml':
                 this._type = 'yaml'
                 break;
 
-            case 'js':
+            case '.js':
                 this._type = 'js';
                 break;
 
@@ -158,14 +163,18 @@ export class ConfigLoader {
                 throw new Error(`Unsupported file type ${extname(this._path)}`);
         }
         
-        this._watcher = new watcherCls();
-        
-        this.onUpdate = this._watcher.watch(resolvedPath)
-            .pipe(
-                map(() => this.load()),
-                startWith(this.load()),
-                share()
-            );
+        if (watcherCls !== null) {
+            this._watcher = new watcherCls();
+            
+            this.onUpdate = this._watcher.watch(resolvedPath)
+                .pipe(
+                    map(() => this.load()),
+                    startWith(this.load()),
+                    share()
+                );
+        } else {
+            this.onUpdate = _throw(`No file watcher class provided`);
+        }
     }
     
     /**

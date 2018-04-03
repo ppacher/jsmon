@@ -23,6 +23,8 @@
     "@homebot/platform-sysinfo": "0.0.1",
     "@homebot/plugin-httpserver": "0.0.1",
     "@homebot/plugin-mqtt": "^0.0.1",
+    "@types/jest": "^22.2.2",
+    "jest": "^22.4.3",
     "js-yaml": "^3.11.0",
     "minimist": "^1.2.0",
     "mqtt": "^2.17.0",
@@ -30,6 +32,7 @@
     "request": "^2.83.0",
     "restify": "^6.3.4",
     "rxjs": "^5.5.6",
+    "ts-jest": "^22.4.2",
     "ts-node": "^4.1.0",
     "typescript": "^2.7.2"
   },
