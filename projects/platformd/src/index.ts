@@ -4,7 +4,6 @@ import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@ho
 
 import * as minimist from 'minimist';
 
-
 @App({
     plugins: [
         DeviceManagerModule,
@@ -34,8 +33,7 @@ export class PlatformDaemon {
         
         cfg.forEach(plugin => {
             plugin.enable.forEach(skill => {
-
-                loader.bootstrapPlatform(plugin.plugin, skill.type, skill.params)
+                loader.bootstrap(plugin.plugin, skill.type, skill.params)
                     .then(instances => 
                         instances.forEach(instance => console.log('Created skill ' + instance.name + ' with description ' + instance.description)));
             });
