@@ -36,7 +36,7 @@ export interface PlatformSpec {
      * The plugin class that should be loaded when creating instances of
      * devices or services
      */
-    plugin: Type<any>;
+    plugin?: Type<any>;
     
     /**
      * A list of devices that should be created

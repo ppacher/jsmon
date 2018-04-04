@@ -93,7 +93,9 @@ export class PlatformLoader {
         
         const result: any[] = [];
         
-        this.bootstrapPlugin(module.path, spec.plugin);
+        if (!!spec.plugin) {
+            this.bootstrapPlugin(module.path, spec.plugin);
+        }
         
         (spec.devices || []).forEach(dev => {
 
