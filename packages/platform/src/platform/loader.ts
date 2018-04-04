@@ -66,13 +66,13 @@ export class PlatformLoader {
         
         let module = await this.cacheOrLoadModule(platformName, options.disableNodeModules);
         
-        return this.createFeature(module, featureName, parameters);
+        return await this.createFeature(module, featureName, parameters);
     }
     
     async bootstrapFile(path: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
         let module = this._tryLoadModule(path);
         
-        return this.createFeature(module, featureName, parameters);
+        return await this.createFeature(module, featureName, parameters);
     }
     
     
