@@ -57,12 +57,46 @@ export class PlatformLoader {
         this._pluginDirs = this._pluginDirs.map(dir => resolve(dir));
     }
     
-    async bootstrap<T extends Type<any> = any>(platformName: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
-        let spec = await this.loadPlatformFeature<T>(platformName, featureName, parameters);
+    async bootstrap(platformName: string, featureName: string, parameters: PlatformParameters, options?: BootstrapOptions): Promise<any[]> {
+        if (options === undefined || options === null) {
+            options = {
+                disableNodeModules: false,
+            };
+        }
         
-        let result: any[] = [];
+        let module = await this.cacheOrLoadModule(platformName, options.disableNodeModules);
+        
+        return this.createFeature(module, featureName, parameters);
+    }
+    
+    async bootstrapFile(path: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
+        let module = this._tryLoadModule(path);
+        
+        return this.createFeature(module, featureName, parameters);
+    }
+    
+    
+    async createFeature(module: PluginModule, featureName: string, params: PlatformParameters): Promise<any[]> {
+        const factory = module.factories[featureName];
+        if (factory === undefined) {
+            throw new Error(`Plugin does not provide skill ${featureName}`);
+        }
+
+        const promiseOrSpec = factory(params);
+        
+        let spec: PlatformSpec;
+        if (isPromiseLike<PlatformSpec>(promiseOrSpec)) {
+            spec = await promiseOrSpec;
+        } else {
+            spec = promiseOrSpec;
+        }
+        
+        const result: any[] = [];
+        
+        this.bootstrapPlugin(module.path, spec.plugin);
         
         (spec.devices || []).forEach(dev => {
+
             let instance = this._deviceManager.setupDevice(dev.name, dev.class, dev.description || '', dev.providers || []);
             
             result.push(instance);
@@ -78,23 +112,6 @@ export class PlatformLoader {
         });
         
         return result;
-    }
-    
-    async loadPlatformFeature<T extends Type<any> = any>(platformName: string, featureName: string, params: PlatformParameters): Promise<PlatformSpec> {
-        let module = await this.cacheOrLoadModule(platformName);
-
-        const factory = module.factories[featureName];
-        if (factory === undefined) {
-            throw new Error(`Plugin ${platformName} does not provide skill ${featureName}`);
-        }
-
-        let promiseOrSpec = factory(params);
-        
-        if (isPromiseLike<PlatformSpec>(promiseOrSpec)) {
-            return await promiseOrSpec;
-        }
-        
-        return promiseOrSpec;
     }
     
     /**
