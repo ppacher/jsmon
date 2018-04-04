@@ -115,6 +115,11 @@ export class Config {
         this._platforms.forEach(([name, def]) => cb(name, def));
     }
     
+    forEachFeature(cb: (platformName: string, featureDef: FeatureDefinition) => void): void {
+        this.forEachPlatform((name, def) => def.enable.forEach(feature => cb(name, feature)));
+    }
+    
+    
     /**
      * Returns the list of defined plugin directories
      */

@@ -1,6 +1,8 @@
 import {App, bootstrapApp, Injector, } from '@homebot/core';
-import {PlatformLoader, loadSkillConfig, DeviceManager, DeviceManagerModule, DeviceController, Logger} from '@homebot/platform';
+import {PlatformLoader, DeviceManager, DeviceManagerModule, DeviceController, Logger} from '@homebot/platform';
 import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
+
+import {ConfigLoader, Config} from './config';
 
 import * as minimist from 'minimist';
 
@@ -19,26 +21,33 @@ export class PlatformDaemon {
                 private _injector: Injector) {
         
         let args = minimist(process.argv.slice(2));
-        let pluginDirs = args['plugin-dir'];
-        if (pluginDirs === undefined) {
-            pluginDirs = [];
-        } else {
-            if (!Array.isArray(pluginDirs)) {
-                pluginDirs = [pluginDirs];
-            }
-        }
+        let cfg = this.loadConfig(args.config);
         
-        let loader = new PlatformLoader(this._injector, this._device, pluginDirs);
-        let cfg = loadSkillConfig(args.config);
+        let loader = new PlatformLoader(this._injector, this._device, cfg.pluginDirs());
         
-        cfg.forEach(plugin => {
-            plugin.enable.forEach(skill => {
-                loader.bootstrap(plugin.plugin, skill.type, skill.params)
-                    .then(instances => 
-                        instances.forEach(instance => console.log('Created skill ' + instance.name + ' with description ' + instance.description)));
-            });
-        });
+        cfg.forEachFeature((platform, feature) => {
+            let params = {
+                ...feature.params,
+                name: feature.name,
+            };
 
+            loader.bootstrap(platform, feature.type, params)
+                .then(instances => {
+                    instances.forEach(instance => {
+                        if (instance instanceof DeviceController) {
+                            console.log(`${platform} -> ${feature.type}: Create device with name "${instance.name}"`);
+                        } else {
+                            console.log(`${platform} -> ${feature.type}: Create service ${instance.constructor.name}`);
+                        }
+                    })
+                });;
+        })
+    }
+    
+    loadConfig(path: string): Config {
+        let loader = new ConfigLoader(path, null /* disable file watching for now */)
+        
+        return loader.load();
     }
 }
 
