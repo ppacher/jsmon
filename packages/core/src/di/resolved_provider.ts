@@ -7,7 +7,7 @@ import {Provider, ClassProvider, FactoryProvider, TypeProvider, ValueProvider, E
 import {Type, isType} from './type';
 import {resolveForwardRef} from './forward_ref';
 
-export interface NormalizedProvider extends ClassProvider<any>, FactoryProvider<any>, ValueProvider<any>, ExistingProvider<any> {};
+export type NormalizedProvider = ClassProvider<any> | FactoryProvider<any> | ValueProvider<any> | ExistingProvider<any>;
 
 export class ResolvedProvider<T> {
     constructor(public readonly key: ProviderKey, 
@@ -35,20 +35,20 @@ export function resolveProvider<T>(p: Provider<T>): ResolvedProvider<T> {
     let deps: ResolvedDependency[] = [];
     let factory: (...args: any[]) => any;
 
-    if (n.useValue) {
+    if (isValueProvider(n)) {
         factory = (...args: any[]) => n.useValue;
     } else
-    if (n.useFactory) {
+    if (isFactoryProvider(n)) {
         factory = n.useFactory;
         deps = _resolveDependecies(n.debs || []);
     } else
-    if (n.useClass) {
+    if (isClassProvider(n)) {
         const useClass = resolveForwardRef(n.useClass);
         factory = (...args: any[]) => new useClass(...args);
         
         deps = _getClassDependecies(n.useClass);
     } else
-    if (n.useExisting) {
+    if (isExistingProvider(n)) {
         factory = (...args: any[]) => args[0];
         const depKey = ProviderKey.get(resolveForwardRef(n.useExisting));
 
@@ -105,16 +105,32 @@ function _zipParametersAndAnnotations(params: any[], annotations: any[][]): Reso
 }
 
 export function normalizeProvider(p: Provider): NormalizedProvider {
-    let n: NormalizedProvider;
-    
-    if (isType(p)) {
-        n = {
+    if (isTypeProvider(p)) {
+        return {
             provide: p,
             useClass: p,
-        } as NormalizedProvider;
-    } else {
-        n = p as NormalizedProvider;
+        };
     }
     
-    return n;
+    return p;
+}
+
+function isClassProvider<T>(provider: Provider<T>): provider is ClassProvider<T> {
+    return !!(provider as any).useClass;
+}
+
+function isFactoryProvider<T = any>(provider: Provider<T>): provider is FactoryProvider<T> {
+    return !!(provider as any).useFactory;
+}
+
+function isExistingProvider<T = any>(provider: Provider<T>): provider is ExistingProvider<T> {
+    return !!(provider as any).useExisting;
+}
+
+function isValueProvider<T = any>(provider: Provider<T>): provider is ValueProvider<T> {
+    return !!(provider as any).useValue;
+}
+
+function isTypeProvider<T = any>(provider: Provider<T>): provider is TypeProvider<T> {
+    return isType(provider);
 }

@@ -1,3 +1,5 @@
+import {Observable} from 'rxjs/Observable';
+
 export function stringify(token: any): string {
   if (typeof token === 'string') {
     return token
@@ -28,18 +30,18 @@ export function stringify(token: any): string {
 /**
  * Returns true if `value` is "Observable lik"
  */
-export function isObservableLike(value: any): boolean {
+export function isObservableLike<T>(value: any): value is Observable<T> {
   if (!('prototype' in value)) {
     return false
   }
-  Object.keys(value.prototype).forEach(p => console.log('prototype', p))
+  
   return 'subscribe' in value.prototype
 }
 
 /**
  * Returns true if `value` is "Promise-like"
  */
-export function isPromiseLike(value: any): boolean {
+export function isPromiseLike<T>(value: any): value is Promise<T> {
   if (!('prototype' in value)) {
     return false
   }
