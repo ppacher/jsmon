@@ -2,6 +2,8 @@ import {resolve, dirname} from 'path';
 import {readFileSync, existsSync} from 'fs';
 
 import {isPromiseLike} from '@homebot/core/utils';
+import {isExtenableError} from '@homebot/core/error';
+import {Logger} from '../log';
 
 import {
     DeviceSpec,
@@ -12,7 +14,6 @@ import {
     PlatformSpec,
     ServiceSpec
 } from './factory';
-import {EnabledSkill} from './config';
 
 import {
     bootstrapPlugin,
@@ -22,10 +23,26 @@ import {
 } from '@homebot/core';
 import {DeviceManager, DeviceController} from '../devices';
 
+import * as errors from './errors';
+
+/**
+ * @docs-internal
+ */
 export interface PluginModule {
     path: string;
     factories: PlatformFactories,
 };
+
+/**
+ * Configuration options for bootstrapping a platform
+ */
+export interface BootstrapOptions {
+    /**
+     * Whether or not the {@link PlatformLoader} should try native NodeJS
+     * module resolution
+     */
+    disableNodeModules?: boolean;
+}
 
 export class PlatformLoader {
     private _platformModuleCache: Map<string, PluginModule> = new Map();
@@ -33,14 +50,15 @@ export class PlatformLoader {
 
     constructor(private _injector: Injector,
                 private _deviceManager: DeviceManager,
-                private _pluginDirs: string[]) {
+                private _pluginDirs: string[],
+                private _logger?: Logger) {
 
         // Make sure we have absolute paths for all pluginDirs
         this._pluginDirs = this._pluginDirs.map(dir => resolve(dir));
     }
     
     async bootstrap<T extends Type<any> = any>(platformName: string, featureName: string, parameters: PlatformParameters): Promise<any[]> {
-        let spec = await this.createPlatform<T>(platformName, featureName, parameters);
+        let spec = await this.loadPlatformFeature<T>(platformName, featureName, parameters);
         
         let result: any[] = [];
         
@@ -62,8 +80,8 @@ export class PlatformLoader {
         return result;
     }
     
-    async createPlatform<T extends Type<any> = any>(platformName: string, featureName: string, params: PlatformParameters): Promise<PlatformSpec> {
-        let module = await this.loadModule(platformName);
+    async loadPlatformFeature<T extends Type<any> = any>(platformName: string, featureName: string, params: PlatformParameters): Promise<PlatformSpec> {
+        let module = await this.cacheOrLoadModule(platformName);
 
         const factory = module.factories[featureName];
         if (factory === undefined) {
@@ -72,25 +90,49 @@ export class PlatformLoader {
 
         let promiseOrSpec = factory(params);
         
-        if (isPromiseLike(promiseOrSpec)) {
-            return await (promiseOrSpec as Promise<PlatformSpec>);
+        if (isPromiseLike<PlatformSpec>(promiseOrSpec)) {
+            return await promiseOrSpec;
         }
         
-        return (promiseOrSpec as PlatformSpec);
+        return promiseOrSpec;
     }
     
-    async loadModule(name: string): Promise<PluginModule> {
+    /**
+     * Try to find and load the NodeJS module that provides a given platfrom.
+     * If the platfrom has already been loaded it is returned from the cache
+     * 
+     * @param name The name of the platform or plugin
+     * @param disableNodeModule Whether or not native NodeJS module resolution should be used
+     */
+    async cacheOrLoadModule(name: string, disableNodeModule: boolean = false): Promise<PluginModule> {
         if (this._platformModuleCache.has(name)) {
             return this._platformModuleCache.get(name)!;
         }
         
-        let config = await this._findModule(name);
-        
-        this._platformModuleCache.set(name, config);
+        try {
+            let entryPoint = await this._findModuleEntryPoint(name, disableNodeModule);
+            let config = this._tryLoadModule(entryPoint);
+            
+            this._platformModuleCache.set(name, config);
 
-        return config;
+            return config;
+        } catch (err) {
+            if (isExtenableError(err)) {
+                err.addField('platform', name);
+            }
+            
+            throw err;
+        }
     }
 
+    /**
+     * Bootstrap a Plugin class by adding exported providers to the injector
+     * and creating an instance for each `bootstrapService` as well as the plugin
+     * class itself
+     * 
+     * @param platformName The name of the platform
+     * @param plugin The plugin class to bootstrap (ie. decorated by @Plugin())
+     */
     async bootstrapPlugin(platformName: string, plugin: Type<any>) {
         let pluginKey = `${platformName}-${plugin.name}`;
         if (this._pluginCache.has(pluginKey)) {
@@ -114,73 +156,111 @@ export class PlatformLoader {
         this._pluginCache.set(pluginKey, instance);
     }
     
-    async _findModule(name: string): Promise<PluginModule> {
+    /**
+     * Searches for a plugin or platform module with the given name within all
+     * plugin directories. 
+     *
+     * If the optional parameter `disableNodeModule` is set to true, native NodeJS module
+     * resolution won't be used.
+     * 
+     * @param name The name of the platfrom or plugin to search
+     */
+    async _findModuleEntryPoint(name: string, disableNodeModules: boolean = false): Promise<string> {
         let nodeModulePath = null;
         
-        try {
-            nodeModulePath = require.resolve(name);
-            nodeModulePath = dirname(nodeModulePath);
-        } catch(err) {}
+        if (!disableNodeModules) {
+            try {
+                nodeModulePath = require.resolve(name);
+                nodeModulePath = dirname(nodeModulePath);
+            } catch(err) {}
+        }
 
         let paths = [
             ...this._pluginDirs.map(dir => resolve(dir, name)),
             // use NodeJS lookup strategy
-            ...(nodeModulePath ? [nodeModulePath] : [])
+            ...(nodeModulePath && !disableNodeModules ? [nodeModulePath] : [])
         ];
     
-        let config: PluginModule;
+        let errs: Error[] = [];
+        let entryFile: string|undefined = undefined;
 
-        let found = paths.some(p => {
+        paths.some(p => {
             if (existsSync(p)) {
-                let result = this._tryParsePackage(p);
-                
-                if (result === undefined) {
-                    return false;
+                try {
+                    entryFile = this._getEntryFile(p);
+                    
+                    return true;
+                } catch (err) {
+                    errs.push(err);
                 }
-                
-                config = result;
-                return true;
             }
             
             return false;
         });
 
-        if (found) {
-            return config!;
-        } else {
-            throw new Error(`Failed to find node module for ${name} in any of ${paths.join(", ")}`);
+        if (entryFile !== undefined) {
+            return entryFile;
         }
+        
+        throw errors.getPluginNotFoundError(name, errs);
     }
     
-    _tryParsePackage(path: string): PluginModule|undefined {
+    /**
+     * Try to load the given platform entry file. Refer to {@link PlatformSpec} for
+     * more information about the entry file
+     * 
+     * @param entryFile The path to the entry file of the platform
+     */
+    _tryLoadModule(entryFile: string): PluginModule {
+        if (!existsSync(entryFile)) {
+            throw errors.getEntryPointFileNotFoundError(entryFile);
+        }
+        
+        let exports: any;
+        
+        try {
+            exports = require(entryFile);
+        } catch (err) {
+            throw errors.getCannotLoadEntryFileError(entryFile, err);
+        }
+        
+        if (!exports.hasOwnProperty('homebot')) {
+            throw errors.getMissingHomebotExportError(entryFile);
+        }
+        
+        return {
+            path: entryFile,
+            factories: exports.homebot,
+        };
+    }
+    
+    /**
+     * Tries to get the entry-file path of the platform from the given NodeJS module
+     * 
+     * @param path The path of the NodeJS module
+     */
+    _getEntryFile(path: string): string {
         let packagePath = resolve(path, 'package.json');
         if (!existsSync(packagePath)) {
-            console.log(`${path} does not contain a package.json file`);
-            return undefined;
+            throw errors.getInvalidPackageError(path, 'No package.json file found');
         }
+        
+        let entryFile: string|undefined = undefined;
 
         try {
             let data = readFileSync(packagePath);
             let content = JSON.parse(data.toString()) as HomeBotPlatformExtension;
             if (content.homebot !== undefined) {
-                let entryFile = resolve(path, (content.homebot.entry || content.main));
-                let exports = require(entryFile);
-                if (exports.homebot === undefined) {
-                    return undefined;
-                }
-                
-                let factories = exports.homebot;
-                
-                return {
-                    path: path,
-                    factories: factories,
-                };
+                entryFile = resolve(path, (content.homebot.entry || content.main));
             }
         } catch(err) {
-            console.error(`${path} cought error during parsing: `, err);
+            throw errors.getInvalidPackageError(path, err);
         }
         
-        console.log(`${path}: failed to load module`);
-        return undefined;
+        if (entryFile === undefined) {
+            throw errors.getInvalidPackageError(path, 'no "homebot" configuration property found');
+        }
+        
+        return entryFile;
     }
 }
