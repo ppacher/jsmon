@@ -6,3 +6,4 @@ cybertrap-graphql-proxy/
 config.json
 _data/
 package-lock.json
+projects/platformd/config.yaml
