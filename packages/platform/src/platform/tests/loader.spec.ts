@@ -35,30 +35,37 @@ describe('PlatformLoader', () => {
    
     describe('package.json parsing', () => {
         it('should return undefined if the package.json file does not exist', () => {
-            let result = loader._tryParsePackage(fromTestDir('.'));
+            let err = false;
+
+            try {
+                loader._getEntryFile(fromTestDir('.'));
+            } catch (e) {
+                err = true;
+            }
             
-            expect(result).toBeUndefined();
+            expect(err).toBe(true);
         });
         
         it('should load the entry file specified in package.json', () => {
-            let result = loader._tryParsePackage(fromTestDir('case1'));
+            let result = loader._getEntryFile(fromTestDir('case1'));
+            
             expect(result).toBeDefined();
-            expect(Object.keys(result.factories)).toContain('case1');
+            expect(result).toBe(resolve(fromTestDir('case1'), 'entry.ts'));
         });
     });
 
     describe('plugin resolution', () => {
         it('should automatically find the plugin', async () => {
-            let result = await loader.loadModule('case1');
+            let result = await loader._tryLoadModule(resolve(fromTestDir('case1'), 'entry.ts'));
             expect(result).toBeDefined();
             expect(Object.keys(result.factories)).toContain('case1');
-            expect(result.path).toBe(fromTestDir('case1'));
+            expect(result.path).toBe(resolve(fromTestDir('case1'), 'entry.ts'));
         });
         
         it('should throw if the plugin cannot be found', async () => {
             let error = false;
             try {
-                let result = await loader.loadModule('does-not-exist')
+                let result = await loader._tryLoadModule('does-not-exist')
             } catch( err ) {
                 error = true;
             }
@@ -67,12 +74,12 @@ describe('PlatformLoader', () => {
         });
 
         it('should only load a plugin once', async () => {
-            let findSpy = jest.spyOn(loader, '_findModule');
+            let findSpy = jest.spyOn(loader, '_tryLoadModule');
 
-            let result = await loader.loadModule('case1');
+            let result = await loader.cacheOrLoadModule('case1');
             expect(result).toBeDefined();
             
-            let result2 = await loader.loadModule('case1');
+            let result2 = await loader.cacheOrLoadModule('case1');
             expect(result).toBe(result2); // Must be the very same object
             
             expect(findSpy).toHaveBeenCalledTimes(1);
@@ -107,12 +114,19 @@ describe('PlatformLoader', () => {
 
     describe('platform bootstrapping', () => {
         it('should call the correct factory function and pass parameters', async () => {
-            let factory = jest.spyOn(homebot, 'case1');
+            let factory = jest.fn().mockImplementation(() => ({}));
             let params = {
                 param1: 'foobar'
             };
+            
+            let module = {
+                path: 'test',
+                factories: {
+                    'case1': factory
+                }
+            }
 
-            let spec = await loader.createPlatform('case1', 'case1', params);
+            let spec = await loader.createFeature(module, 'case1', params);
             
             expect(spec).toBeDefined();
             expect(factory).toHaveBeenCalledTimes(1);
@@ -120,12 +134,19 @@ describe('PlatformLoader', () => {
         });
         
         it('should support async factory functions', async () => {
-            let factory = jest.spyOn(homebot, 'case2');
+            let factory = jest.fn().mockImplementation(async () => ({}));
             let params = {
                 param1: 'foobar'
             };
+            
+            let module = {
+                path: 'test',
+                factories: {
+                    'case2': factory
+                }
+            }
 
-            let spec = await loader.createPlatform('case1', 'case2', params);
+            let spec = await loader.createFeature(module, 'case2', params);
             
             expect(spec).toBeDefined();
             expect(factory).toHaveBeenCalledTimes(1);
