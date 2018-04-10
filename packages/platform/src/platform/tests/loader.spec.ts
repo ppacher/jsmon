@@ -13,6 +13,10 @@ function fromTestDir(path: string): string {
 class MockInjector {
     provide(token: any): void {}
     get(token: any) {}
+    _registerDisposeFn(fn: any) {}
+    createChild(providers: any) {
+        return this;
+    }
 }
 
 class MockDeviceManager {
@@ -88,14 +92,13 @@ describe('PlatformLoader', () => {
 
     describe('plugin bootstrapping', () => {
         it('should bootstrap the plugin', async () => {
-            let provideSpy = jest.spyOn(injector, 'provide');
+            let provideSpy = jest.spyOn(injector, 'createChild');
             let getSpy = jest.spyOn(injector, 'get');
 
             await loader.bootstrapPlugin('case1', Case1Plugin);
             
-            expect(provideSpy).toHaveBeenCalledTimes(2);
-            expect(provideSpy.mock.calls[0][0]).toEqual([DummyService]);
-            expect(provideSpy.mock.calls[1][0]).toEqual(Case1Plugin);
+            expect(provideSpy).toHaveBeenCalledTimes(1);
+            expect(provideSpy.mock.calls[0][0]).toEqual([DummyService, Case1Plugin]);
             
             expect(getSpy).toHaveBeenCalledTimes(2);
             expect(getSpy.mock.calls[0][0]).toBe(DummyService);
@@ -160,10 +163,6 @@ describe('PlatformLoader', () => {
             
             expect(result).toBeDefined();
             expect(result.length).toBe(2);
-            
-            // We cannot spy on MockInjector because a new child injector is created for each service that 
-            // is bootstrapped
-            expect(result[1]).toBeInstanceOf(AnotherService);
             
             expect(deviceSpy).toHaveBeenCalledTimes(1);
             expect(deviceSpy.mock.calls[0]).toEqual(['dummy', DummyDevice, '', [AnotherService]]);

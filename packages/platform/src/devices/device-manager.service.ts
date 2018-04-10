@@ -121,10 +121,10 @@ export class DeviceManager {
      *                      description from the device metadata decorator
      * @param providers     An optional set of one or more providers for the device injector
      */
-    setupDevice<T>(name: string, deviceClass: Type<T>, description?: string, providers?: Provider|Provider[]): DeviceController<T> {
+    setupDevice<T>(name: string, deviceClass: Type<T>, description?: string, providers?: Provider|Provider[], parentInjector?: Injector): DeviceController<T> {
         const metadata = getDeviceMetadata(deviceClass);
         const commands = getPropertyMetadata(deviceClass);
-        const injector = this._setupDeviceInjector(deviceClass, providers || []); 
+        const injector = this._setupDeviceInjector(deviceClass, providers || [], parentInjector); 
         
         description = description || (metadata.description || '');
         
@@ -212,15 +212,11 @@ export class DeviceManager {
         this.unregisterDeviceController(def);
     }
     
-    private _setupDeviceInjector(deviceClass: Type<any>, providers: Provider|Provider[]): Injector {
+    private _setupDeviceInjector(deviceClass: Type<any>, providers: Provider|Provider[], parentInjector: Injector = this._injector): Injector {
         if (!Array.isArray(providers)) {
             providers = [providers];
         }
         
-        const child = new Injector(this._injector);
-        child.provide(deviceClass);
-        providers.forEach(provider => child.provide(provider));
-        
-        return child;
+        return new Injector([...providers, deviceClass], this._injector);
     }
 }

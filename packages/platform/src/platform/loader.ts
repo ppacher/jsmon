@@ -19,7 +19,9 @@ import {
     bootstrapPlugin,
     Type,
     Injector,
-    Injectable
+    Injectable,
+    Provider,
+    normalizeProvider
 } from '@homebot/core';
 import {DeviceManager, DeviceController} from '../devices';
 
@@ -46,7 +48,7 @@ export interface BootstrapOptions {
 
 export class PlatformLoader {
     private _platformModuleCache: Map<string, PluginModule> = new Map();
-    private _pluginCache: Map<string, any> = new Map();
+    private _pluginCache: Map<string, Injector> = new Map();
 
     constructor(private _injector: Injector,
                 private _deviceManager: DeviceManager,
@@ -93,8 +95,9 @@ export class PlatformLoader {
         
         const result: any[] = [];
         
+        let injector = this._injector;
         if (!!spec.plugin) {
-            this.bootstrapPlugin(module.path, spec.plugin);
+            injector = await this.bootstrapPlugin(module.path, spec.plugin);
         }
         
         (spec.devices || []).forEach(dev => {
@@ -105,11 +108,14 @@ export class PlatformLoader {
         });
         
         (spec.services || []).forEach(svc => {
-            let childInjector = new Injector(this._injector);
-            childInjector.provide(svc.class);
-            childInjector.provide(svc.providers || []);
+            const providers = [
+                ...(svc.providers || []),
+                svc.class
+            ];
+            let childInjector = injector.createChild(providers);
             
             let instance = childInjector.get(svc.class);
+            console.log(instance);
             result.push(instance);
         });
         
@@ -152,27 +158,37 @@ export class PlatformLoader {
      * @param platformName The name of the platform
      * @param plugin The plugin class to bootstrap (ie. decorated by @Plugin())
      */
-    async bootstrapPlugin(platformName: string, plugin: Type<any>) {
+    async bootstrapPlugin(platformName: string, plugin: Type<any>): Promise<Injector> {
         let pluginKey = `${platformName}-${plugin.name}`;
         if (this._pluginCache.has(pluginKey)) {
-            return;
+            return this._pluginCache.get(pluginKey)!;
         }
         
         let desc = bootstrapPlugin(plugin);
-        console.log(desc);
-
+        
+        let providers: Provider[] = []
         if (!!desc.providers) {
-            this._injector.provide(desc.providers);
+            providers = [
+                ...providers,
+                ...desc.providers,
+            ]
         }
         
+        let bootstrap: any[] = [];
         if (!!desc.bootstrapService) {
-            desc.bootstrapService.forEach(svc => this._injector.get(svc));
+            bootstrap = desc.bootstrapService.map(p => normalizeProvider(p).provide);
         }
         
-        this._injector.provide(plugin);
-        let instance = this._injector.get(plugin);
+        providers.push(plugin);
         
-        this._pluginCache.set(pluginKey, instance);
+        let injector = this._injector.createChild(providers);
+        
+        bootstrap.forEach(token => injector.get(token));
+
+        injector.get(plugin);
+        
+        this._pluginCache.set(pluginKey, injector);
+        return injector;
     }
     
     /**
