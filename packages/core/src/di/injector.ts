@@ -46,6 +46,10 @@ export class Injector {
         return this._getByKeyBubble(key, notFound);
     }
     
+    public createChild(providers: Provider|Provider[]): Injector {
+        return new Injector(providers, this);
+    }
+    
     public dispose(): void {
         // unregister our dispose handler from the parent injector
         if (!!this.parent) {

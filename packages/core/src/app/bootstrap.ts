@@ -1,16 +1,16 @@
-import {Provider, Injector, Type} from '../di';
+import {Provider, Injector, Type, normalizeProvider} from '../di';
 import {App, AppDescriptor} from './app';
 import {ANNOTATIONS} from '../utils/decorator';
 import {Plugin, bootstrapPlugin, PluginDescriptor} from '../plugin';
 
 export function bootstrapApp<T>(app: Type<T>): T {
     const settings = getAppDescriptor(app);
-    
-    const appInjector = new Injector();
+    const providers: Provider[] = [];
+    const bootstrap: any[] = [];
 
     if (!!settings) {
         (settings.providers || []).forEach(imported => {
-            appInjector.provide(imported);
+            providers.push(imported);
         });
         
         let plugins = settings.plugins || [];
@@ -34,15 +34,20 @@ export function bootstrapApp<T>(app: Type<T>): T {
         } as PluginDescriptor);
 
         pluginDescriptor.providers.forEach((p: Provider) => {
-            appInjector.provide(p);
+            providers.push(p);
         });
         
         pluginDescriptor.bootstrapService.forEach((p: Provider) => {
-            appInjector.get(p);
+            let n = normalizeProvider(p);
+
+            bootstrap.push(n.provide);
         });
     }
 
-    appInjector.provide(app);
+    providers.push(app);
+    const appInjector = new Injector(providers);
+    
+    bootstrap.forEach(token => appInjector.get(token));
 
     return appInjector.get(app);
 }
