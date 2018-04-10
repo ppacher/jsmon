@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import {ProviderKey} from './key';
-import {Inject, Injectable, Optional} from './annotations';
+import {Self, SkipSelf, Inject, Injectable, Optional} from './annotations';
 import {ANNOTATIONS, PARAMETERS} from '../utils/decorator';
 import {Provider, ClassProvider, FactoryProvider, TypeProvider, ValueProvider, ExistingProvider} from './provider';
 import {Type, isType} from './type';
@@ -11,14 +11,20 @@ export type NormalizedProvider = ClassProvider<any> | FactoryProvider<any> | Val
 
 export class ResolvedProvider<T> {
     constructor(public readonly key: ProviderKey, 
-                public readonly factory: (...args: any[]) => T,
-                public readonly dependencies: ResolvedDependency[]) {
+                public readonly factories: ResolvedFactory<T>[],
+                public readonly multi: boolean) {
     }
+}
+
+export class ResolvedFactory<T> {
+    constructor(public readonly factory: (...args: any[]) => T,
+                public readonly dependencies: ResolvedDependency[]) {}
 }
 
 export class ResolvedDependency {
     constructor(public readonly key: ProviderKey,
-                public readonly optional: boolean = false) {}
+                public readonly optional: boolean = false,
+                public visibility: 'self'|'skipself'|null = null) {}
     
     static fromKey(key: ProviderKey): ResolvedDependency {
         return new ResolvedDependency(key);
@@ -34,6 +40,7 @@ export function resolveProvider<T>(p: Provider<T>): ResolvedProvider<T> {
     const key = ProviderKey.get(resolveForwardRef(n.provide));
     let deps: ResolvedDependency[] = [];
     let factory: (...args: any[]) => any;
+    let multi = n.multi === true;
 
     if (isValueProvider(n)) {
         factory = (...args: any[]) => n.useValue;
@@ -57,7 +64,7 @@ export function resolveProvider<T>(p: Provider<T>): ResolvedProvider<T> {
         throw Error(`Invalid provider`);
     }
     
-    return new ResolvedProvider(key, factory, deps);
+    return new ResolvedProvider(key, [new ResolvedFactory(factory, deps)], multi);
 }
 
 function _resolveDependecies(deps: any[]): ResolvedDependency[] {
@@ -85,6 +92,7 @@ function _zipParametersAndAnnotations(params: any[], annotations: any[][]): Reso
     for(let i = 0; i < params.length; i++) {
         let token = params[i];
         let optional = false;
+        let visibility: 'self'|'skipself'|null = null;
         
         if (!!annotations[i]) {
             let inject: Inject = annotations[i].find(m => m instanceof Inject);
@@ -93,12 +101,27 @@ function _zipParametersAndAnnotations(params: any[], annotations: any[][]): Reso
             }
         
             optional = annotations[i].find(m => m instanceof Optional) !== undefined;
+
+            let self = annotations[i].find(m => m instanceof Self) !== undefined;
+            let skipSelf = annotations[i].find(m => m instanceof SkipSelf) !== undefined;
+            
+            if (self && skipSelf) {
+                throw new Error(`@Self() and @SkipSelf() cannot be used together`);
+            }
+            
+            if (self) {
+                visibility = 'self';
+            }
+            
+            if (skipSelf) {
+                visibility = 'skipself';
+            }
         }
 
         token = resolveForwardRef(token);
 
         
-        debs.push(new ResolvedDependency(ProviderKey.get(token), optional));
+        debs.push(new ResolvedDependency(ProviderKey.get(token), optional, visibility));
     }
 
     return debs;
@@ -106,9 +129,11 @@ function _zipParametersAndAnnotations(params: any[], annotations: any[][]): Reso
 
 export function normalizeProvider(p: Provider): NormalizedProvider {
     if (isTypeProvider(p)) {
+        // Type providers itself can never be multi-providers
         return {
             provide: p,
             useClass: p,
+            multi: false,
         };
     }
     

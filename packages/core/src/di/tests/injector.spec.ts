@@ -10,15 +10,11 @@ import {
 
 describe(`Injector`, () => {
     let injector: Injector;
-
-    beforeEach(() => {
-        injector = new Injector();
-    });
     
     it('should create a new instance when requested', () => {
         class A {}
         
-        injector.provide(A);
+        injector = new Injector(A);
 
         let a = injector.get(A);
 
@@ -30,7 +26,7 @@ describe(`Injector`, () => {
         it('should support ValueProvider', () => {
             let value = {prop: 'value'};
             
-            injector.provide({
+            injector = new Injector({
                 provide: 'MyCustomToken',
                 useValue: value
             });
@@ -42,7 +38,7 @@ describe(`Injector`, () => {
         it('should support ClassProvider', () => {
             class A {}
             
-            injector.provide({
+            injector = new Injector({
                 provide: 'MyClass',
                 useClass: A
             });
@@ -54,7 +50,7 @@ describe(`Injector`, () => {
         it('should support FactoryProvider', () => {
             let factory = () => 'value';
 
-            injector.provide({
+            injector = new Injector({
                 provide: 'MyToken',
                 useFactory: factory,
             });
@@ -66,14 +62,16 @@ describe(`Injector`, () => {
         it('should support ExistingProvider', () => {
             class A {}
             
-            injector.provide({
-                provide: 'ClassToken',
-                useClass: A,
-            });
-            injector.provide({
-                provide: 'MyToken',
-                useExisting: 'ClassToken'
-            });
+            injector = new Injector([
+                {
+                    provide: 'ClassToken',
+                    useClass: A,
+                },
+                {
+                    provide: 'MyToken',
+                    useExisting: 'ClassToken'
+                }
+            ]);
 
             let obj = injector.get('MyToken');
             expect(obj).toBeInstanceOf(A);
@@ -89,8 +87,7 @@ describe(`Injector`, () => {
                 constructor(public a: A1) {}
             }
             
-            injector.provide(A1);
-            injector.provide(B);
+            injector = new Injector([A1, B]);
 
             let obj: B = injector.get(B);
             expect(obj).toBeInstanceOf(B);
@@ -101,16 +98,19 @@ describe(`Injector`, () => {
         it('should resolve factory dependencies', () => {
             let dependet = 'foobar';
             let factory = (d: string) => d;
+            
+            injector = new Injector([
+                {
+                    useValue: dependet,
+                    provide: 'FactoryDependency'
+                },
+                {
+                    provide: 'factoryDepTest',
+                    useFactory: factory,
+                    debs: ['FactoryDependency']
+                }
+            ])
 
-            injector.provide({
-                useValue: dependet,
-                provide: 'FactoryDependency'
-            });
-            injector.provide({
-                provide: 'factoryDepTest',
-                useFactory: factory,
-                debs: ['FactoryDependency']
-            });
 
             let value = injector.get('factoryDepTest');
             expect(value).toBe('foobar');
@@ -129,7 +129,7 @@ describe(`Injector`, () => {
                 constructor(public b1: B1){}
             }
             
-            injector.provide([A2, B1, C1]);
+            injector = new Injector([A2, B1, C1]);
             
             let obj: C1 = injector.get(C1);
             expect(obj).toBeInstanceOf(C1),
@@ -151,7 +151,7 @@ describe(`Injector`, () => {
         });
 
         it('should invoke onDestroy for each destroyable', () => {
-            injector.provide(Destroyable);
+            injector = new Injector(Destroyable);
             let instance: Destroyable = injector.get(Destroyable);
 
             expect(destroyed).toBe(false);
@@ -162,12 +162,12 @@ describe(`Injector`, () => {
         });
 
         it('should dispose itself when the parent is disposed', () => {
-            let child = new Injector(injector);
-            child.provide(Destroyable);
+            let parent = new Injector([]);
+            let child = new Injector(Destroyable, parent);
 
             let instance = child.get(Destroyable);
             
-            injector.dispose();
+            parent.dispose();
             expect(destroyed).toBe(true);
         });
     })

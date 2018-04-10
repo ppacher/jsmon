@@ -4,12 +4,16 @@ export interface ValueProvider<T> {
     provide: any;
     
     useValue: T;
+
+    multi?: boolean;
 };
 
 export interface ClassProvider<T> {
     provide: any;
     
     useClass: Type<T>;
+    
+    multi?: boolean;
 }
 
 export interface FactoryProvider<T> {
@@ -18,12 +22,16 @@ export interface FactoryProvider<T> {
     useFactory: (...args: any[]) => T
     
     debs?: any[];
+    
+    multi?: boolean;
 }
 
 export interface ExistingProvider<T> {
     provide: any;
 
     useExisting: any;
+    
+    multi?: boolean;
 }
 
 export interface TypeProvider<T> extends Type<T> {};

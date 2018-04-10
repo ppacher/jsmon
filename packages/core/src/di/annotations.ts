@@ -55,3 +55,22 @@ export interface Optional {};
  * Optional decorator
  */
 export const Optional: OptionalDecorator = makeParamDecorator('Optional');
+
+
+export interface SkipSelfDecorator {
+    (): any;
+    new (): SkipSelf;
+}
+
+export interface SkipSelf {};
+
+export const SkipSelf: SkipSelfDecorator = makeParamDecorator('SkipSelf');
+
+export interface SelfDecorator {
+    (): any;
+    new (): Self;
+}
+
+export interface Self {};
+
+export const Self: SelfDecorator = makeParamDecorator('Self');

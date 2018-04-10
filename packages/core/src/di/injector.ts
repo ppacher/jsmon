@@ -24,6 +24,7 @@ export class Injector {
     private _instanceByKey: Map<ProviderKey, any> = new Map<ProviderKey, any>(); 
     private _instances: any[] = [];
     private _disposeFns: DisposeCallback[] = [];
+    
     private readonly _disposeHandler: DisposeCallback = (inj) => {
         if (inj !== this.parent) {
             throw new Error(`Invalid origin for dispose handler`);
@@ -31,22 +32,12 @@ export class Injector {
         this.dispose();
     }
     
-    constructor(private parent?: Injector) {
+    constructor(providers: Provider|Provider[], private parent?: Injector) {
         if (!!parent) {
             parent._registerDisposeFn(this._disposeHandler);
         }
-    }
-    
-    public provide(p: Provider|Provider[]): void {
-        let providers: Provider[];
-
-        if (Array.isArray(p)) {
-            providers = p;
-        } else {
-            providers = [p];
-        }
-
-        providers.forEach(p => this._resolveProvider(p));
+        
+        this._provide(providers);
     }
     
     public get<T>(token: Type<T>|any, notFound: any = _THROW_NOT_FOUND): T {
@@ -94,14 +85,23 @@ export class Injector {
         return this._instantiate(provider);
     }
     
-    _getByKeyBubble<T>(key: ProviderKey, notFound: any): T {
+    _getByKeyBubble<T>(key: ProviderKey, notFound: any, visibility: 'self'|'skipself'|null = null): T {
         let inj: Injector|undefined = this;
+        
+        if (visibility === 'skipself') {
+            inj = inj.parent;
+        }
 
         while(inj instanceof Injector && !!inj) {
             let instance = inj._getByKey<T>(key, _UNDEFINED);
 
             if (instance !== _UNDEFINED) {
                 return instance;
+            }
+            
+            if (visibility === 'self') {
+                inj = undefined;
+                break;
             }
             
             inj = inj.parent;
@@ -118,11 +118,12 @@ export class Injector {
         return notFound;
     }
     
+    // TODO(ppacher): finish support for multi providers
     _instantiate<T>(p: ResolvedProvider<T>): T {
-        let deps = p.dependencies.map(d => this._getByResolvedDependency(d));
+        let deps = p.factories[0].dependencies.map(d => this._getByResolvedDependency(d));
         
-        if (deps.some((d, index) => d === _UNDEFINED && p.dependencies[index].optional === false)) {
-            let args: string[] = p.dependencies.map((dep, index) => {
+        if (deps.some((d, index) => d === _UNDEFINED && p.factories[0].dependencies[index].optional === false)) {
+            let args: string[] = p.factories[0].dependencies.map((dep, index) => {
                 if (deps[index] !== _UNDEFINED) {
                     return dep.key.displayName;
                 }
@@ -135,7 +136,7 @@ export class Injector {
         // at this point, all _UNDEFINED dependencies are optional and need to be replaced
         deps = deps.map(d => d === _UNDEFINED ? undefined : d);
 
-        const instance = p.factory(...deps);
+        const instance = p.factories[0].factory(...deps);
 
         this._instanceByKey.set(p.key, instance);
         this._instances.push(instance);
@@ -148,7 +149,7 @@ export class Injector {
             return this._instanceByKey.get(dep.key);
         }
         
-        return this._getByKeyBubble(dep.key, _UNDEFINED);
+        return this._getByKeyBubble(dep.key, _UNDEFINED, dep.visibility);
     }
     
     toString(): string {
@@ -179,10 +180,30 @@ export class Injector {
         this._instances = [];
     }
     
+    private _provide(p: Provider|Provider[]): void {
+        let providers: Provider[];
+
+        if (Array.isArray(p)) {
+            providers = p;
+        } else {
+            providers = [p];
+        }
+
+        providers.forEach(p => this._resolveProvider(p));
+    }
+    
+    
     private _resolveProvider(p: Provider) {
         const resolved = resolveProvider(p);
 
         if (this._providerByKey.has(resolved.key)) {
+            let existing = this._providerByKey.get(resolved.key)!;
+
+            if (existing.multi !== resolved.multi) {
+                throw new Error(`For multi providers each DI provider must set mutli=true`);
+            }
+            
+            existing.factories.push(resolved.factories[0]);
             return;
         }
         
