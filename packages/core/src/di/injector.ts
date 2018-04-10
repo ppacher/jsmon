@@ -6,12 +6,36 @@ import {Type} from './type';
 const _UNDEFINED = new Object();
 const _THROW_NOT_FOUND = new Object();
 
+export interface DisposeCallback {
+    (injector: Injector): void;
+}
+
+export interface OnDestroy {
+    onDestroy: () => void;
+}
+
+export function isDestroyable(value: any): value is OnDestroy {
+    return ('onDestroy' in value);
+}
+
 export class Injector {
     private static _INJECTOR_KEY = ProviderKey.get(Injector);
-    private _providers: Map<ProviderKey, ResolvedProvider<any>> = new Map<ProviderKey, ResolvedProvider<any>>();
-    private _instances: Map<ProviderKey, any> = new Map<ProviderKey, any>(); 
+    private _providerByKey: Map<ProviderKey, ResolvedProvider<any>> = new Map<ProviderKey, ResolvedProvider<any>>();
+    private _instanceByKey: Map<ProviderKey, any> = new Map<ProviderKey, any>(); 
+    private _instances: any[] = [];
+    private _disposeFns: DisposeCallback[] = [];
+    private readonly _disposeHandler: DisposeCallback = (inj) => {
+        if (inj !== this.parent) {
+            throw new Error(`Invalid origin for dispose handler`);
+        }
+        this.dispose();
+    }
     
-    constructor(private parent?: Injector) {}
+    constructor(private parent?: Injector) {
+        if (!!parent) {
+            parent._registerDisposeFn(this._disposeHandler);
+        }
+    }
     
     public provide(p: Provider|Provider[]): void {
         let providers: Provider[];
@@ -31,12 +55,29 @@ export class Injector {
         return this._getByKeyBubble(key, notFound);
     }
     
+    public dispose(): void {
+        // unregister our dispose handler from the parent injector
+        if (!!this.parent) {
+            this.parent._unregisterDesponseFn(this._disposeHandler);
+        }
+        
+        // call all dispose callbacks
+        this._disposeFns.forEach(fn => fn(this));
+        
+        // cleanup
+        this._providerByKey.clear();
+        this._instanceByKey.clear();
+        
+        // Call any destroy callbacks for created instances
+        this._destroyInstances();
+    }
+    
     _getByKey<T>(key: ProviderKey, notFound: any): T {
         if (key === Injector._INJECTOR_KEY) {
             return this as any;
         }
 
-        const provider = this._providers.get(key);
+        const provider = this._providerByKey.get(key);
         
         if (provider === undefined) {
             if (notFound !== _THROW_NOT_FOUND) {
@@ -46,8 +87,8 @@ export class Injector {
             throw new Error(`No provider for ${key}`);
         }
         
-        if (this._instances.has(key)) {
-            return this._instances.get(key)!;
+        if (this._instanceByKey.has(key)) {
+            return this._instanceByKey.get(key)!;
         }
 
         return this._instantiate(provider);
@@ -96,32 +137,55 @@ export class Injector {
 
         const instance = p.factory(...deps);
 
-        this._instances.set(p.key, instance);
+        this._instanceByKey.set(p.key, instance);
+        this._instances.push(instance);
 
         return instance;
     }
 
     _getByResolvedDependency(dep: ResolvedDependency): any {
-        if (this._instances.has(dep.key)) {
-            return this._instances.get(dep.key);
+        if (this._instanceByKey.has(dep.key)) {
+            return this._instanceByKey.get(dep.key);
         }
         
         return this._getByKeyBubble(dep.key, _UNDEFINED);
     }
     
     toString(): string {
-        let s = Array.from(this._providers.values()).map(p => p.key.displayName).join(', ');
+        let s = Array.from(this._providerByKey.values()).map(p => p.key.displayName).join(', ');
         
         return `Injector(providers=${s})`;
+    }
+    
+    protected _registerDisposeFn(fn: DisposeCallback): void {
+        this._disposeFns.push(fn);
+    }
+    
+    protected _unregisterDesponseFn(fn: DisposeCallback): void {
+        let idx = this._disposeFns.indexOf(fn);
+        
+        if (idx > -1) {
+            this._disposeFns.splice(idx, 1);
+        }
+    }
+    
+    private _destroyInstances(): void {
+        this._instances.forEach(instance => {
+            if (isDestroyable(instance)) {
+                instance.onDestroy();
+            }
+        });
+        
+        this._instances = [];
     }
     
     private _resolveProvider(p: Provider) {
         const resolved = resolveProvider(p);
 
-        if (this._providers.has(resolved.key)) {
+        if (this._providerByKey.has(resolved.key)) {
             return;
         }
         
-        this._providers.set(resolved.key, resolved);
+        this._providerByKey.set(resolved.key, resolved);
     }
 }

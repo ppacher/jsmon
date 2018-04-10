@@ -4,7 +4,8 @@ import {
     ValueProvider,
     ClassProvider,
     ExistingProvider,
-    FactoryProvider
+    FactoryProvider,
+    OnDestroy
 } from "../index";
 
 describe(`Injector`, () => {
@@ -136,4 +137,38 @@ describe(`Injector`, () => {
             expect(obj.b1.a2).toBeInstanceOf(A2);
         })
     });
+    
+    describe('destroyable', () => {
+        let destroyed = false;
+        class Destroyable implements OnDestroy {
+            onDestroy() {
+                destroyed = true;
+            }
+        }
+        
+        beforeEach(() => {
+            destroyed = false;
+        });
+
+        it('should invoke onDestroy for each destroyable', () => {
+            injector.provide(Destroyable);
+            let instance: Destroyable = injector.get(Destroyable);
+
+            expect(destroyed).toBe(false);
+
+            injector.dispose();
+
+            expect(destroyed).toBe(true);
+        });
+
+        it('should dispose itself when the parent is disposed', () => {
+            let child = new Injector(injector);
+            child.provide(Destroyable);
+
+            let instance = child.get(Destroyable);
+            
+            injector.dispose();
+            expect(destroyed).toBe(true);
+        });
+    })
 });
