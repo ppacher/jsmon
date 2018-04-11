@@ -17,7 +17,7 @@ export function bootstrapApp<T>(app: Type<T>): T {
             bootstrap = bootstrap.concat(collectProviders(plugin, rootInjector, null, providers, plugins));
         });
         
-        (settings.plugins||[]).forEach(provider => {
+        (settings.providers||[]).forEach(provider => {
             providers.add(provider);
         });
     }

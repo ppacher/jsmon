@@ -15,7 +15,7 @@
     "@types/node": "^9.4.6"
   },
   "dependencies": {
-    "@homebot/core": "^0.0.1",
+    "@homebot/core": "0.0.1",
     "@homebot/platform": "0.0.1",
     "@homebot/platform-darkskynet": "0.0.1",
     "@homebot/platform-firetv": "0.0.1",
