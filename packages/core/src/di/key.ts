@@ -11,7 +11,7 @@ export class ProviderKey {
         return this.displayName;
     }
     
-    static get(token: Object): ProviderKey {
+    static get(token: any): ProviderKey {
         return _globalKeyRegistry.getKey(token);
     }
 }

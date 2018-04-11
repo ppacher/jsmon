@@ -22,6 +22,8 @@ export function isDestroyable(value: any): value is OnDestroy {
     }
 }
 
+export type Visibility = 'skipself' | 'self' | null;
+
 export class Injector {
     private static _INJECTOR_KEY = ProviderKey.get(Injector);
     private _providerByKey: Map<ProviderKey, ResolvedProvider<any>> = new Map<ProviderKey, ResolvedProvider<any>>();
@@ -50,6 +52,11 @@ export class Injector {
         return this._getByKeyBubble(key, notFound);
     }
     
+    public has(token: any, visibility: Visibility = null): boolean {
+        let key = ProviderKey.get(token);
+        return this._hasProviderByKeyBubble(key, visibility);
+    }
+    
     public createChild(providers: Provider|Provider[]): Injector {
         return new Injector(providers, this);
     }
@@ -69,6 +76,35 @@ export class Injector {
         
         // Call any destroy callbacks for created instances
         this._destroyInstances();
+    }
+    
+    _hasProviderByKey(key: ProviderKey): boolean {
+        return this._providerByKey.get(key) !== undefined;
+    }
+    
+    _hasProviderByKeyBubble(key: ProviderKey, visibility: Visibility): boolean {
+        let inj: Injector|undefined = this;
+        
+        if (visibility === 'skipself') {
+            inj = inj.parent;
+        }
+
+        while(inj instanceof Injector && !!inj) {
+            let result = inj._hasProviderByKey(key);
+
+            if (result) {
+                return result;
+            }
+            
+            if (visibility === 'self') {
+                inj = undefined;
+                break;
+            }
+            
+            inj = inj.parent;
+        }
+        
+        return false;
     }
     
     _getByKey<T>(key: ProviderKey, notFound: any): T {
@@ -93,7 +129,7 @@ export class Injector {
         return this._instantiate(provider);
     }
     
-    _getByKeyBubble<T>(key: ProviderKey, notFound: any, visibility: 'self'|'skipself'|null = null): T {
+    _getByKeyBubble<T>(key: ProviderKey, notFound: any, visibility: Visibility = null): T {
         let inj: Injector|undefined = this;
         
         if (visibility === 'skipself') {

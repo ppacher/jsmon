@@ -139,6 +139,52 @@ describe(`Injector`, () => {
         })
     });
     
+    describe('inheritance', () => {
+        it('should bubble requests', () => {
+            let parent = new Injector({
+                provide: 'foo',
+                useValue: 'foo',
+            });
+
+            let child = parent.createChild([
+                {
+                    provide: 'bar',
+                    useValue: 'bar'
+                }
+            ]);
+
+            let foo = child.get('foo');
+            let bar = child.get('bar');
+
+            try {
+                let barFromParent = parent.get('bar');
+                fail();
+            } catch(err) {}
+            
+            expect(foo).toBe('foo');
+            expect(bar).toBe('bar');
+        });
+        
+        it('should check parents for providers', () => {
+            let parent = new Injector({
+                provide: 'foo',
+                useValue: 'foo',
+            });
+
+            let child = parent.createChild([
+                {
+                    provide: 'bar',
+                    useValue: 'bar'
+                }
+            ]);
+
+            expect(parent.has('foo')).toBeTruthy();
+            expect(parent.has('bar')).toBeFalsy();
+            expect(child.has('bar')).toBeTruthy();
+            expect(child.has('foo')).toBeTruthy();
+        });
+    })
+    
     describe('destroyable', () => {
         let destroyed = false;
         class Destroyable implements OnDestroy {
