@@ -17,6 +17,9 @@ class MockInjector {
     createChild(providers: any) {
         return this;
     }
+    has(p: any) {
+        return false
+    }
 }
 
 class MockDeviceManager {
@@ -98,11 +101,11 @@ describe('PlatformLoader', () => {
             await loader.bootstrapPlugin('case1', Case1Plugin);
             
             expect(provideSpy).toHaveBeenCalledTimes(1);
-            expect(provideSpy.mock.calls[0][0]).toEqual([DummyService, Case1Plugin]);
+            expect(provideSpy.mock.calls[0][0]).toEqual([Case1Plugin, DummyService]);
             
-            expect(getSpy).toHaveBeenCalledTimes(2);
-            expect(getSpy.mock.calls[0][0]).toBe(DummyService);
-            expect(getSpy.mock.calls[1][0]).toBe(Case1Plugin);
+            expect(getSpy).toHaveBeenCalledTimes(3);
+            expect(getSpy.mock.calls[0][0]).toBe(Case1Plugin);
+            expect(getSpy.mock.calls[1][0]).toBe(DummyService);
         });
 
         it('should only bootstrap a plugin once', async () => {

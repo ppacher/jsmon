@@ -164,30 +164,14 @@ export class PlatformLoader {
             return this._pluginCache.get(pluginKey)!;
         }
         
-        let desc = bootstrapPlugin(plugin);
-        
-        let providers: Provider[] = []
-        if (!!desc.providers) {
-            providers = [
-                ...providers,
-                ...desc.providers,
-            ]
+        let injector = bootstrapPlugin(plugin, this._injector);
+        if (injector === null) {
+            injector =  this._injector.createChild([]);
         }
         
-        let bootstrap: any[] = [];
-        if (!!desc.bootstrapService) {
-            bootstrap = desc.bootstrapService.map(p => normalizeProvider(p).provide);
-        }
-        
-        providers.push(plugin);
-        
-        let injector = this._injector.createChild(providers);
-        
-        bootstrap.forEach(token => injector.get(token));
-
         injector.get(plugin);
-        
         this._pluginCache.set(pluginKey, injector);
+        
         return injector;
     }
     

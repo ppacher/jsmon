@@ -1,53 +1,34 @@
 import {Provider, Injector, Type, normalizeProvider} from '../di';
 import {App, AppDescriptor} from './app';
 import {ANNOTATIONS} from '../utils/decorator';
-import {Plugin, bootstrapPlugin, PluginDescriptor} from '../plugin';
+import {Plugin, collectProviders, PluginDescriptor} from '../plugin';
 
 export function bootstrapApp<T>(app: Type<T>): T {
     const settings = getAppDescriptor(app);
-    const providers: Provider[] = [];
-    const bootstrap: any[] = [];
-
+    
+    const providers: Set<any> = new Set();;
+    const plugins: Set<any> = new Set();
+    let bootstrap: any[] = [];
+    
+    const rootInjector = new Injector([]);
+    
     if (!!settings) {
-        (settings.providers || []).forEach(imported => {
-            providers.push(imported);
+        (settings.plugins||[]).forEach(plugin => {
+            bootstrap = bootstrap.concat(collectProviders(plugin, rootInjector, null, providers, plugins));
         });
         
-        let plugins = settings.plugins || [];
-
-        let pluginDescriptor = plugins.reduce((result, plugin) => {
-            let desc = bootstrapPlugin(plugin);
-
-            return {
-                bootstrapService: [
-                    ...result.bootstrapService,
-                    ...desc.bootstrapService!,
-                ],
-                providers: [
-                    ...result.providers,
-                    ...desc.providers!,
-                ]
-            };
-        }, {
-            bootstrapService: [],
-            providers: [],
-        } as PluginDescriptor);
-
-        pluginDescriptor.providers.forEach((p: Provider) => {
-            providers.push(p);
-        });
-        
-        pluginDescriptor.bootstrapService.forEach((p: Provider) => {
-            let n = normalizeProvider(p);
-
-            bootstrap.push(n.provide);
+        (settings.plugins||[]).forEach(provider => {
+            providers.add(provider);
         });
     }
-
-    providers.push(app);
-    const appInjector = new Injector(providers);
     
-    bootstrap.forEach(token => appInjector.get(token));
+    providers.add(app);
+    
+    let appInjector = rootInjector.createChild(Array.from(providers.values()));
+    
+    Array.from(plugins.values()).forEach(plugin => appInjector.get(plugin));
+
+    bootstrap.forEach(svc => appInjector.get(svc));
 
     return appInjector.get(app);
 }
