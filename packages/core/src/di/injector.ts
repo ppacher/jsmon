@@ -123,29 +123,55 @@ export class Injector {
     }
     
     // TODO(ppacher): finish support for multi providers
-    _instantiate<T>(p: ResolvedProvider<T>): T {
-        let deps = p.factories[0].dependencies.map(d => this._getByResolvedDependency(d));
-        
-        if (deps.some((d, index) => d === _UNDEFINED && p.factories[0].dependencies[index].optional === false)) {
-            let args: string[] = p.factories[0].dependencies.map((dep, index) => {
-                if (deps[index] !== _UNDEFINED) {
-                    return dep.key.displayName;
-                }
-                return `${dep.key.displayName}?`;
-            });
-            
-            throw new Error(`Cannot create ${p.key.displayName}(${args.join(', ')})`);
+    _instantiate<T>(p: ResolvedProvider<T>): T|T[] {
+        if (p.factories.length > 1 && !p.multi) {
+            throw new Error(`Invalid provider state`);
         }
         
-        // at this point, all _UNDEFINED dependencies are optional and need to be replaced
-        deps = deps.map(d => d === _UNDEFINED ? undefined : d);
+        let result: T[] = [];
+        
+        p.factories.forEach(resolvedFactory => {
+            let deps = resolvedFactory.dependencies.map(d => this._getByResolvedDependency(d));
+            
+            if (deps.some((d, index) => d === _UNDEFINED && resolvedFactory.dependencies[index].optional === false)) {
+                let args: string[] = resolvedFactory.dependencies.map((dep, index) => {
+                    if (deps[index] !== _UNDEFINED) {
+                        return dep.key.displayName;
+                    }
+                    return `${dep.key.displayName}?`;
+                });
+                
+                throw new Error(`Cannot create ${p.key.displayName}(${args.join(', ')})`);
+            }
+            
+            // at this point, all _UNDEFINED dependencies are optional and need to be replaced
+            deps = deps.map(d => d === _UNDEFINED ? undefined : d);
 
-        const instance = p.factories[0].factory(...deps);
+            const instance = resolvedFactory.factory(...deps);
+            
+            result.push(instance);
+        });
 
-        this._instanceByKey.set(p.key, instance);
-        this._instances.push(instance);
+        if (p.multi) {
+            // since this request is about a multi provider we need to 
+            // query all parent injectors for the same provider
+            let parentResults = this._getByKeyBubble(p.key, _UNDEFINED, 'skipself');
+            if (parentResults !== _UNDEFINED) {
+                if (!Array.isArray(parentResults)) {
+                    throw new Error(`Parent Injector returned invalid response`);
+                }
+                
+                result = result.concat(parentResults);
+            }
 
-        return instance;
+            this._instanceByKey.set(p.key, result);
+            this._instances.push(result);
+            return result;
+        } else {
+            this._instanceByKey.set(p.key, result[0]);
+            this._instances.push(result[0]);
+            return result[0];
+        }
     }
 
     _getByResolvedDependency(dep: ResolvedDependency): any {

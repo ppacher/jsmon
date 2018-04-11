@@ -170,5 +170,57 @@ describe(`Injector`, () => {
             parent.dispose();
             expect(destroyed).toBe(true);
         });
-    })
+    });
+
+    describe('multi provider', () => {
+        it('should support multi providers', () => {
+            injector = new Injector([
+                {
+                    provide: 'test',
+                    multi: true,
+                    useValue: '1',
+                },
+                {
+                    provide: 'test',
+                    multi: true,
+                    useValue: '2',
+                },
+                {
+                    provide: 'test',
+                    multi: true,
+                    useValue: '3',
+                },
+            ]);
+            
+            let values: string[] = injector.get('test');
+
+            expect(Array.isArray(values)).toBe(true);
+            expect(values.length).toBe(3);
+            expect(values).toEqual(['1', '2', '3']);
+        });
+        
+        it('should support multi providers with parent injectors', () => {
+            injector = new Injector([
+                {
+                    provide: 'test',
+                    multi: true,
+                    useValue: '1'
+                }
+            ]);
+            
+            let child = injector.createChild([
+                {
+                    provide: 'test',
+                    multi: true,
+                    useValue: '2',
+                }
+            ]);
+
+            let values: string[] = child.get('test');
+
+            expect(Array.isArray(values)).toBe(true);
+            expect(values.length).toBe(2);
+            expect(values).toEqual(['2', '1']);
+        });
+    });
 });
