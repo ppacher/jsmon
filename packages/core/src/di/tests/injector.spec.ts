@@ -5,7 +5,8 @@ import {
     ClassProvider,
     ExistingProvider,
     FactoryProvider,
-    OnDestroy
+    OnDestroy,
+    Inject
 } from "../index";
 
 describe(`Injector`, () => {
@@ -221,6 +222,48 @@ describe(`Injector`, () => {
             expect(Array.isArray(values)).toBe(true);
             expect(values.length).toBe(2);
             expect(values).toEqual(['2', '1']);
+        });
+        
+        it('should correctly destroy multi providers', () => {
+            let parentDisposed = false;
+            let childDisposed = false;
+            let grandChildDisposed = false;
+            injector = new Injector({
+                provide: 'test',
+                multi: true,
+                useClass: class {
+                    onDestroy() {
+                        parentDisposed = true;
+                    } 
+                }
+            });
+            let child = injector.createChild({
+                provide: 'test', 
+                multi: true,
+                useClass: class {
+                    onDestroy() {
+                        childDisposed = true;
+                    } 
+                }
+            })
+            let grandChild = child.createChild({
+                provide: 'test', 
+                multi: true,
+                useClass: class {
+                    onDestroy() {
+                        grandChildDisposed = true;
+                    } 
+                }
+            })
+
+            let values: any[] = grandChild.get('test');
+            expect(values.length).toBe(3);
+            
+            child.dispose();
+
+            expect(childDisposed).toBe(true);
+            expect(parentDisposed).toBe(false);
+            expect(grandChildDisposed).toBe(true);
         });
     });
 });

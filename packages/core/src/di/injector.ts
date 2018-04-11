@@ -15,14 +15,18 @@ export interface OnDestroy {
 }
 
 export function isDestroyable(value: any): value is OnDestroy {
-    return ('onDestroy' in value);
+    try {
+        return (typeof value === 'object' && 'onDestroy' in value && typeof value.onDestroy === 'function');
+    } catch(e) {
+        return false;
+    }
 }
 
 export class Injector {
     private static _INJECTOR_KEY = ProviderKey.get(Injector);
     private _providerByKey: Map<ProviderKey, ResolvedProvider<any>> = new Map<ProviderKey, ResolvedProvider<any>>();
     private _instanceByKey: Map<ProviderKey, any> = new Map<ProviderKey, any>(); 
-    private _instances: any[] = [];
+    private _instancesToDestroy: OnDestroy[] = [];
     private _disposeFns: DisposeCallback[] = [];
     
     private readonly _disposeHandler: DisposeCallback = (inj) => {
@@ -122,7 +126,6 @@ export class Injector {
         return notFound;
     }
     
-    // TODO(ppacher): finish support for multi providers
     _instantiate<T>(p: ResolvedProvider<T>): T|T[] {
         if (p.factories.length > 1 && !p.multi) {
             throw new Error(`Invalid provider state`);
@@ -153,8 +156,14 @@ export class Injector {
         });
 
         if (p.multi) {
-            // since this request is about a multi provider we need to 
-            // query all parent injectors for the same provider
+            // Save a reference to each destroyable that we created
+            result.forEach(i => {
+                if (isDestroyable(i)) {
+                    this._instancesToDestroy.push(i);
+                }
+            })
+            
+            // Now query all parent injectors for the very same token
             let parentResults = this._getByKeyBubble(p.key, _UNDEFINED, 'skipself');
             if (parentResults !== _UNDEFINED) {
                 if (!Array.isArray(parentResults)) {
@@ -163,14 +172,18 @@ export class Injector {
                 
                 result = result.concat(parentResults);
             }
-
+            
+            // Cache the result and (note that we will only destroy instances we created our self)
             this._instanceByKey.set(p.key, result);
-            this._instances.push(result);
+            
             return result;
         } else {
-            this._instanceByKey.set(p.key, result[0]);
-            this._instances.push(result[0]);
-            return result[0];
+            let i = result[0];
+            this._instanceByKey.set(p.key, i);
+            if (isDestroyable(i)) {
+                this._instancesToDestroy.push(i as OnDestroy);
+            }
+            return i;
         }
     }
 
@@ -201,13 +214,13 @@ export class Injector {
     }
     
     private _destroyInstances(): void {
-        this._instances.forEach(instance => {
+        this._instancesToDestroy.forEach(instance => {
             if (isDestroyable(instance)) {
                 instance.onDestroy();
             }
         });
         
-        this._instances = [];
+        this._instancesToDestroy = [];
     }
     
     private _provide(p: Provider|Provider[]): void {
