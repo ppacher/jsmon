@@ -1,5 +1,5 @@
-import {DeviceMessage} from '@homebot/core/device-manager/api';
-import {ParameterType} from '@homebot/core';
+import {DeviceMessage} from '@homebot/platform/devices/api';
+import {ParameterType} from '@homebot/platform';
 import {MqttService, CommandHandler} from '../mqtt.service';
 import {MqttDeviceAPI, DiscoveryHandler} from '../device.api';
 

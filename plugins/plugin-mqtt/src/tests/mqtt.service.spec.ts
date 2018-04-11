@@ -1,4 +1,4 @@
-import {Logger} from '@homebot/core';
+import {Logger} from '@homebot/platform';
 import {
     MqttConnectFn,
     MqttService,
