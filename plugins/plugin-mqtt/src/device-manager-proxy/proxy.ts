@@ -5,8 +5,7 @@ import {MqttDeviceManagerProxy} from './proxy.service';
     providers: [
         MqttDeviceManagerProxy
     ],
-    bootstrapService: [
-        MqttDeviceManagerProxy
-    ]
 })
-export class MqttDeviceManagerProxyPlugin {}
+export class MqttDeviceManagerProxyPlugin {
+    constructor(_: MqttDeviceManagerProxy) {}
+}

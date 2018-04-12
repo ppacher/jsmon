@@ -5,10 +5,7 @@ import {DeviceHttpApi} from './device-frontend';
     providers: [
         DeviceHttpApi
     ],
-    bootstrapService: [
-        DeviceHttpApi
-    ]
 })
 export class DeviceHttpApiPlugin {
-
+    constructor(_: DeviceHttpApi) {}
 }

@@ -1,8 +1,9 @@
-import {Plugin} from '@homebot/core';
+import {Plugin, Injectable} from '@homebot/core';
 import {PlatformSpec} from '../../../factory';
 import {Device} from '../../../../devices';
 import { setTimeout } from 'timers';
 
+@Injectable()
 export class DummyService {
     static instances: number = 0;
     
@@ -12,6 +13,7 @@ export class DummyService {
     }
 }
 
+@Injectable()
 export class AnotherService {
 
 }
@@ -25,12 +27,14 @@ export class DummyDevice {
 
 @Plugin({
     providers: [DummyService],
-    bootstrapService: [DummyService],
 })
 export class Case1Plugin {
+    constructor(private dummy: DummyService) {
+        console.log('Case1Plugin called');
+    }
 }
 
-function factory(params): PlatformSpec {
+function factory(params: any): PlatformSpec {
     return {
         plugin: Case1Plugin,
         services: [{

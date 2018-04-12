@@ -115,7 +115,6 @@ export class PlatformLoader {
             let childInjector = injector.createChild(providers);
             
             let instance = childInjector.get(svc.class);
-            console.log(instance);
             result.push(instance);
         });
         
@@ -169,7 +168,6 @@ export class PlatformLoader {
             injector =  this._injector.createChild([]);
         }
         
-        injector.get(plugin);
         this._pluginCache.set(pluginKey, injector);
         
         return injector;

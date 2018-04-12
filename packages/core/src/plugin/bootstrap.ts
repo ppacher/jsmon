@@ -12,7 +12,7 @@ export function bootstrapPlugin(plugin: Type<any>, injector: Injector, visibilit
     let providers = new Set<any>();
     let plugins = new Set<Type<any>>();
     
-    let bootstrap = collectProviders(plugin, injector, visibility, providers, plugins);
+    collectProviders(plugin, injector, visibility, providers, plugins);
     
     let child = injector.createChild(Array.from(providers.values()));
     
@@ -20,18 +20,11 @@ export function bootstrapPlugin(plugin: Type<any>, injector: Injector, visibilit
     Array.from(plugins.values()).reverse().forEach(plugin => {
         child.get(plugin);
     });
-
-    // boostrap all services
-    bootstrap.reverse().forEach(svc => {
-        child.get(svc);
-    });
     
     return child;
 }
 
-export function collectProviders(plugin: Type<any>, injector: Injector, visibility: Visibility, providers: Set<any>, plugins: Set<any>): any[] {
-    let svcs: any[] = [];
-    
+export function collectProviders(plugin: Type<any>, injector: Injector, visibility: Visibility, providers: Set<any>, plugins: Set<any>): void {
     let desc = getPluginDescriptor(plugin);
     
     if (!plugins.has(plugin) && !injector.has(plugin)) {
@@ -46,18 +39,6 @@ export function collectProviders(plugin: Type<any>, injector: Injector, visibili
             providers.add(p);
         }
     });
-
-    desc.bootstrapService!.forEach(svc => {
-        svcs.push(svc);
-    });
-    
-    desc.exports!.forEach(e => {
-        let exportedServices = collectProviders(e, injector, visibility, providers, plugins);
-        
-        svcs = svcs.concat(exportedServices);
-    });
-    
-    return svcs;
 }
 
 export function getPluginDescriptor<T>(plugin: Type<T>): PluginDescriptor {
@@ -65,10 +46,6 @@ export function getPluginDescriptor<T>(plugin: Type<T>): PluginDescriptor {
     
     if (settings === undefined) {
         throw new Error(`foo: missing @Plugin decorator for ${stringify(plugin)}`);
-    }
-    
-    if (!settings.bootstrapService) {
-        settings.bootstrapService = [];
     }
     
     if (!settings.providers) {

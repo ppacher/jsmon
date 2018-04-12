@@ -8,13 +8,12 @@ export function bootstrapApp<T>(app: Type<T>): T {
     
     const providers: Set<any> = new Set();;
     const plugins: Set<any> = new Set();
-    let bootstrap: any[] = [];
     
     const rootInjector = new Injector([]);
     
     if (!!settings) {
         (settings.plugins||[]).forEach(plugin => {
-            bootstrap = bootstrap.concat(collectProviders(plugin, rootInjector, null, providers, plugins));
+            collectProviders(plugin, rootInjector, null, providers, plugins);
         });
         
         (settings.providers||[]).forEach(provider => {
@@ -27,8 +26,6 @@ export function bootstrapApp<T>(app: Type<T>): T {
     let appInjector = rootInjector.createChild(Array.from(providers.values()));
     
     Array.from(plugins.values()).forEach(plugin => appInjector.get(plugin));
-
-    bootstrap.forEach(svc => appInjector.get(svc));
 
     return appInjector.get(app);
 }

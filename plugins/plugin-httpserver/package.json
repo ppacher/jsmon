@@ -17,10 +17,10 @@
     "@types/jest": "^22.2.2",
     "@types/jsonpath": "^0.2.0",
     "@types/restify": "^5.0.7",
-    "rxjs": "^5.5.6",
     "jest": "^22.4.3",
     "jsonpath": "^1.0.0",
     "restify": "^6.3.4",
+    "rxjs": "^5.5.6",
     "ts-jest": "^22.4.2",
     "typescript": "^2.7.2"
   },

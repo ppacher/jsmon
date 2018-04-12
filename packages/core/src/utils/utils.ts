@@ -4,7 +4,11 @@ export function stringify(token: any): string {
   if (typeof token === 'string') {
     return token
   }
-
+  
+  if (token === undefined || token === null) {
+    return '' + token;
+  }
+  
   if (token instanceof Array) {
     return '[' + token.map(stringify).join(', ') + ']'
   }
