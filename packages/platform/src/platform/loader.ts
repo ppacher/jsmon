@@ -1,7 +1,7 @@
 import {resolve, dirname} from 'path';
 import {readFileSync, existsSync} from 'fs';
 
-import {isPromiseLike} from '@homebot/core/utils';
+import {isPromiseLike, stringify} from '@homebot/core/utils';
 import {isExtenableError} from '@homebot/core/error';
 import {Logger} from '../log';
 
@@ -49,11 +49,18 @@ export interface BootstrapOptions {
 export class PlatformLoader {
     private _platformModuleCache: Map<string, PluginModule> = new Map();
     private _pluginCache: Map<string, Injector> = new Map();
+    private _log: Logger;
 
     constructor(private _injector: Injector,
                 private _deviceManager: DeviceManager,
                 private _pluginDirs: string[],
-                private _logger?: Logger) {
+                logger?: Logger) {
+                
+        if (!!logger) {
+            this._log = logger.createChild('loader');
+        } else {
+            this._log = new Logger(undefined, 'loader');
+        }
 
         // Make sure we have absolute paths for all pluginDirs
         this._pluginDirs = this._pluginDirs.map(dir => resolve(dir));
@@ -101,7 +108,7 @@ export class PlatformLoader {
         }
         
         (spec.devices || []).forEach(dev => {
-
+            this._log.debug(`creating device for ${dev.name} using ${stringify(dev.class)}`)
             let instance = this._deviceManager.setupDevice(dev.name, dev.class, dev.description || '', dev.providers || []);
             
             result.push(instance);
@@ -112,6 +119,7 @@ export class PlatformLoader {
                 ...(svc.providers || []),
                 svc.class
             ];
+            this._log.debug('creating service ${stringify(svc.class)}');
             let childInjector = injector.createChild(providers);
             
             let instance = childInjector.get(svc.class);
@@ -206,9 +214,12 @@ export class PlatformLoader {
                 try {
                     entryFile = this._getEntryFile(p);
                     
+                    this._log.debug(`${name} found at ${p}`);
+                    
                     return true;
                 } catch (err) {
                     errs.push(err);
+                    this._log.debug(`${name} tried path ${p}`)
                 }
             }
             
