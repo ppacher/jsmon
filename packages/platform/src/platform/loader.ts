@@ -21,11 +21,15 @@ import {
     Injector,
     Injectable,
     Provider,
+    Inject,
+    Optional,
     normalizeProvider
 } from '@homebot/core';
 import {DeviceManager, DeviceController} from '../devices';
 
 import * as errors from './errors';
+
+export const LOADER_PLUGIN_DIR = 'PlatformLoaderPluginDir';
 
 /**
  * @docs-internal
@@ -46,6 +50,7 @@ export interface BootstrapOptions {
     disableNodeModules?: boolean;
 }
 
+@Injectable()
 export class PlatformLoader {
     private _platformModuleCache: Map<string, PluginModule> = new Map();
     private _pluginCache: Map<string, Injector> = new Map();
@@ -53,8 +58,8 @@ export class PlatformLoader {
 
     constructor(private _injector: Injector,
                 private _deviceManager: DeviceManager,
-                private _pluginDirs: string[],
-                logger?: Logger) {
+                @Inject(LOADER_PLUGIN_DIR) @Optional() private _pluginDirs: string[] = [],
+                @Optional() logger?: Logger) {
                 
         if (!!logger) {
             this._log = logger.createChild('loader');
