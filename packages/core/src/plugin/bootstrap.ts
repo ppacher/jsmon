@@ -39,6 +39,10 @@ export function collectProviders(plugin: Type<any>, injector: Injector, visibili
             providers.add(p);
         }
     });
+    
+    desc.exports!.forEach(e => {
+        collectProviders(e, injector, visibility, providers, plugins);
+    });
 }
 
 export function getPluginDescriptor<T>(plugin: Type<T>): PluginDescriptor {
