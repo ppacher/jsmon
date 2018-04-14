@@ -31,7 +31,7 @@ export interface ProcedureCall {
 @Injectable()
 export class MqttService {
     private _client: Client;
-    
+    private _log: Logger; 
     private _connected: Subject<void> = new Subject();
     private _topics: Map<string, number> = new Map();
     private _messageCallbacks: Set<MessageHandler> = new Set();
@@ -42,13 +42,15 @@ export class MqttService {
 
     constructor(
         @Inject(MQTT_BROKER_URL) @Optional() private _url: string,
-        private _log: Logger,
+        log: Logger,
         @Inject(MQTT_CLIENT_CONNECT) @Optional() connectClient: MqttConnectFn = connect
     ) {
         this._client = connectClient(this._url);
+        
+        this._log = log.createChild('mqtt');
 
         this._client.on('connect', () => {
-            this._log.info(`[mqtt] successfully connected`);
+            this._log.info(`successfully connected`);
             this._connected.next();
         });
 

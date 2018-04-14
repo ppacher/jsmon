@@ -1,17 +1,10 @@
 import {Provider} from '@homebot/core';
 
 export const LoggingAdapter = 'HomebotLoggingAdapter';
+export type LogLevel = 'debug'|'info'|'warn'|'error';
 
 export interface LoggingAdapter {
-    log(level: string, msg: string, ...args: any[]): void;
-    
-    debug(msg: string, ...args: any[]): void;
-    
-    info(msg: string, ...args: any[]): void;
-    
-    warn(msg: string, ...args: any[]): void;
-    
-    error(msg: string, ...args: any[]): void;
+    log(level: LogLevel, name: string,msg: string, ...args: any[]): void;
 }
 
 export function useLoggingAdapter(l: LoggingAdapter): Provider {

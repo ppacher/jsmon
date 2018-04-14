@@ -8,7 +8,6 @@ export class MqttDeviceManagerAPI {
     constructor(
         private _manager: DeviceManager,
         private _api: MqttDeviceAPI,
-        private _log: Logger
     ){
         this._api.setupDiscoveryHandler(() => this._handleDiscoveryRequest());
         

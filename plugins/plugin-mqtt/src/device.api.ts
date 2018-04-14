@@ -1,5 +1,5 @@
 import {Injectable} from '@homebot/core';
-import {DeviceController, CommandSchema} from '@homebot/platform';
+import {Logger, DeviceController, CommandSchema} from '@homebot/platform';
 import * as api from '@homebot/platform/devices/api';
 
 import {Subscription} from 'rxjs/Subscription';
@@ -19,8 +19,11 @@ export class MqttDeviceAPI {
     private _discoveryHandler: DiscoveryHandler|null = null;
     private _discoverySubscription: Subscription|null = null;
     private _discoveryRequests: Observable<[string, Buffer]>;
+    private _log: Logger;
 
-    constructor(private _mqtt: MqttService) {
+    constructor(private _mqtt: MqttService, log: Logger) {
+        this._log = log.createChild('mqtt:device');
+        
         this._discoveryRequests = this._mqtt.subscribe('homebot/discovery');
     }
     
@@ -114,7 +117,7 @@ export class MqttDeviceAPI {
         const name = deviceOrName instanceof DeviceController ? deviceOrName.name : deviceOrName;
         const payload = JSON.stringify(value);
         
-        console.log(`[mqtt] publishing sensor value for ${name}.${sensor} => ${payload}`)
+        this._log.debug(`publishing sensor value for ${name}.${sensor}`)
 
         this._mqtt.publish(`homebot/device/${name}/sensor/${sensor}/value`, payload);
     }

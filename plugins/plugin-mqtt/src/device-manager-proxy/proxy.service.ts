@@ -9,11 +9,15 @@ import {toPromise} from 'rxjs/operator/toPromise';
 
 @Injectable()
 export class MqttDeviceManagerProxy {
+    private _log: Logger;
+
     constructor(
         private _api: MqttDeviceAPI,
         private _manager: DeviceManager,
-        private _log: Logger
+        log: Logger
     ) {
+        this._log = log.createChild('mqtt:device-proxy')
+        
         this._api.watchDeviceAnnouncements()
             .subscribe(device => this._handleDiscovery(device));
             
@@ -45,7 +49,7 @@ export class MqttDeviceManagerProxy {
                     name: cmd.name,
                     parameters: cmd.parameters as any,
                     handler: (params: Map<string, any>) => {
-                        this._log.info(`[mqtt] sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
+                        this._log.info(`sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
                         
                         return this._api.call(d.name, cmd.name, params);
                     }

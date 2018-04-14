@@ -122,8 +122,8 @@ export class PlatformLoader {
     }
     
     /**
-     * Try to find and load the NodeJS module that provides a given platfrom.
-     * If the platfrom has already been loaded it is returned from the cache
+     * Try to find and load the NodeJS module that provides a given platform.
+     * If the platform has already been loaded it is returned from the cache
      * 
      * @param name The name of the platform or plugin
      * @param disableNodeModule Whether or not native NodeJS module resolution should be used
@@ -180,7 +180,7 @@ export class PlatformLoader {
      * If the optional parameter `disableNodeModule` is set to true, native NodeJS module
      * resolution won't be used.
      * 
-     * @param name The name of the platfrom or plugin to search
+     * @param name The name of the platform or plugin to search
      */
     async _findModuleEntryPoint(name: string, disableNodeModules: boolean = false): Promise<string> {
         let nodeModulePath = null;
