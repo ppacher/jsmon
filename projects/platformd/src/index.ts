@@ -1,5 +1,5 @@
 import {App, bootstrapApp, Injector, } from '@homebot/core';
-import {PlatformLoader, DeviceManager, DeviceManagerModule, DeviceController, Logger} from '@homebot/platform';
+import {PlatformLoader, DeviceManager, DeviceController, Logger, PlatformModule} from '@homebot/platform';
 import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
 
 import {ConfigLoader, Config} from './config';
@@ -8,7 +8,7 @@ import * as minimist from 'minimist';
 
 @App({
     plugins: [
-        DeviceManagerModule,
+        PlatformModule,
         MqttPlugin,
         MqttDeviceApiPlugin,
     ],
