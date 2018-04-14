@@ -1,5 +1,5 @@
 import {Provider} from '@homebot/core';
-import {Device, Sensor, Command, ParameterType} from '@homebot/platform';
+import {Device, Sensor, Command, ParameterType, Logger} from '@homebot/platform';
 import {FireTV} from './firetv';
 import {FireTVState} from './states';
 
@@ -72,7 +72,7 @@ export class FireTVDevice {
         });
     }
 
-    constructor(private _config: FireTVConfig) {
+    constructor(private _config: FireTVConfig, private _log: Logger) {
         this._device = new FireTV(this._config.host);
 
         // TODO: we need to wait for the device to be connected
@@ -90,7 +90,7 @@ export class FireTVDevice {
                 startWith(-1),
                 switchMap(() => this._device.getPowerState()),
                 catchError(err => {
-                    console.log(`Error: ` + err);
+                    this._log.error(err);
                     return of(FireTVState.DISCONNECTED);
                 }),
             )       

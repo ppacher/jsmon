@@ -1,4 +1,4 @@
-import { Injectable, Type, Injector, Provider } from '@homebot/core';
+import { Optional, Injectable, Type, Injector, Provider } from '@homebot/core';
 import { isPromiseLike, isObservableLike, stringify } from '@homebot/core/utils';
 
 import {
@@ -11,6 +11,7 @@ import {
     getPropertyMetadata
 } from './device';
 import {DeviceController} from './device-controller';
+import {Logger} from '../log';
 
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
@@ -110,7 +111,13 @@ export class DeviceManager {
             .takeUntil(this.onDeviceUnregistration([device]));
     }
     
-    constructor(private _injector: Injector) {} 
+    constructor(private _injector: Injector, @Optional() private _logger?: Logger) {
+        if (!this._logger) {
+            this._logger = new Logger(undefined, 'device');
+        } else {
+            this._logger = this._logger.createChild('device');
+        }
+    } 
     
     /**
      * Setup and register a new device controller
@@ -124,7 +131,7 @@ export class DeviceManager {
     setupDevice<T>(name: string, deviceClass: Type<T>, description?: string, providers?: Provider|Provider[], parentInjector?: Injector): DeviceController<T> {
         const metadata = getDeviceMetadata(deviceClass);
         const commands = getPropertyMetadata(deviceClass);
-        const injector = this._setupDeviceInjector(deviceClass, providers || [], parentInjector); 
+        const injector = this._setupDeviceInjector(name, deviceClass, providers || [], parentInjector); 
         
         description = description || (metadata.description || '');
         
@@ -212,11 +219,16 @@ export class DeviceManager {
         this.unregisterDeviceController(def);
     }
     
-    private _setupDeviceInjector(deviceClass: Type<any>, providers: Provider|Provider[], parentInjector: Injector = this._injector): Injector {
+    private _setupDeviceInjector(name: string, deviceClass: Type<any>, providers: Provider|Provider[], parentInjector: Injector = this._injector): Injector {
         if (!Array.isArray(providers)) {
             providers = [providers];
         }
         
-        return new Injector([...providers, deviceClass], this._injector);
+        let logger = {
+            provide: Logger,
+            useValue: this._logger!.createChild(name)
+        }
+        
+        return new Injector([...providers, deviceClass, logger], this._injector);
     }
 }

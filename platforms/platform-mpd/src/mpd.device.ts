@@ -1,5 +1,5 @@
 import {Inject} from '@homebot/core';
-import {Device, Command, Sensor, ParameterType} from '@homebot/platform';
+import {Logger, Device, Command, Sensor, ParameterType} from '@homebot/platform';
 import {MPD_CONFIG, MPDConfig} from './config';
 
 //import {Observable, BehaviorSubject} from 'rxjs/Rx';
@@ -68,8 +68,7 @@ export class MPDDevice {
         return this._status.asObservable()
             .map(status => status  ? status.elapsed : -1)
             .map(val => isNaN(val) ? -1 : val)
-            .distinctUntilChanged()
-            .do(elapsed => console.log(`New elapsed: ${elapsed}`));
+            .distinctUntilChanged();
     }
 
     @Command({
@@ -133,8 +132,7 @@ export class MPDDevice {
         return this._mpd.playback.pause(false);
     }
     
-    
-    constructor(@Inject(MPD_CONFIG) private _config: MPDConfig) {
+    constructor(@Inject(MPD_CONFIG) private _config: MPDConfig, private _log: Logger) {
         this._mpd = new mpc.MPC();
         
         this._mpd.on('changed', (subsystems: string[]) => {
@@ -151,10 +149,10 @@ export class MPDDevice {
             // Initiate connection
             this._mpd.connectTCP(this._config.address, this._config.port)
                 .then(() => {
-                    console.info('Successfully connected to MPD');
+                    this._log.info('Successfully connected to MPD');
                 })
                 .catch(err => {
-                    console.warn('Failed to connect to MPD: ', err.message || err);
+                    this._log.warn('Failed to connect to MPD: ', err.message || err);
                 });
         };
         
@@ -194,7 +192,6 @@ export class MPDDevice {
         subsystems.forEach(sys => {
             switch(sys) {
                 case 'player':
-                    console.log(`Player change`);
                     this._handlePlayerChange();
                     this._updateStatus();
                     return;

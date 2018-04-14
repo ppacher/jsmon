@@ -8,8 +8,8 @@ export class Logger {
     private _parent: Logger|undefined;
     
     constructor(
-        @Inject(LoggingAdapter) @Optional() private _adapter: LoggingAdapter,
-        @Optional() private _name: string = '(root)',
+        @Inject(LoggingAdapter) @Optional() private _adapter?: LoggingAdapter,
+        @Optional() private _name?: string,
     ) {
         if (!this._adapter) {
             this._adapter = new ConsoleAdapter();
@@ -20,7 +20,7 @@ export class Logger {
     
     /** Log a message given a log level */
     log(level: LogLevel, msg: string, ...args: any[]): void {
-        this._adapter.log(level, this._fullName, msg, ...args);
+        this._adapter!.log(level, this._fullName, msg, ...args);
     }
     
     /** Print an info message */
@@ -49,7 +49,10 @@ export class Logger {
         let log: Logger|undefined = this;
 
         while(!!log && log instanceof Logger) {
-            names.push(log.getOwnName());
+            let name = log.getOwnName();
+            if (name !== undefined) {
+                names.push(name);
+            } 
             
             log = log._parent;
         }
@@ -57,12 +60,14 @@ export class Logger {
         return names.reverse().join('.');
     }
     
-    protected getOwnName(): string {
+    protected getOwnName(): string|undefined {
         return this._name;
     }
     
     protected setParent(parent: Logger): this {
         this._parent = parent;
+        
+        this._fullName = this.getName();
         
         return this;
     }
