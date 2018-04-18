@@ -40,7 +40,7 @@ export class Injector {
     
     constructor(providers: Provider|Provider[], private parent?: Injector) {
         if (!!parent) {
-            parent._registerDisposeFn(this._disposeHandler);
+            parent.addOnDispose(this._disposeHandler);
         }
         
         this._provide(providers);
@@ -64,7 +64,7 @@ export class Injector {
     public dispose(): void {
         // unregister our dispose handler from the parent injector
         if (!!this.parent) {
-            this.parent._unregisterDesponseFn(this._disposeHandler);
+            this.parent.delOnDispose(this._disposeHandler);
         }
         
         // call all dispose callbacks
@@ -237,11 +237,11 @@ export class Injector {
         return `Injector(providers=${s})`;
     }
     
-    protected _registerDisposeFn(fn: DisposeCallback): void {
+    addOnDispose(fn: DisposeCallback): void {
         this._disposeFns.push(fn);
     }
     
-    protected _unregisterDesponseFn(fn: DisposeCallback): void {
+    delOnDispose(fn: DisposeCallback): void {
         let idx = this._disposeFns.indexOf(fn);
         
         if (idx > -1) {
