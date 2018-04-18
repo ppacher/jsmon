@@ -17,7 +17,8 @@ import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 
 import {_throw} from 'rxjs/observable/throw';
-import 'rxjs/add/operator/takeUntil';
+
+import {filter, takeUntil} from 'rxjs/operators';
 
 const _BASE_URL = '/devices';
 
@@ -58,7 +59,7 @@ export class DeviceManager {
      */
     onDeviceRegistration(devices: string[]): Observable<DeviceController> {
         return this.registrations
-            .filter(dev => devices.includes(dev.name));
+            .pipe(filter(dev => devices.includes(dev.name)));
     }
     
     /** 
@@ -69,7 +70,7 @@ export class DeviceManager {
      */
     onDeviceUnregistration(devices: string[]): Observable<DeviceController> {
         return this.unregistrations
-            .filter(dev => devices.includes(dev.name));
+            .pipe(filter(dev => devices.includes(dev.name)));
     }
     
     /**
@@ -88,7 +89,7 @@ export class DeviceManager {
         }
         
         return dev.watchSensors()
-            .takeUntil(this.onDeviceUnregistration([device]));
+            .pipe(takeUntil(this.onDeviceUnregistration([device])));
     }
     
     /**
@@ -108,7 +109,7 @@ export class DeviceManager {
         }
         
         return dev.watchSensor(sensor)
-            .takeUntil(this.onDeviceUnregistration([device]));
+            .pipe(takeUntil(this.onDeviceUnregistration([device])));
     }
     
     constructor(private _injector: Injector, @Optional() private _logger?: Logger) {
