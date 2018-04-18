@@ -18,10 +18,20 @@ import * as minimist from 'minimist';
 })
 export class PlatformDaemon {
     constructor(private _device: DeviceManager,
-                private _injector: Injector) {
+                private _injector: Injector,
+                private _logger: Logger) {
         
         let args = minimist(process.argv.slice(2));
         let cfg = this.loadConfig(args.config);
+        
+        if (!!args['log-level']) {
+            if (!['debug','info','warn','error'].includes(args['log-level'])) {
+                throw new Error(`invalid log level. expected debug, info, warn or error. Got ${args['log-level']}`);
+            }
+            
+            this._logger.info('Setting log-level to ' + args['log-level']);
+            this._logger.setLogLevel(args['log-level']);
+        }
         
         let loader = new PlatformLoader(this._injector, this._device, cfg.pluginDirs());
         
@@ -35,9 +45,9 @@ export class PlatformDaemon {
                 .then(instances => {
                     instances.forEach(instance => {
                         if (instance instanceof DeviceController) {
-                            console.log(`${platform} -> ${feature.type}: Create device with name "${instance.name}"`);
+                            this._logger.info(`${platform} -> ${feature.type}: Create device with name "${instance.name}"`);
                         } else {
-                            console.log(`${platform} -> ${feature.type}: Create service ${instance.constructor.name}`);
+                            this._logger.info(`${platform} -> ${feature.type}: Create service ${instance.constructor.name}`);
                         }
                     })
                 });;

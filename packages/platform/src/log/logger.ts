@@ -2,10 +2,18 @@ import {Injectable, Inject, Optional} from '@homebot/core';
 import {LoggingAdapter, LogLevel} from './adapter';
 import {ConsoleAdapter} from './console.adapter';
 
+enum Levels {
+    debug,
+    info,
+    warn,
+    error,
+};
+
 @Injectable()
 export class Logger {
     private _fullName: string;
     private _parent: Logger|undefined;
+    private _levels: LogLevel|undefined;
     
     constructor(
         @Inject(LoggingAdapter) @Optional() private _adapter?: LoggingAdapter,
@@ -18,8 +26,16 @@ export class Logger {
         this._fullName = this.getName();
     }
     
+    setLogLevel(level: LogLevel) {
+        this._levels = level;
+    }
+    
     /** Log a message given a log level */
     log(level: LogLevel, msg: string, ...args: any[]): void {
+        if (!this.canLog(level)) {
+            return;
+        }
+        
         this._adapter!.log(level, this._fullName, msg, ...args);
     }
     
@@ -70,6 +86,22 @@ export class Logger {
         this._fullName = this.getName();
         
         return this;
+    }
+    
+    canLog(level: LogLevel): boolean {
+        if (this._levels === undefined && !!this._parent) {
+            return this._parent.canLog(level); 
+        }
+        
+        let l: LogLevel;
+        if (this._parent === undefined && this._levels === undefined) {
+            l = 'info';
+        } else {
+            l = this._levels!;
+        }
+
+        let idx = Levels[level];
+        return idx >= Levels[l];
     }
     
     /**
