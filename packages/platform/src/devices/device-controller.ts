@@ -1,6 +1,7 @@
 import {Observable} from 'rxjs/Observable';
 import {Subscription} from 'rxjs/Subscription';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+import {Subject} from 'rxjs/Subject';
 import {_throw} from 'rxjs/observable/throw';
 import {fromPromise} from 'rxjs/observable/fromPromise';
 import {of} from 'rxjs/observable/of';
@@ -9,15 +10,7 @@ import {Injector, OnDestroy} from '@homebot/core';
 
 import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, SensorSchema, SensorProvider} from './device';
 
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/do';
-
-// BUG(ppacher): we need to include rx operators in homebot/common
-// including them in example doesn't work -_-
-import 'rxjs/add/operator/distinctUntilChanged';
-import 'rxjs/add/operator/debounceTime';
-import 'rxjs/add/operator/combineLatest';
-import 'rxjs/add/operator/filter';
+import {map, distinctUntilChanged, debounceTime, takeUntil} from 'rxjs/operators';
 
 /**
  * @class Device
@@ -29,7 +22,7 @@ import 'rxjs/add/operator/filter';
 export class DeviceController<T = any> implements OnDestroy {
     private _health: BehaviorSubject<DeviceHealthState> = new BehaviorSubject<DeviceHealthState>(DeviceHealthState.Unknown);
     private _sensorValues: BehaviorSubject<{[key:string]: any}> = new BehaviorSubject<{[key:string]:any}>({});
-    private _subscription: Subscription;
+    private _destroy: Subject<void> = new Subject();
 
     constructor(
         /** The name of the device */
@@ -51,24 +44,24 @@ export class DeviceController<T = any> implements OnDestroy {
         private _description: string = '',
     ) {
         /** Subscribe to health values */
-        this._subscription = this._checkHealth()
+        this._checkHealth()
+            .pipe(takeUntil(this._destroy))
             .subscribe(state => this._health.next(state));
         
         this._sensors
             .forEach(sensor => {
                 let sensorSubcription = sensor.onChange
+            .pipe(takeUntil(this._destroy))
                     .subscribe(value => {
                         this._updateSensorValue(sensor, value);
                     });
                     
-                this._subscription.add(sensorSubcription);
             });    
     }
     
     onDestroy() {
-        if (!!this._subscription) {
-            this._subscription.unsubscribe();
-        }
+        this._destroy.next();
+        this._destroy.complete();
     }
     
     dispose(): void {
@@ -123,8 +116,11 @@ export class DeviceController<T = any> implements OnDestroy {
 
     watchSensors(): Observable<{[key: string]: any}> {
         return this._sensorValues.asObservable()
-            .distinctUntilChanged()
-            .debounceTime(100);
+            .pipe(
+                takeUntil(this._destroy),
+                distinctUntilChanged(),
+                debounceTime(100)
+            );
     }
     
     watchSensor(name: string): Observable<any> {
@@ -133,9 +129,12 @@ export class DeviceController<T = any> implements OnDestroy {
         }
         
         return this.watchSensors()
-            .map(values => values[name])
-            .distinctUntilChanged()
-            .debounceTime(100);
+            .pipe(
+                takeUntil(this._destroy),
+                map(values => values[name]),
+                distinctUntilChanged(),
+                debounceTime(100),
+            );
     }
     
     getSensorValues(): {[key: string]: any} {
