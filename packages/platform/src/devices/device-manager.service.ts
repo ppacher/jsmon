@@ -1,4 +1,4 @@
-import { Optional, Injectable, Type, Injector, Provider } from '@homebot/core';
+import { Optional, Injectable, Type, Injector, Provider, isDestroyable } from '@homebot/core';
 import { isPromiseLike, isObservableLike, stringify } from '@homebot/core/utils';
 
 import {
@@ -162,7 +162,9 @@ export class DeviceManager {
                 };
             });
         
-        const controller = new DeviceController(name, instance, commandSchemas, sensorProviders, undefined, description);
+        const controller = new DeviceController(name, instance, commandSchemas, sensorProviders, injector, undefined, description);
+        
+        injector.addOnDispose(() => this._disposeController(controller));
         
         this.registerDeviceController(controller);
 
@@ -217,6 +219,15 @@ export class DeviceManager {
      */
     deregisterDeviceController(def: DeviceController|string): void {
         this.unregisterDeviceController(def);
+    }
+    
+    private _disposeController(def: DeviceController): void {
+        try { this.unregisterDeviceController(def); } 
+            catch(err) {}
+
+        if (isDestroyable(def)) {
+            def.onDestroy();
+        }
     }
     
     private _setupDeviceInjector(name: string, deviceClass: Type<any>, providers: Provider|Provider[], parentInjector: Injector = this._injector): Injector {

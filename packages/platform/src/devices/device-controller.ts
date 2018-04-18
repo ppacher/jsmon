@@ -1,10 +1,11 @@
 import {Observable} from 'rxjs/Observable';
+import {Subscription} from 'rxjs/Subscription';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {_throw} from 'rxjs/observable/throw';
 import {fromPromise} from 'rxjs/observable/fromPromise';
-import {subscribeOn} from 'rxjs/operator/subscribeOn';
 import {of} from 'rxjs/observable/of';
 import {isPromiseLike} from '@homebot/core/utils/utils';
+import {Injector, OnDestroy} from '@homebot/core';
 
 import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, SensorSchema, SensorProvider} from './device';
 
@@ -25,10 +26,11 @@ import 'rxjs/add/operator/filter';
  * Describes how the device manager should handle and register commands
  * of a device
  */
-export class DeviceController<T = any> {
+export class DeviceController<T = any> implements OnDestroy {
     private _health: BehaviorSubject<DeviceHealthState> = new BehaviorSubject<DeviceHealthState>(DeviceHealthState.Unknown);
     private _sensorValues: BehaviorSubject<{[key:string]: any}> = new BehaviorSubject<{[key:string]:any}>({});
-    
+    private _subscription: Subscription;
+
     constructor(
         /** The name of the device */
         public readonly name: string,
@@ -40,6 +42,8 @@ export class DeviceController<T = any> {
         
         private _sensors: SensorProvider[],
         
+        private _injector: Injector,
+        
         /** An optional health check function, defaults to DeviceHealthState.Unknown */
         private _checkHealth: HealthCheck = () => of(DeviceHealthState.Unknown),
         
@@ -47,7 +51,7 @@ export class DeviceController<T = any> {
         private _description: string = '',
     ) {
         /** Subscribe to health values */
-        this._checkHealth()
+        this._subscription = this._checkHealth()
             .subscribe(state => this._health.next(state));
         
         this._sensors
@@ -56,9 +60,21 @@ export class DeviceController<T = any> {
                     .subscribe(value => {
                         this._updateSensorValue(sensor, value);
                     });
-            });
+                    
+                this._subscription.add(sensorSubcription);
+            });    
     }
     
+    onDestroy() {
+        if (!!this._subscription) {
+            this._subscription.unsubscribe();
+        }
+    }
+    
+    dispose(): void {
+        this._injector.dispose();
+    }
+
     /**
      * Executes a command with the provided arguments and returns
      * and observable that emits the results when available
