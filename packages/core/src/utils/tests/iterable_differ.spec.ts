@@ -151,6 +151,11 @@ describe('IterableDiffer', () => {
                 expect(changed[0].item.value).toBe('foo');
                 expect(changed[0].trackById).toBe(2);
             });
+            
+            it('should return null when nothing changed', () => {
+                differ.diff([a, b]);
+                expect(differ.diff([a, b])).toBeNull();
+            })
         })
     });
 })
