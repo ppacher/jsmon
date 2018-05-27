@@ -18,6 +18,10 @@ export interface IterableChanges<T> {
     forEachNewIdentity(cb: (record: IterableChangeRecord<T>) => void): void;
     forEachDeletedIdentity(cb: (record: IterableChangeRecord<T>) => void): void;
     forEachRecord(cb: (record: IterableChangeRecord<T>, index: number) => void): void;
+    
+    countNewIdentities(): number;
+    countDeletedIdentities(): number;
+    countChangedIdentities(): number;
 }
 
 export interface IterableDiffer<T> {
@@ -97,6 +101,18 @@ class IterableDiffer_<T> implements IterableDiffer<T>, IterableChanges<T>{
 
     forEachRecord(cb: (record: IterableChangeRecord<T>, index: number) => void) {
         this._records.forEach((record, idx) => cb(record, idx));
+    }
+    
+    countNewIdentities(): number {
+        return this._new.length;
+    }
+    
+    countDeletedIdentities(): number {
+        return this._deleted.length;
+    }
+    
+    countChangedIdentities(): number {
+        return this._changed.length;
     }
     
     private _reset() {
