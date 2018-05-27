@@ -52,3 +52,14 @@ export function isPromiseLike<T>(value: any): value is Promise<T> {
 
   return 'then' in value.prototype && 'catch' in value.prototype
 }
+
+export function iterableForEach<T>(iterable: Iterable<T>|Array<T>, cb: (item: T, idx: number) => void) {
+    let arr: Array<T>;
+    if (Array.isArray(iterable)) {
+      arr = iterable;
+    } else {
+      arr = [...iterable];
+    }
+    
+    arr.forEach((value, idx) => cb(value, idx));
+}
