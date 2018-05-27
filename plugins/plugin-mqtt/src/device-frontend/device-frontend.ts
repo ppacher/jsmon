@@ -3,6 +3,8 @@ import {DeviceManager, DeviceController, SensorSchema, Logger} from '@homebot/pl
 import * as api from '@homebot/platform/devices/api';
 import {MqttDeviceAPI} from '../device.api';
 
+import {filter, takeUntil} from 'rxjs/operators';
+
 @Injectable()
 export class MqttDeviceManagerAPI {
     constructor(
@@ -17,12 +19,12 @@ export class MqttDeviceManagerAPI {
 
     private _setupDevice(d: DeviceController): void {
         const until = this._manager.unregistrations
-            .filter(u => u.name === d.name);
+            .pipe(filter(u => u.name === d.name));
 
         d.getSensorSchemas()
             .forEach(s => {
                 d.watchSensor(s.name)
-                    .takeUntil(until)
+                    .pipe(takeUntil(until))
                     .subscribe(value => this._publishSensor(d, s.name, value));
             });
             
