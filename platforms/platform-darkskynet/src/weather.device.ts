@@ -1,8 +1,9 @@
-import {Device, Sensor, ParameterType} from '@homebot/platform';
+import {Optional} from '@homebot/core';
+import {Device, Sensor, ParameterType, Logger} from '@homebot/platform';
 import {DarkSkyWeatherService} from './weather.service';
 import {Observable} from 'rxjs/Observable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {flatMap, share, filter, startWith, catchError, map} from 'rxjs/operators';
+import {tap, flatMap, share, filter, startWith, catchError, map} from 'rxjs/operators';
 import {interval} from 'rxjs/observable/interval';
 import {of} from 'rxjs/observable/of';
 import { WeatherResponse } from './data';
@@ -48,20 +49,40 @@ export class DarkSkyWeatherDevice {
     @Sensor({name: 'visibility', type: ParameterType.Number})
     readonly visibility = get(this._updates, r => r.currently.visibility);
     
-    constructor(private _weather: DarkSkyWeatherService) {}
+    constructor(private _weather: DarkSkyWeatherService,
+                @Optional() private _log: Logger) {
+
+        if (!!this._log) {
+            this._log.debug(`weather device initialized`);
+        }
+    }
 
     private _setup(): Observable<WeatherResponse> {
         const fetch = this._weather.fetch()
                 .pipe(
-                    catchError(err => of(new Error(err))),
-                    // TODO: add logging for errors
+                    catchError(err => {
+                        if (!!this._log) {
+                            this._log.error(`Failed to fetch weather information: `, err);
+                        }
+                        return of(new Error(err));
+                    }),
                     filter(res => !(res instanceof Error))
                 ) as Observable<WeatherResponse>;
 
         return interval(30 * 60 * 1000) // every 30 minutes
             .pipe(
                 startWith(-1), // start instant
+                tap(() => {
+                    if (!!this._log) {
+                        this._log.debug(`updating weather information`);
+                    }
+                }),
                 flatMap(() => fetch), // load data and discard/filter errors
+                tap(res => {
+                    if (!!this._log) {
+                        this._log.debug(`received weather data for ${res.latitude}, ${res.longitude}`);
+                    }
+                }),
                 share() // share the observable so we only load the data once for all subscriptions
                         // and as long as there is at least one subscriber
             );

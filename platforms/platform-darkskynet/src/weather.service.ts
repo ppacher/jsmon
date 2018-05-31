@@ -5,7 +5,7 @@ import {get, Response} from 'request';
 
 import {WeatherResponse} from './data';
 
-import {map, tap} from 'rxjs/operators';
+import {map} from 'rxjs/operators';
 
 export interface Location {
     latitude: number;
@@ -73,7 +73,6 @@ export class DarkSkyWeatherService {
                 return cb(err, parsed);
             });
         });
-
         return fetch(url);
     }
     
