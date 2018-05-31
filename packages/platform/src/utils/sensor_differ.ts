@@ -36,6 +36,15 @@ class SensorDiff_ implements SensorDiff {
     }
 }
 
+/**
+ * Calculates differences between two {@link SensorSchema}s
+ * 
+ * Note that the name of the sensor schemas is not allowed to change and
+ * must be the same (Otherwise you are probably comparing two independed sensor schemas)
+ * 
+ * @param oldSensor The old sensor schema
+ * @param newSensor The new sensor schema
+ */
 export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema): SensorDiff|null {
     // the name of the sensor is not allowed to change
     if (oldSensor.name !== newSensor.name) {
@@ -59,6 +68,9 @@ export function SensorTrackByFunction(idx: number, sensor: SensorSchema): any {
     return sensor.name;
 }
 
+/**
+ * Contains changes between two sets of {@link SensorSchema}s
+ */
 export interface IterableSensorChanges {
     /**
      * Invokes the provided callback function for each new sensor
@@ -76,6 +88,9 @@ export interface IterableSensorChanges {
     forEachChangedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void;
 }
 
+/**
+ * Tracks changes between sets of {@link SensorSchema}s
+ */
 export interface IterableSensorDiffer {
     /**
      * Searches for differences witihn the SensorSchema iterable.
@@ -134,6 +149,10 @@ class IterableSensorDiffer_ implements IterableSensorChanges, IterableSensorDiff
     }
 }
 
+/**
+ * Creates a new {@link IterableSensorDiffer} that can be used to track
+ * changes to a list of {@link SensorSchema}s
+ */
 export function createIterableSensorDiffer(): IterableSensorDiffer {
     return new IterableSensorDiffer_();
 }
