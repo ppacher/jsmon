@@ -51,7 +51,7 @@ export class DeviceController<T = any> implements OnDestroy {
         this._sensors
             .forEach(sensor => {
                 let sensorSubcription = sensor.onChange
-            .pipe(takeUntil(this._destroy))
+                    .pipe(takeUntil(this._destroy))
                     .subscribe(value => {
                         this._updateSensorValue(sensor, value);
                     });

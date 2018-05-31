@@ -3,6 +3,10 @@ import {iterableForEach} from '../utils';
 /**
  * TrackByFunction is used track changes to interables
  * it should return unique and constant IDs for iterable entries
+ * 
+ * Returning different IDs for the same entry will cause the {@link IterableDiffer}
+ * to mark it as deleted and new. When the same ID is returned it will check if
+ * the object itself is new and mark it as changed accordingly.
  */
 export interface TrackByFunction<T> {
     (index: number, obj: T): any;
