@@ -142,9 +142,10 @@ class IterableSensorDiffer_ implements IterableSensorChanges, IterableSensorDiff
     forEachChangedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void {
         this._changes!.forEachIdentityChanged((schema, oldSensor) => {
             let diff = getSensorDiff(oldSensor, schema.item);
-            let record = new IterableSensorChangeRecord(schema.trackById, diff!);
-            
-            cb(record);
+            if (!!diff) {
+                let record = new IterableSensorChangeRecord(schema.trackById, diff);
+                cb(record);
+            }
         });
     }
 }
