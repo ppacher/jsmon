@@ -4,7 +4,7 @@ import * as api from '@homebot/platform/devices/api';
 import {MqttDeviceAPI} from '../device.api';
 
 import {_throw} from 'rxjs/observable/throw';
-import {map, catchError, publishBehavior} from 'rxjs/operators';
+import {map, catchError, shareReplay, startWith} from 'rxjs/operators';
 import {toPromise} from 'rxjs/operator/toPromise';
 
 @Injectable()
@@ -75,7 +75,8 @@ export class MqttDeviceManagerProxy {
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
                         .pipe(
-                            publishBehavior(sensor.value)
+                            startWith(sensor.value),
+                            shareReplay(1)
                         )
                 }
             }),
