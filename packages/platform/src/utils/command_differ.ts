@@ -57,6 +57,10 @@ export interface ParameterDiffer {
     diff(parameters: {[name: string]: ParameterDefinition|ParameterType[]}): ParameterChanges|null;
 }
 
+export interface CommandDiffer {
+    diff(cmd: CommandSchema): CommandChanges|null;
+}
+
 function ParameterTrackByFunction(idx: number, [name, defintion]: Parameter) {
     return name;
 } 
@@ -136,8 +140,65 @@ class ParameterDiffer_ implements ParameterDiffer, ParameterChanges {
     }
 }
 
+class CommandDiffer_ implements CommandDiffer, CommandChanges {
+    private _paramDiffer = createParameterDiffer();
+    private _lastParamDiff: ParameterChanges|null = null;
+    private _hasDescriptionChanged: boolean = false;
+    private _lastCommand: CommandSchema|null = null;
+
+    diff(cmd: CommandSchema): CommandChanges|null {
+        this._reset();
+        
+        this._hasDescriptionChanged = (this._lastCommand ? this._lastCommand.description : null) === cmd.description;
+        this._lastParamDiff = this._paramDiffer.diff(cmd.parameters);
+        
+        this._lastCommand = cmd;
+        
+        if (this._lastParamDiff === null && !this._hasDescriptionChanged) {
+            return null;
+        }
+
+        return this;
+    }
+    
+    hasDescriptionChanged(): boolean {
+        return this._hasDescriptionChanged;
+    }
+    
+    hasParametersChanged(): boolean {
+        return this._lastParamDiff !== null;
+    }
+    
+    forEachNewParameter(cb: (record: ParameterChangeRecord)=>void): void {
+        if (!!this._lastParamDiff) {
+            this._lastParamDiff.forEachNewParameter(cb);
+        }
+    }
+    
+    forEachChangedParameter(cb: (record: ParameterChangeRecord, old: ParameterDefinition|ParameterType[])=>void): void {
+        if (!!this._lastParamDiff) {
+            this._lastParamDiff.forEachChangedParameter(cb);
+        }
+    }
+    
+    forEachDeletedParameter(cb: (record: ParameterChangeRecord)=>void): void {
+        if (!!this._lastParamDiff) {
+            this._lastParamDiff.forEachDeletedParameter(cb);
+        }
+    }
+    
+    private _reset() {
+        this._hasDescriptionChanged = false;
+        this._lastParamDiff = null;
+    }
+}
+
 export function createParameterDiffer(): ParameterDiffer {
     return new ParameterDiffer_();
+}
+
+export function createCommandDiffer(): CommandDiffer {
+    return new CommandDiffer_();
 }
 
 function isParameterDefintion(v: ParameterDefinition|ParameterType[]): v is ParameterDefinition {
