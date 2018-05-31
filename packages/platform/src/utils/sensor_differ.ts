@@ -1,7 +1,7 @@
 import {IterableDiffer, IterableChangeRecord, IterableChanges, createIterableDiffer} from '@homebot/core';
 import {SensorSchema} from '../devices';
 
-export interface SensorDiff {
+export interface SensorChanges {
     /** Wether or not the sensor description has changed */
     hasDescriptionChanged(): boolean;
 
@@ -12,7 +12,7 @@ export interface SensorDiff {
     getSchema(): SensorSchema;
 }
 
-class SensorDiff_ implements SensorDiff {
+class SensorChanges_ implements SensorChanges {
     constructor(
         private _hasDescriptionChanged: boolean,
         private _hasTypeChanged: boolean,
@@ -45,7 +45,7 @@ class SensorDiff_ implements SensorDiff {
  * @param oldSensor The old sensor schema
  * @param newSensor The new sensor schema
  */
-export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema): SensorDiff|null {
+export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema): SensorChanges|null {
     // the name of the sensor is not allowed to change
     if (oldSensor.name !== newSensor.name) {
         throw new Error(`Cannot diff sensors with different names`);
@@ -55,7 +55,7 @@ export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema):
     let typeChanged = oldSensor.type !== newSensor.type;
     
     if (descriptionChanged || typeChanged) {
-        return new SensorDiff_(descriptionChanged, typeChanged, newSensor);
+        return new SensorChanges_(descriptionChanged, typeChanged, newSensor);
     }
     
     return null;
@@ -75,17 +75,17 @@ export interface IterableSensorChanges {
     /**
      * Invokes the provided callback function for each new sensor
      */
-    forEachNewSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void;
+    forEachNewSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void;
     
     /**
      * Invokes the provided callback function for each deleted sensor
      */
-    forEachDeletedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void;
+    forEachDeletedSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void;
     
     /**
      * Invokes the provided callback function for each changed/updated sensor
      */
-    forEachChangedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void;
+    forEachChangedSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void;
 }
 
 /**
@@ -99,10 +99,10 @@ export interface IterableSensorDiffer {
     diff(sensors: Iterable<SensorSchema>|SensorSchema[]): IterableSensorChanges|null;
 }
 
-class IterableSensorChangeRecord implements IterableChangeRecord<SensorDiff> {
+class IterableSensorChangeRecord implements IterableChangeRecord<SensorChanges> {
     constructor(
         public readonly trackById: any,
-        public readonly item: SensorDiff
+        public readonly item: SensorChanges
     ) {}
 }
 
@@ -121,25 +121,25 @@ class IterableSensorDiffer_ implements IterableSensorChanges, IterableSensorDiff
         return this;
     }
     
-    forEachNewSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void {
+    forEachNewSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void {
         this._changes!.forEachNewIdentity(schema => {
-            let diff = new SensorDiff_(false, false, schema.item);
+            let diff = new SensorChanges_(false, false, schema.item);
             let record = new IterableSensorChangeRecord(schema.trackById, diff);
             
             cb(record);
         });
     }
     
-    forEachDeletedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void {
+    forEachDeletedSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void {
         this._changes!.forEachDeletedIdentity(schema => {
-            let diff = new SensorDiff_(false, false, schema.item);
+            let diff = new SensorChanges_(false, false, schema.item);
             let record = new IterableSensorChangeRecord(schema.trackById, diff);
             
             cb(record);
         });
     }
     
-    forEachChangedSensor(cb: (record: IterableChangeRecord<SensorDiff>)=>void): void {
+    forEachChangedSensor(cb: (record: IterableChangeRecord<SensorChanges>)=>void): void {
         this._changes!.forEachIdentityChanged((schema, oldSensor) => {
             let diff = getSensorDiff(oldSensor, schema.item);
             if (!!diff) {
