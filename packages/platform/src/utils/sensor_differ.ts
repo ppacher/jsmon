@@ -56,11 +56,7 @@ export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema):
  * a {@link @homebot/core:TrackByFunction} for {@link SensorSchema}
  */
 export function SensorTrackByFunction(idx: number, sensor: SensorSchema): any {
-    let escape = (s: string) => {
-        return s.replace(':', '\:');
-    }
-    
-    return `${escape(sensor.name)}:${escape(sensor.description||'')}:${sensor.type}`;
+    return sensor.name;
 }
 
 export interface IterableSensorChanges {
