@@ -156,6 +156,10 @@ class CommandDiffer_ implements CommandDiffer, CommandChanges {
     private _lastCommand: CommandSchema|null = null;
 
     diff(cmd: CommandSchema): CommandChanges|null {
+        if (!!this._lastCommand && cmd.name !== this._lastCommand.name) {
+            throw new Error(`Cannot diff command with different names`);
+        }
+        
         this._reset();
         
         this._hasDescriptionChanged = (this._lastCommand ? this._lastCommand.description : null) === cmd.description;
