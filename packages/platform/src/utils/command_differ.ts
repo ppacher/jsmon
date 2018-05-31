@@ -68,8 +68,11 @@ function ParameterTrackByFunction(idx: number, [name, defintion]: Parameter) {
 class ParameterDiffer_ implements ParameterDiffer, ParameterChanges {
     private _iterableParameterDiffer = createIterableDiffer(ParameterTrackByFunction);
     private _changes: IterableChanges<Parameter>|null = null;
+    private _parameterChangeRecord: [ParameterChangeRecord, ParameterDefinition|ParameterType[]][] = [];
 
     diff(params: {[name: string]: ParameterDefinition|ParameterType[]}): ParameterChanges|null {
+        this._parameterChangeRecord = [];
+
         let iterable = Object.keys(params).map(key => ([key, params[key]])) as Parameter[];
         
         this._changes = this._iterableParameterDiffer.diff(iterable);
@@ -78,22 +81,6 @@ class ParameterDiffer_ implements ParameterDiffer, ParameterChanges {
             return null;
         }
 
-        return this;
-    }
-    
-    forEachNewParameter(cb: (record: ParameterChangeRecord)=>void): void {
-        this._changes!.forEachNewIdentity(record => {
-            cb(new ParameterChangeRecord_(record.trackById, record.item[0], record.item[1]));
-        })
-    }
-    
-    forEachDeletedParameter(cb: (record: ParameterChangeRecord)=>void): void {
-        this._changes!.forEachDeletedIdentity(record => {
-            cb(new ParameterChangeRecord_(record.trackById, record.item[0], record.item[1]));
-        })
-    }
-    
-    forEachChangedParameter(cb: (record: ParameterChangeRecord, old: ParameterDefinition|ParameterType[])=>void): void {
         // since we are mapping all object keys to {@link Parameter} we 
         // will get all parameters as "changed"
         this._changes!.forEachIdentityChanged((record, old) => {
@@ -134,9 +121,31 @@ class ParameterDiffer_ implements ParameterDiffer, ParameterChanges {
             if (isDifferent) {
                 let changeRecord = new ParameterChangeRecord_(record.trackById, record.item[0], record.item[1]);
 
-                cb(changeRecord, old[1]);
+                this._parameterChangeRecord.push([changeRecord, old[1]]);
             }
         });
+        
+        if (this._parameterChangeRecord.length === 0) {
+            return null;
+        }
+        
+        return this;
+    }
+    
+    forEachNewParameter(cb: (record: ParameterChangeRecord)=>void): void {
+        this._changes!.forEachNewIdentity(record => {
+            cb(new ParameterChangeRecord_(record.trackById, record.item[0], record.item[1]));
+        })
+    }
+    
+    forEachDeletedParameter(cb: (record: ParameterChangeRecord)=>void): void {
+        this._changes!.forEachDeletedIdentity(record => {
+            cb(new ParameterChangeRecord_(record.trackById, record.item[0], record.item[1]));
+        })
+    }
+    
+    forEachChangedParameter(cb: (record: ParameterChangeRecord, old: ParameterDefinition|ParameterType[])=>void): void {
+        this._parameterChangeRecord.forEach(([record, old]) => cb(record, old));
     }
 }
 
