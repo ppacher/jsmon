@@ -18,7 +18,7 @@ export interface IterableChangeRecord<T> {
 }
 
 export interface IterableChanges<T> {
-    forEachIdentityChanged(cb: (record: IterableChangeRecord<T>) => void): void;
+    forEachIdentityChanged(cb: (record: IterableChangeRecord<T>, oldItem: T) => void): void;
     forEachNewIdentity(cb: (record: IterableChangeRecord<T>) => void): void;
     forEachDeletedIdentity(cb: (record: IterableChangeRecord<T>) => void): void;
     forEachRecord(cb: (record: IterableChangeRecord<T>, index: number) => void): void;
@@ -44,7 +44,7 @@ class IterableDiffer_<T> implements IterableDiffer<T>, IterableChanges<T>{
     private _records: IterableChangeRecord_<T>[] = [];
     private _new: IterableChangeRecord_<T>[] = [];
     private _deleted: IterableChangeRecord_<T>[] = [];
-    private _changed: IterableChangeRecord_<T>[] = [];
+    private _changed: [IterableChangeRecord_<T>, T][] = [];
     
     constructor(private _trackByFn: TrackByFunction<T> = trackByIdentity) {}
 
@@ -67,7 +67,7 @@ class IterableDiffer_<T> implements IterableDiffer<T>, IterableChanges<T>{
 
                 if (!looseIdentical(prevRecord.item, newRecord.item)) {
                     // identity has changed
-                    this._changed.push(newRecord);
+                    this._changed.push([newRecord, prevRecord.item]);
                 }
                 
                 this._records.splice(prevIdx, 1);
@@ -95,8 +95,8 @@ class IterableDiffer_<T> implements IterableDiffer<T>, IterableChanges<T>{
         this._deleted.forEach(record => cb(record));
     }
     
-    forEachIdentityChanged(cb: (record: IterableChangeRecord<T>)=>void) {
-        this._changed.forEach(record => cb(record));
+    forEachIdentityChanged(cb: (record: IterableChangeRecord<T>, oldItem: T)=>void) {
+        this._changed.forEach(record => cb(record[0], record[1]));
     }
     
     forEachNewIdentity(cb: (record: IterableChangeRecord<T>)=>void) {
