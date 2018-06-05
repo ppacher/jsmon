@@ -10,7 +10,7 @@ export interface Value<T> {
     timestamp: number;
 }
 
-export type ValueIterator<T> = Iterator<Value<T>>;
+export type ValueIterator<T> = IterableIterator<Value<T>>;
 
 export abstract class TimeSeriesStorage {
     /**
