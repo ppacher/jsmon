@@ -1,0 +1,54 @@
+{
+  "name": "@homebot/plugin-storage-file",
+  "version": "0.0.1",
+  "description": "A simple example storage plugin for homebot using files",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc && cp package.json dist/",
+    "test": "jest --silent --verbose --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/ppacher/homebot"
+  },
+  "author": "Patrick Pacher",
+  "license": "MIT",
+  "devDependencies": {
+    "@homebot/core": "0.0.1",
+    "@homebot/platform": "0.0.1",
+    "@types/jest": "^23.0.0",
+    "@types/node": "^10.3.1",
+    "jest": "^23.1.0",
+    "reflect-metadata": "^0.1.12",
+    "rimraf": "^2.6.2",
+    "rxjs": "^5.5.11",
+    "ts-jest": "^22.4.6",
+    "typescript": "^2.9.1"
+  },
+  "peerDependencies": {
+    "@homebot/core": "0.0.1",
+    "@homebot/platform": "0.0.1",
+    "reflect-metadata": "^0.1.12",
+    "rxjs": "^5.5.11"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "collectCoverage": true,
+    "roots": [
+      "<rootDir>/src/"
+    ],
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "text",
+      "html"
+    ]
+  }
+}
