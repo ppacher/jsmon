@@ -79,7 +79,7 @@ export class MqttDeviceManagerProxy {
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
                         .pipe(
-                            startWith(value.value),
+                            startWith(value.value ? JSON.parse(value.value) : null),
                             shareReplay(1)
                         )
                 }
