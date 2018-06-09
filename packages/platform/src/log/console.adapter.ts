@@ -40,7 +40,7 @@ export class ConsoleAdapterLoggingConfig {
         'error': [TerminalColor.FgRed, TerminalColor.Bright]
     };
 
-    format = '[{{level}}] {{name}} -> {{msg}}';
+    format = '[{{level}}] [{{name}}] {{msg}}';
     
     formatLevel(level: LogLevel, text: string): string {
         let def = this.colorMap[level];

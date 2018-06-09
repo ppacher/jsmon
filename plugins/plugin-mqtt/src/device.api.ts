@@ -4,7 +4,7 @@ import {IDeviceDefinition, DeviceDefinition, ICommandDefinition, DeviceDiscovery
 
 import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs/Observable';
-import {map, catchError} from 'rxjs/operators';
+import {tap, map, catchError} from 'rxjs/operators';
 import {_throw} from 'rxjs/observable/throw';
 import {toPromise} from 'rxjs/operator/toPromise';
 
@@ -116,7 +116,7 @@ export class MqttDeviceAPI {
         const name = deviceOrName instanceof DeviceController ? deviceOrName.name : deviceOrName;
         const payload = JSON.stringify(value);
         
-        this._log.debug(`publishing sensor value for ${name}.${sensor}`)
+        this._log.debug(`publishing sensor value for ${name}.${sensor}`, value)
 
         this._mqtt.publish(`homebot/device/${name}/sensor/${sensor}/value`, payload);
     }
@@ -132,7 +132,8 @@ export class MqttDeviceAPI {
     watchSensor(deviceName: string, sensorName: string): Observable<any> {
         return this._mqtt.subscribe(`homebot/device/${deviceName}/sensor/${sensorName}/value`)
             .pipe(
-                map(([topic, buffer]) => JSON.parse(buffer.toString()))
+                map(([topic, buffer]) => JSON.parse(buffer.toString())),
+                tap((value) => this._log.debug(`Received sensor value for ${deviceName}/${sensorName}`, value))
             );
     }
     

@@ -5,6 +5,7 @@ set -e
 platforms=false
 plugins=false
 packages=false
+projects=false
 updateTypescript=false
 
 lastlog=""
@@ -29,8 +30,17 @@ _setArgs(){
       "-c" | "--packages")
         packages=true
         ;;
+      "-b" | "--projects")
+        projects=true
+        ;;
       "-t" | "--typescript")
         updateTypescript=true
+        ;;
+      "-a" | "--all")
+        platforms=true
+        plugins=true
+        packages=true
+        projects=true
         ;;
     esac
     shift
@@ -119,4 +129,8 @@ fi
 
 if $platforms ; then
     run ./platforms/*
+fi
+
+if $projects ; then
+    run ./projects/*
 fi

@@ -150,7 +150,7 @@ export class JsonStore implements TimeSeriesStorage {
                     return;
                 }
                 
-                this._info(`Updated sensor data for ${deviceName}:${sensorName}`, {value: value});
+                this._info(`Updated sensor data for ${deviceName}:${sensorName}`);
                 resolve();
             });
         });
