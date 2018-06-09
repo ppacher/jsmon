@@ -5,7 +5,7 @@ import {Value} from '@homebot/platform';
 
 import {mkdirSync, existsSync, writeFileSync, unlinkSync, readFileSync, appendFileSync} from 'fs';
 import {join} from 'path';
-import {SensorSchema, ParameterType} from '@homebot/platform';
+import {ISensorSchema, ParameterType} from '@homebot/platform';
 
 // we are using rimraf instead of fs.rmdirSync as it allows deleting
 // non-empty directories
@@ -61,10 +61,10 @@ describe('JsonStore', () => {
     });    
     
     describe('hasDeviceSensor', () => {
-        let sensor: SensorSchema = {
+        let sensor: ISensorSchema = {
             name: 'dummy',
             description: 'dummy description',
-            type: ParameterType.String,
+            type: ParameterType.STRING,
         };
         let store: JsonStore;
         
@@ -98,10 +98,10 @@ describe('JsonStore', () => {
     });
     
     describe('addDeviceSensor', () => {
-        let sensor: SensorSchema = {
+        let sensor: ISensorSchema = {
             name: 'dummy',
             description: 'dummy description',
-            type: ParameterType.String,
+            type: ParameterType.STRING,
         };
         let store: JsonStore;
         
@@ -124,7 +124,7 @@ describe('JsonStore', () => {
         it('should throw if the sensor changed', () => {
             let s = {
                 ...sensor,
-                type: ParameterType.Array,
+                type: ParameterType.ARRAY,
             }
             
             expect(store.addDeviceSensor('device', s)).rejects.toBeDefined();
@@ -143,10 +143,10 @@ describe('JsonStore', () => {
     });
 
     describe('dropDeviceSensor', () => {
-        let sensor: SensorSchema = {
+        let sensor: ISensorSchema = {
             name: 'dummy',
             description: 'dummy description',
-            type: ParameterType.String,
+            type: ParameterType.STRING,
         };
         let store: JsonStore;
         
@@ -183,10 +183,10 @@ describe('JsonStore', () => {
     });
 
     describe('writeValue', () => {
-        let sensor: SensorSchema = {
+        let sensor: ISensorSchema = {
             name: 'dummy',
             description: 'dummy description',
-            type: ParameterType.String,
+            type: ParameterType.STRING,
         };
         let store: JsonStore;
         
@@ -236,10 +236,10 @@ describe('JsonStore', () => {
     });
 
     describe('queryValues', () => {
-        let sensor: SensorSchema = {
+        let sensor: ISensorSchema = {
             name: 'dummy',
             description: 'dummy description',
-            type: ParameterType.String,
+            type: ParameterType.STRING,
         };
         let store: JsonStore;
         

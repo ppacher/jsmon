@@ -1,5 +1,5 @@
 import {IterableDiffer, IterableChangeRecord, IterableChanges, createIterableDiffer} from '@homebot/core';
-import {SensorSchema} from '../devices';
+import {ISensorSchema} from '../devices';
 
 export interface SensorChanges {
     /** Wether or not the sensor description has changed */
@@ -9,14 +9,14 @@ export interface SensorChanges {
     hasTypeChanged(): boolean;
     
     /** Returns the new sensor schema */
-    getSchema(): SensorSchema;
+    getSchema(): ISensorSchema;
 }
 
 class SensorChanges_ implements SensorChanges {
     constructor(
         private _hasDescriptionChanged: boolean,
         private _hasTypeChanged: boolean,
-        private _schema: SensorSchema,
+        private _schema: ISensorSchema,
     ) {}
 
     hasDescriptionChanged(): boolean {
@@ -31,13 +31,13 @@ class SensorChanges_ implements SensorChanges {
         return this._hasTypeChanged;
     }
 
-    getSchema(): SensorSchema {
+    getSchema(): ISensorSchema {
         return this._schema;
     }
 }
 
 /**
- * Calculates differences between two {@link SensorSchema}s
+ * Calculates differences between two {@link ISensorSchema}s
  * 
  * Note that the name of the sensor schemas is not allowed to change and
  * must be the same (Otherwise you are probably comparing two independed sensor schemas)
@@ -45,7 +45,7 @@ class SensorChanges_ implements SensorChanges {
  * @param oldSensor The old sensor schema
  * @param newSensor The new sensor schema
  */
-export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema): SensorChanges|null {
+export function getSensorDiff(oldSensor: ISensorSchema, newSensor: ISensorSchema): SensorChanges|null {
     // the name of the sensor is not allowed to change
     if (oldSensor.name !== newSensor.name) {
         throw new Error(`Cannot diff sensors with different names`);
@@ -62,14 +62,14 @@ export function getSensorDiff(oldSensor: SensorSchema, newSensor: SensorSchema):
 }
 
 /**
- * a {@link @homebot/core:TrackByFunction} for {@link SensorSchema}
+ * a {@link @homebot/core:TrackByFunction} for {@link ISensorSchema}
  */
-export function SensorTrackByFunction(idx: number, sensor: SensorSchema): any {
+export function SensorTrackByFunction(idx: number, sensor: ISensorSchema): any {
     return sensor.name;
 }
 
 /**
- * Contains changes between two sets of {@link SensorSchema}s
+ * Contains changes between two sets of {@link ISensorSchema}s
  */
 export interface IterableSensorChanges {
     /**
@@ -89,14 +89,14 @@ export interface IterableSensorChanges {
 }
 
 /**
- * Tracks changes between sets of {@link SensorSchema}s
+ * Tracks changes between sets of {@link ISensorSchema}s
  */
 export interface IterableSensorDiffer {
     /**
-     * Searches for differences witihn the SensorSchema iterable.
+     * Searches for differences witihn the ISensorSchema iterable.
      * Returns null if no changes occured
      */
-    diff(sensors: Iterable<SensorSchema>|SensorSchema[]): IterableSensorChanges|null;
+    diff(sensors: Iterable<ISensorSchema>|ISensorSchema[]): IterableSensorChanges|null;
 }
 
 class IterableSensorChangeRecord implements IterableChangeRecord<SensorChanges> {
@@ -109,9 +109,9 @@ class IterableSensorChangeRecord implements IterableChangeRecord<SensorChanges> 
 class IterableSensorDiffer_ implements IterableSensorChanges, IterableSensorDiffer {
     /** our internal iterable differ for tracking changes */
     private _iterableDiffer = createIterableDiffer(SensorTrackByFunction);
-    private _changes: IterableChanges<SensorSchema>|null = null;
+    private _changes: IterableChanges<ISensorSchema>|null = null;
 
-    diff(sensors: Iterable<SensorSchema>|SensorSchema[]): IterableSensorChanges|null {
+    diff(sensors: Iterable<ISensorSchema>|ISensorSchema[]): IterableSensorChanges|null {
         this._changes = this._iterableDiffer.diff(sensors);
         
         if (this._changes === null) {
@@ -152,7 +152,7 @@ class IterableSensorDiffer_ implements IterableSensorChanges, IterableSensorDiff
 
 /**
  * Creates a new {@link IterableSensorDiffer} that can be used to track
- * changes to a list of {@link SensorSchema}s
+ * changes to a list of {@link ISensorSchema}s
  */
 export function createIterableSensorDiffer(): IterableSensorDiffer {
     return new IterableSensorDiffer_();

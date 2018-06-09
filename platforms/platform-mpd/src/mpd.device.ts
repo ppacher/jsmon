@@ -28,42 +28,42 @@ export class MPDDevice {
     private readonly _currentSong = new BehaviorSubject<mpc.PlaylistItem|null>(null);
     private readonly _status = new BehaviorSubject<mpc.Status|null>(null);
     
-    @Sensor('title', ParameterType.String, 'The title of the current song')
+    @Sensor('title', ParameterType.STRING, 'The title of the current song')
     get currentSongTitle() {
         return mapSubject(this._currentSong, song => song ? song.title : '');
     }
     
-    @Sensor('artist', ParameterType.String, 'The artist of the current song')
+    @Sensor('artist', ParameterType.STRING, 'The artist of the current song')
     get currentSongArtist() {
         return this._currentSong.asObservable()
             .map(song => song  ? song.artist : '');
     }
     
-    @Sensor('album', ParameterType.String, 'The album of the current song')
+    @Sensor('album', ParameterType.STRING, 'The album of the current song')
     get currentSongAlbum() {
         return this._currentSong.asObservable()
             .map(song => song  ? song.album : '');
     }
     
-    @Sensor('duration', ParameterType.Number, 'The duration of the current song')
+    @Sensor('duration', ParameterType.NUMBER, 'The duration of the current song')
     get currentDuration() {
         return this._currentSong.asObservable()
             .map(song => song  ? song.duration : -1);
     }
     
-    @Sensor('position', ParameterType.Number, 'The position of the current song in the tracklist')
+    @Sensor('position', ParameterType.NUMBER, 'The position of the current song in the tracklist')
     get currentPosition() {
         return this._currentSong.asObservable()
             .map(song => song  ? song.position : -1);
     }
     
-    @Sensor('playing', ParameterType.Boolean, 'Wether or not playback is active')
+    @Sensor('playing', ParameterType.BOOLEAN, 'Wether or not playback is active')
     get isPlaying() {
         return this._status.asObservable()
             .map(status => status  ? status.state === 'play' : false);
     }
     
-    @Sensor('elapsed', ParameterType.Number, 'The time elapsed in the current song')
+    @Sensor('elapsed', ParameterType.NUMBER, 'The time elapsed in the current song')
     get elapsed() {
         return this._status.asObservable()
             .map(status => status  ? status.elapsed : -1)
@@ -76,13 +76,13 @@ export class MPDDevice {
         description: 'search for songs, artists and albums',
         parameters: {
             type: {
-                types: [ParameterType.String],
-                help: 'Type of MPD tag to search for',
+                types: [ParameterType.STRING],
+                description: 'Type of MPD tag to search for',
                 optional: false,
             },
             what: {
-                types: [ParameterType.String],
-                help: 'What to search for',
+                types: [ParameterType.STRING],
+                description: 'What to search for',
                 optional: false,
             }
         }
@@ -100,9 +100,9 @@ export class MPDDevice {
         description: 'Start playback',
         parameters: {
             pos: {
-                types: [ParameterType.Number],
+                types: [ParameterType.NUMBER],
                 optional: true,
-                help: 'start playback at the given position',
+                description: 'start playback at the given position',
             }
         }
     })

@@ -1,7 +1,7 @@
 import {Injectable, Optional} from '@homebot/core';
 import {
     TimeSeriesStorage,
-    SensorSchema,
+    ISensorSchema,
     QueryOptions,
     ValueIterator,
     Value,
@@ -75,7 +75,7 @@ export class JsonStore implements TimeSeriesStorage {
      * @param deviceName The name of the device
      * @param sensorNameOrSchema  The name of the sensor or the sensors' schema
      */
-    public async hasDeviceSensor(deviceName: string, sensorNameOrSchema: string|SensorSchema): Promise<boolean> {
+    public async hasDeviceSensor(deviceName: string, sensorNameOrSchema: string|ISensorSchema): Promise<boolean> {
         if (typeof sensorNameOrSchema === 'string') {
             return this._hasSchemaFile(deviceName, sensorNameOrSchema);
         }
@@ -92,7 +92,7 @@ export class JsonStore implements TimeSeriesStorage {
      * @param deviceName The name of the device
      * @param sensorSchema  The sensors' schema definition
      */
-    public async addDeviceSensor(deviceName: string, sensorSchema: SensorSchema): Promise<void> {
+    public async addDeviceSensor(deviceName: string, sensorSchema: ISensorSchema): Promise<void> {
         if (this._hasSchemaFile(deviceName, sensorSchema.name)) {
             let isValid = await this._isDeviceSensorSchemaValid(deviceName, sensorSchema);
             if (!isValid) {
@@ -191,9 +191,9 @@ export class JsonStore implements TimeSeriesStorage {
      * On error the returned promise is rejected
      * 
      * @param deviceName The name of the device
-     * @param schema  The {@link @homebot/platform:SensorSchema} of the sensor
+     * @param schema  The {@link @homebot/platform:ISensorSchema} of the sensor
      */
-    private _isDeviceSensorSchemaValid(deviceName: string, schema: SensorSchema): Promise<boolean> {
+    private _isDeviceSensorSchemaValid(deviceName: string, schema: ISensorSchema): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const path = this._getSchemaFilePath(deviceName, schema.name);
             
@@ -207,7 +207,7 @@ export class JsonStore implements TimeSeriesStorage {
                     reject(err);
                 }
                 
-                let parsed: SensorSchema;
+                let parsed: ISensorSchema;
                 try {
                     parsed = JSON.parse(data.toString());
                 } catch(err) {
@@ -268,7 +268,7 @@ export class JsonStore implements TimeSeriesStorage {
      * @param deviceName The name of the device
      * @param schema     The schema definition of the sensor
      */
-    private _createSchemaFile(deviceName: string, schema: SensorSchema): Promise<void> {
+    private _createSchemaFile(deviceName: string, schema: ISensorSchema): Promise<void> {
         const path = this._getSchemaFilePath(deviceName, schema.name);
         const buffer = JSON.stringify(schema, undefined, 4);
         

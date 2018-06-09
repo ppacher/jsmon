@@ -4,7 +4,10 @@
   "description": "Platform library of the HomeBot automation development framework",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && cp package.json dist/",
+    "start": "npm run generate-types && npm run generate-src &&  npm run build-src && cp src/proto.{d.ts,js} dist/",
+    "build-src": "tsc && cp package.json dist/",
+    "generate-src": "pbjs -w commonjs -t static-module -o src/proto.js protobuf/*.proto",
+    "generate-types": "pbjs -t static-module protobuf/*.proto | pbts -o src/proto.d.ts - ",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -22,7 +25,7 @@
     "reflect-metadata": "^0.1.12",
     "rxjs": "^5.5.6",
     "ts-jest": "^22.4.2",
-    "typescript": "^2.7.2"
+    "typescript": "^2.9.1"
   },
   "peerDependencies": {
     "@homebot/core": "^0.0.1",
@@ -49,5 +52,8 @@
       "json",
       "html"
     ]
+  },
+  "dependencies": {
+    "protobufjs": "^6.8.6"
   }
 }

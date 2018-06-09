@@ -1,11 +1,12 @@
 import {Injectable, Injector, createIterableDiffer, TrackByFunction} from '@homebot/core';
-import {DeviceManager, DeviceController, ParameterDefinition, Logger, Command, ParameterType, SensorSchema} from '@homebot/platform';
-import * as api from '@homebot/platform/devices/api';
+import {DeviceManager, DeviceController, IParameterDefinition, Logger, Command, ParameterType, ISensorSchema} from '@homebot/platform';
+import {IDeviceDiscoveryAnnouncement, ICommandDefinition} from '@homebot/platform/proto';
 import {MqttDeviceAPI} from '../device.api';
 
 import {_throw} from 'rxjs/observable/throw';
 import {map, catchError, shareReplay, startWith} from 'rxjs/operators';
 import {toPromise} from 'rxjs/operator/toPromise';
+import { IDeviceDefinition, DeviceDefinition, ISensorValue } from '@homebot/platform/proto';
 
 @Injectable()
 export class MqttDeviceManagerProxy {
@@ -29,7 +30,9 @@ export class MqttDeviceManagerProxy {
         this._api.initiateDiscovery();
     }
     
-    private _handleDiscovery(device: api.DeviceMessage): void {
+    private _handleDiscovery(announcement: IDeviceDiscoveryAnnouncement): void {
+        const device = announcement.device;
+        
         const registeredDevices = this._manager.getRegisteredDevices();
         const controller = registeredDevices.find(ctrl => ctrl.name === device.name);
         
@@ -47,10 +50,10 @@ export class MqttDeviceManagerProxy {
             this._log.info(`Registering new device ${device.name}`);
         }
 
-        this._registerDevice(device);
+        this._registerDevice(device, announcement.sensorValues);
     }
     
-    private _registerDevice(d: api.DeviceMessage): void {
+    private _registerDevice(d: IDeviceDefinition, sensorValues: ISensorValue[]): void {
         const injector = this._createDeviceInjector();
 
         const controller = new DeviceController(
@@ -59,7 +62,7 @@ export class MqttDeviceManagerProxy {
             d.commands.map(cmd => {
                 return {
                     name: cmd.name,
-                    description: cmd.description,
+                    description: cmd.shortDescription,
                     parameters: cmd.parameters as any,
                     handler: (params: Map<string, any>) => {
                         this._log.info(`sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
@@ -69,13 +72,14 @@ export class MqttDeviceManagerProxy {
                 };
             }),
             d.sensors.map(sensor => {
+                let value: ISensorValue = sensorValues.find(v => v.deviceName === d.name && v.sensorName === sensor.name);
                 return {
                     name: sensor.name,
                     type: sensor.type,
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
                         .pipe(
-                            startWith(sensor.value),
+                            startWith(value),
                             shareReplay(1)
                         )
                 }
@@ -90,27 +94,27 @@ export class MqttDeviceManagerProxy {
         return this._injector.createChild([]);
     }
     
-    private _hasDeviceChanged(old: DeviceController, current: api.DeviceMessage): boolean {
-        const trackCommands: TrackByFunction<Command> = (idx: number, cmd: Command) => {
-            return `${cmd.name}:${cmd.description}`;
+    private _hasDeviceChanged(old: DeviceController, current: IDeviceDefinition): boolean {
+        const trackCommands: TrackByFunction<ICommandDefinition> = (idx: number, cmd: ICommandDefinition) => {
+            return `${cmd.name}:${cmd.shortDescription}`;
         }
         
-        const trackParameter: TrackByFunction<ParameterDefinition|ParameterType[]> = (idx: number, param: ParameterDefinition|ParameterType[]) => {
+        const trackParameter: TrackByFunction<IParameterDefinition|ParameterType[]> = (idx: number, param: IParameterDefinition|ParameterType[]) => {
             if (Array.isArray(param)) {
-                let types = [...param].sort((a, b) => a.localeCompare(b))
+                let types = [...param].sort((a, b) => a - b)
                 return `${types.join(',')}`;
             }
             
-            let types = [...param.types].sort((a, b) => a.localeCompare(b))
-            return `${param.help}:${param.optional}:${types.join(',')}`;
+            let types = [...param.types].sort((a, b) => a - b)
+            return `${param.description}:${param.optional}:${types.join(',')}`;
         }
 
-        const trackSenors: TrackByFunction<SensorSchema> = (idx: number, sensor: SensorSchema) => {
+        const trackSenors: TrackByFunction<ISensorSchema> = (idx: number, sensor: ISensorSchema) => {
             return `${sensor.name}:${sensor.description}:${sensor.type}`;
         }
 
         let commandDiffer = createIterableDiffer(trackCommands);
-        commandDiffer.diff(old.commands);
+        commandDiffer.diff(old.getCommandDefinitions());
         let diff = commandDiffer.diff(current.commands);
         if (diff !== null && (diff.countDeletedIdentities() > 0 || diff.countNewIdentities() > 0)) {
             this._log.info(`${current.name}: ${diff.countDeletedIdentities()} deleted and ${diff.countNewIdentities()} new commands `);
@@ -118,7 +122,7 @@ export class MqttDeviceManagerProxy {
         }
         
         let hasParamsChanged = current.commands.some(cmd => {
-            let oldCommand = old.commands.find(c => c.name === cmd.name);
+            let oldCommand = old.getCommandDefinitions().find(c => c.name === cmd.name);
             
             let nameDiffer = createIterableDiffer();
             nameDiffer.diff(Object.keys(oldCommand.parameters || {}));

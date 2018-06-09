@@ -6,7 +6,6 @@ import {
     Sensor,
     Command,
     CommandSchema,
-    SensorSchema,
     getDeviceMetadata,
     getPropertyMetadata
 } from './device';

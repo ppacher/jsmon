@@ -49,7 +49,7 @@ export class SensorStorageManager implements OnDestroy {
                     // schema has changed
 
                     try {
-                        await this._adapter.dropDeviceSensor(device.name, schema.name);
+                        await this._adapter.dropDeviceSensor(device.name, schema.name!);
                     } catch (err) {}
                 }
                 
@@ -60,11 +60,11 @@ export class SensorStorageManager implements OnDestroy {
                     return;
                 }
                 
-                device.watchSensor(schema.name)
+                device.watchSensor(schema.name!)
                     .pipe(takeUntil(unregistered))
                     .subscribe(async (value) => {
                         try {
-                            await this._adapter.writeValue(device.name, schema.name, value);
+                            await this._adapter.writeValue(device.name, schema.name!, value);
                         } catch(err) {
                             // TODO(ppacher): add logging
                         }

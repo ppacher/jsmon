@@ -8,9 +8,10 @@ import {of} from 'rxjs/observable/of';
 import {isPromiseLike} from '@homebot/core/utils/utils';
 import {Injector, OnDestroy} from '@homebot/core';
 
-import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, SensorSchema, SensorProvider} from './device';
+import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, ISensorSchema, SensorProvider, ParameterTypeMap, ICommandDefinition} from './device';
 
 import {map, distinctUntilChanged, debounceTime, takeUntil} from 'rxjs/operators';
+import { IParameterDefinition } from 'proto';
 
 /**
  * @class Device
@@ -31,7 +32,7 @@ export class DeviceController<T = any> implements OnDestroy {
         public readonly instance: T,
 
         /** A list of commands supported by the device */
-        public readonly commands: ReadonlyArray<CommandSchema>,
+        private _commands: ReadonlyArray<CommandSchema>,
         
         private _sensors: SensorProvider[],
         
@@ -76,7 +77,7 @@ export class DeviceController<T = any> implements OnDestroy {
      * @param args      Additional arguments to pass to the command
      */
     call(command: string, params: Map<string, any>): Observable<any> {
-        const cmd = this.commands.find(c => c.name == command);
+        const cmd = this._commands.find(c => c.name == command);
         
         if (cmd === undefined) {
             return _throw(new Error(`Command ${command} not supported by device ${this.name}`));
@@ -93,6 +94,32 @@ export class DeviceController<T = any> implements OnDestroy {
             cmd.handler.apply(this.instance, [params])
         );
     }
+
+    getCommandDefinitions(): ReadonlyArray<ICommandDefinition> {
+        return this._commands.map(cmd => {
+            let params: IParameterDefinition[] = [];
+
+            Object.keys(cmd.parameters).forEach(key => {
+                let p = cmd.parameters[key];
+
+                if (Array.isArray(p)) {
+                    params.push({
+                        name: key,
+                        description: '',
+                        types: p,
+                    })
+                } else {
+                    params.push(p)
+                }
+            });
+            
+            return {
+                name: cmd.name,
+                shortDescription: cmd.description,
+                parameters: params,
+            }
+        })
+    }
     
     /** Returns the description of the device or an empty string */
     get description(): string {
@@ -105,7 +132,7 @@ export class DeviceController<T = any> implements OnDestroy {
     }
     
     /** Returns a list of sensor definitions the device supports */
-    getSensorSchemas(): SensorSchema[] {
+    getSensorSchemas(): ISensorSchema[] {
         return this._sensors
             .map(s => ({
                 name: s.name,
@@ -150,7 +177,7 @@ export class DeviceController<T = any> implements OnDestroy {
     }
 
     private _updateSensorValue(sensor: SensorProvider, value: any): void {
-        const old = this._sensorValues.getValue()[sensor.name];
+        const old = this._sensorValues.getValue()[sensor.name!];
         const changed = old !== value;
 
         if (!changed) {
@@ -159,7 +186,7 @@ export class DeviceController<T = any> implements OnDestroy {
         
         let state = {...this._sensorValues.getValue()};
 
-        state[sensor.name] = value;
+        state[sensor.name!] = value;
         
         this._sensorValues.next(state);
     }
@@ -205,19 +232,19 @@ export class DeviceController<T = any> implements OnDestroy {
                 continue;
             }
             
-            const types: ParameterType[] = definition instanceof Array ? definition : definition.types;
+            const types: ParameterType[] = definition instanceof Array ? definition : definition.types!;
             
-            if (types.includes(ParameterType.Any)) {
+            if (types.includes(ParameterType.ANY)) {
                 // Every type of parameter is allowed, skip checks
                 continue;
             }
             
             const arrayTypes = [
-                ParameterType.Array,
-                ParameterType.BooleanArray,
-                ParameterType.NumberArray,
-                ParameterType.ObjectArray,
-                ParameterType.StringArray
+                ParameterType.ARRAY,
+                ParameterType.BOOLEAN_ARRAY,
+                ParameterType.NUMBER_ARRAY,
+                ParameterType.OBJECT_ARRAY,
+                ParameterType.STRING_ARRAY
             ];
             const isArrayType = (p: ParameterType) =>  arrayTypes.includes(p);
             const isValidArray = (p: ParameterType) => {
@@ -226,15 +253,15 @@ export class DeviceController<T = any> implements OnDestroy {
                 }
                 
                 switch (p) {
-                    case ParameterType.Array:
+                    case ParameterType.ARRAY:
                         return true;
-                    case ParameterType.BooleanArray:
+                    case ParameterType.BOOLEAN_ARRAY:
                         return value.some(v => !(typeof v === 'boolean'));
-                    case ParameterType.NumberArray:
+                    case ParameterType.NUMBER_ARRAY:
                         return value.some(v => !(typeof v === 'number'));
-                    case ParameterType.ObjectArray:
+                    case ParameterType.OBJECT_ARRAY:
                         return value.some(v => !(typeof v === 'object'));
-                    case ParameterType.StringArray:
+                    case ParameterType.STRING_ARRAY:
                         return value.some(v => !(typeof v === 'string'));
                 }
                 
@@ -246,7 +273,7 @@ export class DeviceController<T = any> implements OnDestroy {
                     return isValidArray(ptype);
                 }
 
-                return typeof value === ptype;
+                return typeof value === ParameterTypeMap[ptype];
             });
             
             if (!isValidType) {

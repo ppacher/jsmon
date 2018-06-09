@@ -1,6 +1,5 @@
 import {Injectable} from '@homebot/core';
-import {DeviceManager, DeviceController, SensorSchema, Logger} from '@homebot/platform';
-import * as api from '@homebot/platform/devices/api';
+import {DeviceManager, DeviceController, Logger} from '@homebot/platform';
 import {MqttDeviceAPI} from '../device.api';
 
 import {filter, takeUntil} from 'rxjs/operators';
@@ -28,7 +27,7 @@ export class MqttDeviceManagerAPI {
                     .subscribe(value => this._publishSensor(d, s.name, value));
             });
             
-        d.commands.forEach(cmd => this._api.setupDeviceControllerCommand(d, cmd.name));
+        d.getCommandDefinitions().forEach(cmd => this._api.setupDeviceControllerCommand(d, cmd.name));
 
         this._publishDevice(d);
     }

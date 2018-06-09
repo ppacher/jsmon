@@ -26,18 +26,18 @@ function poll<T>(p: () => Promise<T>): Observable<T> {
     description: 'System information',
 })
 export class SysInfoDevice {
-    @Sensor({name: 'memory', type: ParameterType.Object})
+    @Sensor({name: 'memory', type: ParameterType.OBJECT})
     readonly memory = poll<Systeminformation.MemData>(sysinfo.mem);
     
-    @Sensor({name: 'cpu', type: ParameterType.Object})
+    @Sensor({name: 'cpu', type: ParameterType.OBJECT})
     readonly cpu = poll<Systeminformation.CpuData>(sysinfo.cpu);
     
-    @Sensor({name: 'battery', type: ParameterType.Object})
+    @Sensor({name: 'battery', type: ParameterType.OBJECT})
     readonly battery = poll<Systeminformation.BatteryData>(sysinfo.battery);
     
-    @Sensor({name: 'load', type: ParameterType.Object})
+    @Sensor({name: 'load', type: ParameterType.OBJECT})
     readonly load = poll<Systeminformation.CurrentLoadData>(sysinfo.currentLoad);
     
-    @Sensor({name: 'fs', type: ParameterType.Object})
+    @Sensor({name: 'fs', type: ParameterType.OBJECT})
     readonly fs = poll<Systeminformation.FsSizeData[]>(sysinfo.fsSize);
 }

@@ -18,6 +18,7 @@
     "@homebot/platform": "0.0.1",
     "@homebot/plugin-httpserver": "0.0.1",
     "@homebot/plugin-mqtt": "0.0.1",
+    "@homebot/plugin-storage-file": "0.0.1",
     "@types/minimist": "^1.2.0",
     "js-yaml": "^3.11.0",
     "jsonpath": "^1.0.0",

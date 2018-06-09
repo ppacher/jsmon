@@ -1,9 +1,10 @@
 import {Injectable, Optional} from '@homebot/core';
-import {DeviceManager, DeviceController, SensorSchema, CommandSchema, ParameterDefinition, ParameterType} from '@homebot/platform'
+import {DeviceManager, DeviceController, ISensorSchema, CommandSchema, IParameterDefinition, ParameterType} from '@homebot/platform'
 import {HTTPServer, RemoveRouteFn} from '../server';
 import {DeviceHttpApiConfig} from './config';
 import {Request, Response} from 'restify';
 import {query} from 'jsonpath';
+import { ICommandDefinition } from '@homebot/platform/proto';
 
 @Injectable()
 export class DeviceHttpApi {
@@ -62,7 +63,7 @@ export class DeviceHttpApi {
             (req, res) => this._getDeviceSensors(d, req, res)
         ));
 
-        d.getSensorSchemas().forEach((sensor: SensorSchema) => {
+        d.getSensorSchemas().forEach((sensor: ISensorSchema) => {
             let sensorUrl = `${sensorsUrl}/${sensor.name}`;
 
             cancelFns.push(this._server.register('get', sensorUrl, 
@@ -74,7 +75,7 @@ export class DeviceHttpApi {
             (req, res) => this._getDeviceCommands(d, req, res)
         ));
 
-        d.commands.forEach((cmd: CommandSchema) => {
+        d.getCommandDefinitions().forEach((cmd: ICommandDefinition) => {
             const cmdUrl = `${cmdsUrl}/${cmd.name}`;
             cancelFns.push(this._server.register('get', cmdUrl, 
                 (req, res) => this._getDeviceCommand(d, cmd, req, res)
@@ -96,15 +97,15 @@ export class DeviceHttpApi {
 
     private _getDeviceSensors(d: DeviceController, req: Request, res: Response): void {
         const values = d.getSensorValues();
-        const response = d.getSensorSchemas().map((sensor: SensorSchema) => ({
+        const response = d.getSensorSchemas().map((sensor: ISensorSchema) => ({
             ...sensor,
-            value: values[sensor.name],
+            value: values[sensor.name!],
         }));
         res.send(response);
     }
 
-    private _getDeviceSensor(d: DeviceController, s: SensorSchema, req: Request, res: Response): void {
-        const value = d.getSensorValue(s.name);
+    private _getDeviceSensor(d: DeviceController, s: ISensorSchema, req: Request, res: Response): void {
+        const value = d.getSensorValue(s.name!);
         let response: any = {
             ...s,
             value: value,
@@ -141,16 +142,16 @@ export class DeviceHttpApi {
     }
 
     private _getDeviceCommands(d: DeviceController, req: Request, res: Response): void {
-        const response = d.commands.map((cmd: CommandSchema) => this._getCommandDescriptor(cmd));
+        const response = d.getCommandDefinitions().map((cmd: ICommandDefinition) => this._getCommandDescriptor(cmd));
         
         res.send(response);
     }
     
-    private _getDeviceCommand(d: DeviceController, cmd: CommandSchema, req: Request, res: Response): void {
+    private _getDeviceCommand(d: DeviceController, cmd: ICommandDefinition, req: Request, res: Response): void {
         res.send(this._getCommandDescriptor(cmd));
     }
     
-    private _callDeviceCommand(d: DeviceController, cmd: CommandSchema, req: Request, res: Response): void {
+    private _callDeviceCommand(d: DeviceController, cmd: ICommandDefinition, req: Request, res: Response): void {
         let parameters: Map<string, any>;
         
         try {
@@ -160,7 +161,7 @@ export class DeviceHttpApi {
             return;
         }
 
-        d.call(cmd.name, parameters)
+        d.call(cmd.name!, parameters)
             .subscribe(
                 (result: any) => {
                     let path = req.query['path'];
@@ -200,27 +201,19 @@ export class DeviceHttpApi {
             name: d.name,
             description: d.description,
             state: d.healthy(),
-            commands: d.commands.map((cmd: CommandSchema) => ({
-                name: cmd.name,
-                description: cmd.description,
-                // TODO: add parameters
-            })),
+            commands: d.getCommandDefinitions(),
             sensors: d.getSensorSchemas()
         };
     }
     
-    private _parseRequestParameters(cmd: CommandSchema, req: Request): Map<string, any> {
+    private _parseRequestParameters(cmd: ICommandDefinition, req: Request): Map<string, any> {
         const params = new Map<string, any>();
-        const isOptional = (p: ParameterType[]|ParameterDefinition) => {
-            if (Array.isArray(p)) {
-                return false;
-            }
-            
+        const isOptional = (p: IParameterDefinition) => {
             return p.optional || false;
         };
 
-        const hasParams = !!cmd.parameters && Object.keys(cmd.parameters).filter(key => !isOptional(cmd.parameters[key])).length > 0;
-        const hasOptional = !!cmd.parameters && Object.keys(cmd.parameters).filter(key => isOptional(cmd.parameters[key])).length > 0;
+        const hasParams = !!cmd.parameters && cmd.parameters.filter(p => !isOptional(p)).length > 0;
+        const hasOptional = !!cmd.parameters && cmd.parameters.filter(p => isOptional(p)).length > 0;
         
         if (req.getContentType() !== 'application/json' && hasParams) {
             throw new Error(`Invalid content type. Accpected application json`);
@@ -251,20 +244,12 @@ export class DeviceHttpApi {
         return params;
     }
     
-    private _getCommandDescriptor(cmd: CommandSchema): any {
-
+    private _getCommandDescriptor(cmd: ICommandDefinition): any {
         return {
             name: cmd.name,
-            description: cmd.description,
-            parameters: Object.keys(cmd.parameters || {}).map(key => {
-                const def = cmd.parameters[key];
-                return {
-                    name: key,
-                    types: Array.isArray(def) ? def : def.types,
-                    optional: Array.isArray(def) ? false : def.optional,
-                    help: Array.isArray(def) ? null : def.help
-                };
-            })
-        };
+            parameters: cmd.parameters,
+            longDescription: cmd.longDescription,
+            shortDescription: cmd.shortDescription,
+        }
     }
 }

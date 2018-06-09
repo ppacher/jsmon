@@ -1,4 +1,4 @@
-import {SensorSchema} from '../devices';
+import {ISensorSchema} from '../devices';
 
 export interface QueryOptions {
     from?: number;
@@ -21,7 +21,7 @@ export abstract class TimeSeriesStorage {
      * @param deviceName The name of the device to query
      * @param sensorNameOrSchema The name or schema of the sensor to query
      */
-    abstract hasDeviceSensor(deviceName: string, sensorNameOrSchema: string|SensorSchema): Promise<boolean>;
+    abstract hasDeviceSensor(deviceName: string, sensorNameOrSchema: string|ISensorSchema): Promise<boolean>;
     
     /**
      * Setup a new measurement for a device sensor
@@ -32,7 +32,7 @@ export abstract class TimeSeriesStorage {
      * @param deviceName The name of the device to register
      * @param sensorSchema The schema of the sensor to setup
      */
-    abstract addDeviceSensor(deviceName: string, sensorSchema: SensorSchema): Promise<void>;
+    abstract addDeviceSensor(deviceName: string, sensorSchema: ISensorSchema): Promise<void>;
     
     /**
      * Drop a device sensor from the storage

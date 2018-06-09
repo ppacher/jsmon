@@ -1,6 +1,6 @@
 import {Injectable} from '@homebot/core';
 import {Logger, DeviceController, CommandSchema} from '@homebot/platform';
-import * as api from '@homebot/platform/devices/api';
+import {IDeviceDefinition, DeviceDefinition, ICommandDefinition, DeviceDiscoveryAnnouncement, IDeviceDiscoveryAnnouncement} from '@homebot/platform/proto';
 
 import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs/Observable';
@@ -11,7 +11,7 @@ import {toPromise} from 'rxjs/operator/toPromise';
 import {MqttService, CommandHandler} from './mqtt.service';
 
 export interface DiscoveryHandler {
-    (): Promise<(api.DeviceMessage|api.DeviceMessage|DeviceController)[]>;
+    (): Promise<(IDeviceDiscoveryAnnouncement|DeviceController)[]>;
 }
 
 @Injectable()
@@ -61,45 +61,44 @@ export class MqttDeviceAPI {
      * 
      * @param device The {@link @homebot/core:DeviceController} or {@link @homebot/core:api.DeviceMessage} to publish
      */
-    announceDevice(device: api.DeviceMessage|DeviceController) {
+    announceDevice(device: DeviceController|IDeviceDiscoveryAnnouncement) {
         if (!device) {
             return;
         }
         
-        let msg: api.DeviceMessage;
+        let msg: IDeviceDiscoveryAnnouncement;
+        
         if (device instanceof DeviceController) {
             msg = {
-                name: device.name,
-                description: device.description,
-                sensors: device.getSensorSchemas().map(s => {
-                    return {
-                        ...s,
-                        value: device.getSensorValue(s.name)
-                    };
-                }),
-                commands: device.commands.map(cmd => {
-                    return {
-                        name: cmd.name,
-                        description: cmd.description,
-                        parameter: cmd.parameters
-                    }  
-                }),
+                device: {
+                    name: device.name,
+                    description: device.description,
+                    sensors: device.getSensorSchemas(),
+                    commands: device.getCommandDefinitions() as ICommandDefinition[],
+                },
+                sensorValues: device.getSensorSchemas().map(sensor => ({
+                    sensorName: sensor.name,
+                    type: sensor.type,
+                    deviceName: device.name,
+                    value: JSON.stringify(device.getSensorValue(sensor.name)),
+                }))
             };
         } else {
             msg = device;
         }
         
-        const payload = JSON.stringify(msg);
-        this._mqtt.publish(`homebot/device/${device.name}`, payload);
+        let payload = DeviceDiscoveryAnnouncement.encode(msg).finish();
+        
+        this._mqtt.publish(`homebot/device/${msg.device.name}`, new Buffer(payload));
     }
     
     /**
      * Setup a listener for device annoucements
      */
-    watchDeviceAnnouncements(): Observable<api.DeviceMessage> {
+    watchDeviceAnnouncements(): Observable<IDeviceDiscoveryAnnouncement> {
         return this._mqtt.subscribe(`homebot/device/+`)
             .pipe(
-                map(([topic, buffer]) => JSON.parse(buffer.toString()))
+                map(([topic, buffer]) => DeviceDiscoveryAnnouncement.decode(buffer))
             );
     }
     
@@ -180,7 +179,7 @@ export class MqttDeviceAPI {
      * @param cmdName The name of the command that should be exposed over MQTT
      */
     setupDeviceControllerCommand(device: DeviceController, cmdName: string): Subscription {
-        let cmd: CommandSchema = device.commands.find(cmd => cmd.name === cmdName);
+        let cmd: ICommandDefinition = device.getCommandDefinitions().find(cmd => cmd.name === cmdName);
         
         if (cmd === undefined) {
             throw new Error(`Device ${device.name} does not have a command handler for ${cmdName}`);
@@ -199,7 +198,9 @@ export class MqttDeviceAPI {
                 params.set(key, body[key]);
             });
             
-            return cmd.handler.apply(device.instance, [params])
+
+            return device.call(cmd.name, params)
+                .toPromise()
                 .then(res => {
                     return new Buffer(JSON.stringify(res));
                 });

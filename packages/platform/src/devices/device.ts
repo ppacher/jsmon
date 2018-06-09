@@ -7,42 +7,24 @@ import {
     PROP_METADATA,
     Type,
 } from '@homebot/core';
+import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition} from '../proto';
+export {ParameterType, IParameterDefinition, ISensorSchema, ICommandDefinition} from '../proto';
 
-// TODO: missing: array
-/** Available types for command paramters */
-export enum ParameterType {
-    String = 'string',
-    Number = 'number',
-    Boolean = 'boolean',
-    Object = 'object',
-    Array = 'array',
-    StringArray = 'string-array',
-    NumberArray = 'number-array',
-    BooleanArray = 'boolean-array',
-    ObjectArray = 'object-array',
-    Any = 'any'
-};
-
-/** Definition for a device command parameter */
-export interface ParameterDefinition {
-    /** A list of accepted parameter types */
-    types: ParameterType[]
-    
-    /** An optional help text for the parameter */
-    help?: string;
-    
-    /** Wether or not the parameter is optional. Defaults to false */
-    optional?: boolean;
+export const ParameterTypeMap: {[key: number]: string} = {
+    [ParameterType.ARRAY]: 'array',
+    [ParameterType.BOOLEAN]: 'boolean',
+    [ParameterType.NUMBER]: 'number',
+    [ParameterType.OBJECT]: 'object',
+    [ParameterType.STRING]: 'string',
 }
 
-/** Definition of a command supported by the device */
 export interface CommandSchema {
     /** the name of the command */
     name: string;
     
     /** Parameter definitions and their accepted type */
     parameters: {
-        [key: string]: ParameterDefinition|ParameterType[];
+        [key: string]: IParameterDefinition|ParameterType[];
     };
     
     /** An optional description for the command */
@@ -67,19 +49,7 @@ export enum DeviceHealthState {
     Unknown = 'unknown'
 }
 
-/** Describes the schema of a sensor/state value exported by the device */
-export interface SensorSchema {
-    /** Name of the sensor / state */
-    name: string;
-    
-    /** An optional description of the sensor name */
-    description?: string;
-    
-    /** Type of the sensor */
-    type: ParameterType;
-}
-
-export interface SensorProvider extends SensorSchema {
+export interface SensorProvider extends ISensorSchema {
     /** Observable that should emit changes whenever the state of the sensor changes */
     onChange: Observable<any>;
 }
@@ -150,7 +120,7 @@ export interface CommandDecoratorSettings {
     
     /** Parameter definitions and their accepted type */
     parameters?: {
-        [key: string]: ParameterDefinition|ParameterType[];
+        [key: string]: IParameterDefinition|ParameterType[];
     };
 
     description?: string;
@@ -159,18 +129,7 @@ export interface CommandDecoratorSettings {
 /**
  * Type of the command decorator metadata
  */
-export interface Command {
-    /** the name of the command */
-    name: string;
-    
-    /** Parameter definitions and their accepted type */
-    parameters?: {
-        [key: string]: ParameterDefinition|ParameterType[];
-    };
-    
-    /** An optional description for the command */
-    description?: string;
-}
+export interface Command extends CommandDecoratorSettings {}
 
 /**
  * Type of the Command decorator
@@ -179,14 +138,14 @@ export interface CommandDecorator {
     (settings: CommandDecoratorSettings): any;
     (name: string): any;
     (name: string, description: string): any;
-    (name: string, description: string, params: ParameterDefinition): any;
-    (name: string, params: ParameterDefinition): any;
+    (name: string, description: string, params: IParameterDefinition): any;
+    (name: string, params: IParameterDefinition): any;
 
     new (settings: CommandDecoratorSettings): Command;
     new (name: string): Command;
     new (name: string, description: string): Command;
-    new (name: string, description: string, params: ParameterDefinition): Command;
-    new (name: string, params: ParameterDefinition): Command;
+    new (name: string, description: string, params: IParameterDefinition): Command;
+    new (name: string, params: IParameterDefinition): Command;
 }
 
 /**
@@ -239,26 +198,26 @@ export const Command: CommandDecorator = makePropDecorator('Commands', (...args:
  * Type of the sensor decorator
  */
 export interface SensorDecorator {
-    (settings: SensorSchema): any;
+    (settings: ISensorSchema): any;
     (name: string, type: ParameterType, description?: string): any;
 
-    new (settings: SensorSchema): Sensor;
+    new (settings: ISensorSchema): Sensor;
     new (name: string, type: ParameterType, description?: string): Sensor;
 }
 
 /**
  * Type of the sensor metadata
  */
-export interface Sensor extends SensorSchema {}
+export interface Sensor extends ISensorSchema {}
 
 /**
  * The Sensor decorator
  */
 export const Sensor: SensorDecorator = makePropDecorator('Sensor', (...args: any[]) => {
-    let settings: SensorSchema;
+    let settings: ISensorSchema;
     
     if (args.length === 1) {
-        settings = args[0] as SensorSchema;
+        settings = args[0] as ISensorSchema;
     } else {
         settings = {
             name: args[0],

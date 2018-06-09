@@ -19,34 +19,34 @@ export class DarkSkyWeatherDevice {
 
     private readonly _updates: Observable<WeatherResponse> = this._setup();
     
-    @Sensor({name: 'lastUpdate', type: ParameterType.Number})
+    @Sensor({name: 'lastUpdate', type: ParameterType.NUMBER})
     readonly lastUpdate = get(this._updates, r => r.currently.time);
     
-    @Sensor({name: 'currentTemperature', type: ParameterType.Number})
+    @Sensor({name: 'currentTemperature', type: ParameterType.NUMBER})
     readonly currentTemperature = get(this._updates, r => r.currently.temperature);
     
-    @Sensor({name: 'currentSummary', type: ParameterType.String})
+    @Sensor({name: 'currentSummary', type: ParameterType.STRING})
     readonly currentSummary = get(this._updates, r => r.currently.summary);
     
-    @Sensor({name: 'currentIcon', type: ParameterType.String})
+    @Sensor({name: 'currentIcon', type: ParameterType.STRING})
     readonly currentIcon = get(this._updates, r => r.currently.icon);
     
-    @Sensor({name: 'nearestStormDistance', type: ParameterType.Number})
+    @Sensor({name: 'nearestStormDistance', type: ParameterType.NUMBER})
     readonly nearestStormDistance = get(this._updates, r => r.currently.nearestStormDistance);
     
-    @Sensor({name: 'humidity', type: ParameterType.Number})
+    @Sensor({name: 'humidity', type: ParameterType.NUMBER})
     readonly humidity = get(this._updates, r => r.currently.humidity);
 
-    @Sensor({name: 'pressure', type: ParameterType.Number})
+    @Sensor({name: 'pressure', type: ParameterType.NUMBER})
     readonly pressure = get(this._updates, r => r.currently.pressure);
     
-    @Sensor({name: 'windSpeed', type: ParameterType.Number})
+    @Sensor({name: 'windSpeed', type: ParameterType.NUMBER})
     readonly windSpeed = get(this._updates, r => r.currently.windSpeed);
     
-    @Sensor({name: 'cloudCover', type: ParameterType.Number})
+    @Sensor({name: 'cloudCover', type: ParameterType.NUMBER})
     readonly cloudCover = get(this._updates, r => r.currently.cloudCover);
     
-    @Sensor({name: 'visibility', type: ParameterType.Number})
+    @Sensor({name: 'visibility', type: ParameterType.NUMBER})
     readonly visibility = get(this._updates, r => r.currently.visibility);
     
     constructor(private _weather: DarkSkyWeatherService,
