@@ -1,15 +1,16 @@
 import {Optional, Inject, OnDestroy, Provider, Type} from '@jsmon/core';
-import {Sensor, Command, Device} from '@jsmon/platform';
+import {Sensor, Command, Device, Logger} from '@jsmon/platform';
 import {ParameterType} from '@jsmon/platform/proto';
 
 import {ScanProvider, HostScanner} from './scanner.interface';
 import {Observable} from 'rxjs/Observable';
 import {interval} from 'rxjs/observable/interval';
-import {takeUntil, distinctUntilChanged, share} from 'rxjs/operators';
+import {takeUntil, share} from 'rxjs/operators';
 import {Subject} from 'rxjs/Subject';
-import { clearInterval } from 'timers';
+import {clearInterval, setInterval} from 'timers';
 
 import {isIP} from 'net';
+import { Observer } from 'rxjs/Observer';
 
 export enum DeviceStatus {
     Online = 'online',
@@ -42,6 +43,7 @@ export class WatcherDeviceConfig {
 export class WatcherDevice implements OnDestroy {
     private _destroyed: Subject<void> = new Subject();
     private _scanning: boolean = false;
+    private _last: boolean|null = null;
 
     @Sensor({
         name: 'online',
@@ -51,33 +53,43 @@ export class WatcherDevice implements OnDestroy {
 
     constructor(
         @Inject(ScanProvider) private _scanner: HostScanner,
-        private _config: WatcherDeviceConfig
+        private _config: WatcherDeviceConfig,
+        private _logger: Logger
     ) {
         if (!isIP(this._config.target)) {
             throw new Error(`Invalid target: Expected IP but received ${this._config.target}`);
         }
         
         this.online = new Observable<boolean>(observer => {
-            let interval = setInterval(async () => {
-                // Skip this interval if we are already scanning
-                if (this._scanning) {
-                    return;
-                }
-                this._scanning = true;
-                
-                try {
-                    let result = await this._scanner.scan(this._config.target);
-                    this._scanning = false;
-                    
-                    observer.next(result.length == 1); // the user MUST enter one IP and is not allowed to enter a range
-                } catch(err) {
-                    // TODO(ppacher): add logging
-                }
-                
-            }, this._config.interval);
+            let interval = setInterval(() => this._scan(observer), this._config.interval);
+
+            this._scan(observer);
 
             return () => clearInterval(interval);     
         }).pipe(takeUntil(this._destroyed),share());
+    }
+
+    private async _scan(observer: Observer<boolean>)  {
+        // Skip this interval if we are already scanning
+        if (this._scanning) {
+            return;
+        }
+        this._scanning = true;
+        
+        try {
+            const result = await this._scanner.scan(this._config.target);
+            const isOnline = result.length === 1;
+            
+            if (isOnline !== this._last) {
+                observer.next(result.length == 1); // the user MUST enter one IP and is not allowed to enter a range
+                this._logger.info(`${this._config.target} went ${isOnline ? 'online' : 'offline'}`);
+                this._last = isOnline;
+            }
+        } catch(err) {
+            this._logger.error(`Failed to scan for target ${this._config.target}`)
+        } finally {
+            this._scanning = false;
+        }
     }
 
     onDestroy() {
