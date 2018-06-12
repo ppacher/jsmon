@@ -91,7 +91,11 @@ updateDependecies() {
 
 rebuild() {
     echo "   -> Building package"
-    lastlog=$(npm start)
+    if [ "$(cat package.json|grep '\"build\"')" != "" ]; then
+        lastlog=$(npm run build)
+    else
+        lastlog=$(npm start)
+    fi
 }
 
 publish() {
