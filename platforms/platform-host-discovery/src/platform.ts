@@ -9,12 +9,21 @@ export const homebot: PlatformFactories = {
             throw new Error(`Missing targets for HostDiscovery`);
         }
         
-        if (!Array.isArray(params['target']) && typeof params['target'] !== 'string') {
-            throw new Error(`Invalid target configuration for HostDiscovery`)   ;
+        const name = params.name || 'hosts';
+        const targets = params['target'];
+        let interval = params.interval;
+        
+        if (!Array.isArray(targets) && typeof targets !== 'string') {
+            throw new Error(`Invalid target configuration for HostsDiscovery device "${name}"`)   ;
         }
         
-        let name = params.name || 'hosts';
-        let targets = params['target'];
+        if (!!interval && typeof interval === 'string') {
+            try {
+                interval = parseInt(interval);
+            } catch (err) {
+                throw new Error(`Invalid interval specified for HostsDiscovery device ${name}`);
+            }
+        }
         
         return {
             plugin: HostDiscoveryPlugin,
@@ -22,7 +31,7 @@ export const homebot: PlatformFactories = {
                 class: HostsDiscoveryDevice,
                 name: name,
                 providers: [
-                    ...HostsDiscoveryConfig.provide(new HostsDiscoveryConfig(params['target']), NmapScanner),
+                    ...HostsDiscoveryConfig.provide(new HostsDiscoveryConfig(targets), NmapScanner),
                 ],
             }]
         };

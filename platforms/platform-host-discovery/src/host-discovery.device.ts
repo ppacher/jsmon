@@ -10,7 +10,8 @@ import {ScanProvider, HostScanner, provideScanner} from './scanner.interface';
 
 export class HostsDiscoveryConfig {
     constructor(
-        public readonly target: string|string[]
+        public readonly target: string|string[],
+        public readonly interval: number = 10 * 1000, // Default: 10 seconds
     ) {}
 
     static provide(cfg: HostsDiscoveryConfig, scanner: Type<HostScanner>): Provider[] {
@@ -72,7 +73,7 @@ export class HostsDiscoveryDevice implements OnDestroy {
         this._differ = createIterableDiffer();
         this._differ.diff([]);
         
-        interval(1000)
+        interval(config.interval)
             .pipe(
                 filter(() => !this._scanActive),
                 takeUntil(this._destroyed),
@@ -116,18 +117,18 @@ export class HostsDiscoveryDevice implements OnDestroy {
                     diff.forEachNewIdentity(record => newIPs.push(record.item));
                     
                     if (deletedIPs.length > 0) {
-                        this._debug(`${deletedIPs.length} devices went offline`, {devices: deletedIPs.join(', ')});
+                        this._info(`${deletedIPs.length} devices went offline`, {devices: deletedIPs.join(', ')});
                         this.lostHosts.next(deletedIPs);
                     }
                     
                     
                     if (newIPs.length > 0) {
-                        this._debug(`${newIPs.length} devices went online`, {devices: newIPs.join(', ')});
+                        this._info(`${newIPs.length} devices went online`, {devices: newIPs.join(', ')});
                         this.newHosts.next(newIPs);
                     }
                 }
                 
-                this._info(`Found ${result.length} active hosts`);
+                this._debug(`Found ${result.length} active hosts`, result);
 
                 this._lastHosts = result;
                 
