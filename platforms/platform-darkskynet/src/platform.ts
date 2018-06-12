@@ -1,6 +1,6 @@
 import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyNetWeatherPlugin} from './index';
 import {PlatformFactories, PlatformParameters} from '@homebot/platform';
-import {DarkSkyWeatherDevice} from './weather.device';
+import {DarkSkyWeatherDevice, DarkSkyWeatherDeviceConfig} from './weather.device';
 
 export * from './weather.device';
 
@@ -12,7 +12,8 @@ export const homebot: PlatformFactories = {
             defaultUnits,
             defaultLanguage,
             defaultExclude,
-            name
+            name,
+            interval
         } = params;
         
         return {
@@ -22,7 +23,8 @@ export const homebot: PlatformFactories = {
                 name: name || 'weather',
                 providers: [
                     DarkSkyWeatherService,
-                    DarkSkyAPIConfig.provide(new DarkSkyAPIConfig(apiKey, defaultLocation, defaultUnits, defaultLanguage, defaultExclude))
+                    DarkSkyAPIConfig.provide(new DarkSkyAPIConfig(apiKey, defaultLocation, defaultUnits, defaultLanguage, defaultExclude)),
+                    DarkSkyWeatherDeviceConfig.provide(interval),
                 ],
             }]
         };

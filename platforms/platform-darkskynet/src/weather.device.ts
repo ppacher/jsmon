@@ -1,12 +1,26 @@
-import {Optional} from '@homebot/core';
+import {Provider, Optional, OnDestroy} from '@homebot/core';
 import {Device, Sensor, ParameterType, Logger} from '@homebot/platform';
 import {DarkSkyWeatherService} from './weather.service';
 import {Observable} from 'rxjs/Observable';
+import {Subject} from 'rxjs/Subject';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {tap, flatMap, share, filter, startWith, catchError, map} from 'rxjs/operators';
+import {tap, flatMap, share, filter, startWith, catchError, map, takeUntil} from 'rxjs/operators';
 import {interval} from 'rxjs/observable/interval';
 import {of} from 'rxjs/observable/of';
-import { WeatherResponse } from './data';
+import {WeatherResponse} from './data';
+
+export class DarkSkyWeatherDeviceConfig {
+    constructor(
+        public updateInterval: number = 30 * 60 * 1000 // Default: 30minutes
+    ) {}
+    
+    static provide(interval?: number): Provider {
+        return {
+            provide: DarkSkyWeatherDeviceConfig,
+            useValue: new DarkSkyWeatherDeviceConfig(interval),
+        }
+    }
+}
 
 function get<T>(o: Observable<WeatherResponse>, fn: (r: WeatherResponse) => T): Observable<T> {
     return o.pipe(map(fn));
@@ -15,9 +29,10 @@ function get<T>(o: Observable<WeatherResponse>, fn: (r: WeatherResponse) => T): 
 @Device({
     description: 'Weather conditions powered by DarkSky.net',
 })
-export class DarkSkyWeatherDevice {
+export class DarkSkyWeatherDevice implements OnDestroy {
 
     private readonly _updates: Observable<WeatherResponse> = this._setup();
+    private readonly _destroyed: Subject<void> = new Subject();
     
     @Sensor({name: 'lastUpdate', type: ParameterType.NUMBER})
     readonly lastUpdate = get(this._updates, r => r.currently.time);
@@ -50,11 +65,17 @@ export class DarkSkyWeatherDevice {
     readonly visibility = get(this._updates, r => r.currently.visibility);
     
     constructor(private _weather: DarkSkyWeatherService,
+                private _config: DarkSkyWeatherDeviceConfig,
                 @Optional() private _log: Logger) {
 
         if (!!this._log) {
             this._log.debug(`weather device initialized`);
         }
+    }
+    
+    onDestroy() {
+        this._destroyed.next();
+        this._destroyed.complete();
     }
 
     private _setup(): Observable<WeatherResponse> {
@@ -69,8 +90,9 @@ export class DarkSkyWeatherDevice {
                     filter(res => !(res instanceof Error))
                 ) as Observable<WeatherResponse>;
 
-        return interval(30 * 60 * 1000) // every 30 minutes
+        return interval(this._config.updateInterval) // every 30 minutes
             .pipe(
+                takeUntil(this._destroyed),
                 startWith(-1), // start instant
                 tap(() => {
                     if (!!this._log) {
@@ -80,7 +102,7 @@ export class DarkSkyWeatherDevice {
                 flatMap(() => fetch), // load data and discard/filter errors
                 tap(res => {
                     if (!!this._log) {
-                        this._log.debug(`received weather data for ${res.latitude}, ${res.longitude}`);
+                        this._log.info(`received weather data for ${res.latitude}, ${res.longitude}`);
                     }
                 }),
                 share() // share the observable so we only load the data once for all subscriptions
