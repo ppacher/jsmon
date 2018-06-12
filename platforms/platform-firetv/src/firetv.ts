@@ -1,6 +1,6 @@
 const adb = require('adbkit');
 
-import {OnDestroy, isPromiseLike} from '@homebot/core';
+import {OnDestroy, isPromiseLike} from '@jsmon/core';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {fromPromise} from 'rxjs/observable/fromPromise';

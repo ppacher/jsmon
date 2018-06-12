@@ -1,4 +1,4 @@
-import {Provider, Type} from '@homebot/core';
+import {Provider, Type} from '@jsmon/core';
 import {TimeSeriesStorage} from './storage.interface';
 
 

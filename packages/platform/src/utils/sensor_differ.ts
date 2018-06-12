@@ -1,4 +1,4 @@
-import {IterableDiffer, IterableChangeRecord, IterableChanges, createIterableDiffer} from '@homebot/core';
+import {IterableDiffer, IterableChangeRecord, IterableChanges, createIterableDiffer} from '@jsmon/core';
 import {ISensorSchema} from '../devices';
 
 export interface SensorChanges {
@@ -62,7 +62,7 @@ export function getSensorDiff(oldSensor: ISensorSchema, newSensor: ISensorSchema
 }
 
 /**
- * a {@link @homebot/core:TrackByFunction} for {@link ISensorSchema}
+ * a {@link @jsmon/core:TrackByFunction} for {@link ISensorSchema}
  */
 export function SensorTrackByFunction(idx: number, sensor: ISensorSchema): any {
     return sensor.name;

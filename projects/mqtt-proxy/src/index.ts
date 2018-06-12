@@ -1,9 +1,9 @@
-import {App, bootstrapApp, Injector} from '@homebot/core';
-import {DeviceManager, DeviceManagerModule, Logger} from '@homebot/platform';
-import {SensorStorageManager, provideStorageAdapter} from '@homebot/platform/storage';
-import {JsonStore, JsonStoreConfig} from '@homebot/plugin-storage-file';
-import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from '@homebot/plugin-httpserver';
-import {MqttPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
+import {App, bootstrapApp, Injector} from '@jsmon/core';
+import {DeviceManager, DeviceManagerModule, Logger} from '@jsmon/platform';
+import {SensorStorageManager, provideStorageAdapter} from '@jsmon/platform/storage';
+import {JsonStore, JsonStoreConfig} from '@jsmon/plugin-storage-file';
+import {HTTPServerPlugin, HTTPServer, DeviceHttpApiPlugin, DeviceHttpApi, DeviceHttpApiConfig} from '@jsmon/plugin-httpserver';
+import {MqttPlugin, MqttDeviceManagerProxyPlugin} from '@jsmon/plugin-mqtt';
 
 import * as minimist from 'minimist';
 

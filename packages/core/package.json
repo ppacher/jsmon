@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/core",
+  "name": "@jsmon/core",
   "version": "0.0.1",
   "description": "Rapid home-automation development framework",
   "main": "index.js",
@@ -9,7 +9,7 @@
     "test:watch": "jest --watch"
   },
   "keywords": [
-    "homebot"
+    "jsmon"
   ],
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",

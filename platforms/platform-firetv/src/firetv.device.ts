@@ -1,5 +1,5 @@
-import {Provider, OnDestroy} from '@homebot/core';
-import {Device, Sensor, Command, ParameterType, Logger} from '@homebot/platform';
+import {Provider, OnDestroy} from '@jsmon/core';
+import {Device, Sensor, Command, ParameterType, Logger} from '@jsmon/platform';
 import {FireTV} from './firetv';
 import {FireTVState} from './states';
 

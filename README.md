@@ -1,12 +1,12 @@
-# HomeBot
+# JsMon
 
 Do-It-Yourself Home Automation
 
 > **Note:**   
-> `HomeBot` is currently under active development and can in no way be considered stable. It's not even published to NPM, please stay tuned ;)  
+> `JsMon` is currently under active development and can in no way be considered stable. It's not even published to NPM, please stay tuned ;)  
 > You can still clone the repository and try it yourself. Please follow the instructions below
 
-`HomeBot` is a NodeJS framework (written in TypeScript) for building DIY home automation systems. It works by defining/adding `Device`s that provide the base foundation of your home automation system. Devices can have Sensors and provide Commands (Actors) to interact with whatever kind of thing you like. 
+`JsMon` is a NodeJS framework (written in TypeScript) for building DIY home automation systems. It works by defining/adding `Device`s that provide the base foundation of your home automation system. Devices can have Sensors and provide Commands (Actors) to interact with whatever kind of thing you like. 
 
 It currently features
 

@@ -76,17 +76,17 @@ updatePackage() {
 
 updateDependecies() {
     echo "   -> Updating dependencies"
-    updatePackage "@homebot/core" 
-    updatePackage "@homebot/platform"
-    updatePackage "@homebot/plugin-httpserver"
-    updatePackage "@homebot/plugin-mqtt"
-    updatePackage "@homebot/plugin-graphql"
-    updatePackage "@homebot/plugin-storage-file"
-    updatePackage "@homebot/platform-darkskynet"
-    updatePackage "@homebot/platform-firetv"
-    updatePackage "@homebot/platform-host-discovery"
-    updatePackage "@homebot/platform-mpd"
-    updatePackage "@homebot/platform-sysinfo"
+    updatePackage "@jsmon/core" 
+    updatePackage "@jsmon/platform"
+    updatePackage "@jsmon/plugin-httpserver"
+    updatePackage "@jsmon/plugin-mqtt"
+    updatePackage "@jsmon/plugin-graphql"
+    updatePackage "@jsmon/plugin-storage-file"
+    updatePackage "@jsmon/platform-darkskynet"
+    updatePackage "@jsmon/platform-firetv"
+    updatePackage "@jsmon/platform-host-discovery"
+    updatePackage "@jsmon/platform-mpd"
+    updatePackage "@jsmon/platform-sysinfo"
 }
 
 rebuild() {

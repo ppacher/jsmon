@@ -1,4 +1,4 @@
-import {Type, Provider} from '@homebot/core';
+import {Type, Provider} from '@jsmon/core';
 
 /**
  * Definition of a platform device returned by the a platform factory
@@ -58,7 +58,7 @@ export interface PlatformFactory {
 }
 
 /**
- * Platforms must export a homebot constant with type PlatformFactories 
+ * Platforms must export a jsmon constant with type PlatformFactories 
  * within the `entry` file of the platform
  */
 export interface PlatformFactories {
@@ -71,7 +71,7 @@ export interface PlatformFactories {
 export interface HomeBotPlatformExtension {
     main: string;
 
-    homebot: {
+    jsmon: {
         entry?: string;
     }
 }

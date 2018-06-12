@@ -1,4 +1,4 @@
-import {Plugin} from '@homebot/core';
+import {Plugin} from '@jsmon/core';
 import {DeviceHttpApi} from './device-frontend';
 
 @Plugin({

@@ -1,12 +1,12 @@
-import {Injectable, Injector, createIterableDiffer, TrackByFunction} from '@homebot/core';
-import {DeviceManager, DeviceController, IParameterDefinition, Logger, Command, ParameterType, ISensorSchema} from '@homebot/platform';
-import {IDeviceDiscoveryAnnouncement, ICommandDefinition} from '@homebot/platform/proto';
+import {Injectable, Injector, createIterableDiffer, TrackByFunction} from '@jsmon/core';
+import {DeviceManager, DeviceController, IParameterDefinition, Logger, Command, ParameterType, ISensorSchema} from '@jsmon/platform';
+import {IDeviceDiscoveryAnnouncement, ICommandDefinition} from '@jsmon/platform/proto';
 import {MqttDeviceAPI} from '../device.api';
 
 import {_throw} from 'rxjs/observable/throw';
 import {map, catchError, shareReplay, startWith} from 'rxjs/operators';
 import {toPromise} from 'rxjs/operator/toPromise';
-import { IDeviceDefinition, DeviceDefinition, ISensorValue } from '@homebot/platform/proto';
+import { IDeviceDefinition, DeviceDefinition, ISensorValue } from '@jsmon/platform/proto';
 
 @Injectable()
 export class MqttDeviceManagerProxy {

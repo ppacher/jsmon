@@ -1,6 +1,6 @@
-import {Injectable} from '@homebot/core';
-import {Logger, DeviceController, CommandSchema} from '@homebot/platform';
-import {IDeviceDefinition, DeviceDefinition, ICommandDefinition, DeviceDiscoveryAnnouncement, IDeviceDiscoveryAnnouncement} from '@homebot/platform/proto';
+import {Injectable} from '@jsmon/core';
+import {Logger, DeviceController, CommandSchema} from '@jsmon/platform';
+import {IDeviceDefinition, DeviceDefinition, ICommandDefinition, DeviceDiscoveryAnnouncement, IDeviceDiscoveryAnnouncement} from '@jsmon/platform/proto';
 
 import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs/Observable';
@@ -24,13 +24,13 @@ export class MqttDeviceAPI {
     constructor(private _mqtt: MqttService, log: Logger) {
         this._log = log.createChild('mqtt:device');
         
-        this._discoveryRequests = this._mqtt.subscribe('homebot/discovery');
+        this._discoveryRequests = this._mqtt.subscribe('jsmon/discovery');
     }
     
     /**
      * Register a discovery request handler invoked for each discovery request
-     * The request handler may return one or more {@link @homebot/core/device-manager/api:DeviceMessage} or 
-     * a {@link @homebot/core/device-manager:DeviceController} to be published on MQTT
+     * The request handler may return one or more {@link @jsmon/core/device-manager/api:DeviceMessage} or 
+     * a {@link @jsmon/core/device-manager:DeviceController} to be published on MQTT
      * 
      * @param handler The handler function to invoke for each discovery request
      */
@@ -53,13 +53,13 @@ export class MqttDeviceAPI {
      * Publish a device discovery request on MQTT
      */
     initiateDiscovery(): void {
-        this._mqtt.publish('homebot/discovery', null);
+        this._mqtt.publish('jsmon/discovery', null);
     }
     
     /**
      * Announces the availablility of a device on MQTT
      * 
-     * @param device The {@link @homebot/core:DeviceController} or {@link @homebot/core:api.DeviceMessage} to publish
+     * @param device The {@link @jsmon/core:DeviceController} or {@link @jsmon/core:api.DeviceMessage} to publish
      */
     announceDevice(device: DeviceController|IDeviceDiscoveryAnnouncement) {
         if (!device) {
@@ -89,14 +89,14 @@ export class MqttDeviceAPI {
         
         let payload = DeviceDiscoveryAnnouncement.encode(msg).finish();
         
-        this._mqtt.publish(`homebot/device/${msg.device.name}`, new Buffer(payload));
+        this._mqtt.publish(`jsmon/device/${msg.device.name}`, new Buffer(payload));
     }
     
     /**
      * Setup a listener for device annoucements
      */
     watchDeviceAnnouncements(): Observable<IDeviceDiscoveryAnnouncement> {
-        return this._mqtt.subscribe(`homebot/device/+`)
+        return this._mqtt.subscribe(`jsmon/device/+`)
             .pipe(
                 map(([topic, buffer]) => DeviceDiscoveryAnnouncement.decode(buffer))
             );
@@ -118,7 +118,7 @@ export class MqttDeviceAPI {
         
         this._log.debug(`publishing sensor value for ${name}.${sensor}`, value)
 
-        this._mqtt.publish(`homebot/device/${name}/sensor/${sensor}/value`, payload);
+        this._mqtt.publish(`jsmon/device/${name}/sensor/${sensor}/value`, payload);
     }
     
     /**
@@ -130,7 +130,7 @@ export class MqttDeviceAPI {
      * @returns An {@link Observable} that emits the current sensor value when received
      */
     watchSensor(deviceName: string, sensorName: string): Observable<any> {
-        return this._mqtt.subscribe(`homebot/device/${deviceName}/sensor/${sensorName}/value`)
+        return this._mqtt.subscribe(`jsmon/device/${deviceName}/sensor/${sensorName}/value`)
             .pipe(
                 map(([topic, buffer]) => JSON.parse(buffer.toString())),
                 tap((value) => this._log.debug(`Received sensor value for ${deviceName}/${sensorName}`, value))
@@ -150,7 +150,7 @@ export class MqttDeviceAPI {
 
         const payload = JSON.stringify(body);
         return toPromise.apply(
-            this._mqtt.call(`homebot/device/${device}/command/${cmd}`, payload, 5*1000)
+            this._mqtt.call(`jsmon/device/${device}/command/${cmd}`, payload, 5*1000)
                 .pipe(
                     map(b => b.toString()),
                     map(d => JSON.parse(d)),
@@ -236,7 +236,7 @@ export class MqttDeviceAPI {
     }
 
     private _setupCommandHandler(deviceName: string, cmdName: string, handler: CommandHandler): Subscription {
-        return this._mqtt.handle(`homebot/device/${deviceName}/command/${cmdName}`, handler);
+        return this._mqtt.handle(`jsmon/device/${deviceName}/command/${cmdName}`, handler);
     }
 }
 

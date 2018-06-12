@@ -1,10 +1,10 @@
-import {Injectable, Optional} from '@homebot/core';
-import {DeviceManager, DeviceController, ISensorSchema, CommandSchema, IParameterDefinition, ParameterType} from '@homebot/platform'
+import {Injectable, Optional} from '@jsmon/core';
+import {DeviceManager, DeviceController, ISensorSchema, CommandSchema, IParameterDefinition, ParameterType} from '@jsmon/platform'
 import {HTTPServer, RemoveRouteFn} from '../server';
 import {DeviceHttpApiConfig} from './config';
 import {Request, Response} from 'restify';
 import {query} from 'jsonpath';
-import { ICommandDefinition } from '@homebot/platform/proto';
+import { ICommandDefinition } from '@jsmon/platform/proto';
 
 @Injectable()
 export class DeviceHttpApi {

@@ -1,4 +1,4 @@
-import {Injectable} from '@homebot/core';
+import {Injectable} from '@jsmon/core';
 
 import * as restify from 'restify';
 

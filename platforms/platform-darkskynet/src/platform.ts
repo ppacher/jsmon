@@ -1,10 +1,10 @@
 import {DarkSkyWeatherService, DarkSkyAPIConfig, DarkSkyNetWeatherPlugin} from './index';
-import {PlatformFactories, PlatformParameters} from '@homebot/platform';
+import {PlatformFactories, PlatformParameters} from '@jsmon/platform';
 import {DarkSkyWeatherDevice, DarkSkyWeatherDeviceConfig} from './weather.device';
 
 export * from './weather.device';
 
-export const homebot: PlatformFactories = {
+export const jsmon: PlatformFactories = {
     'Weather': (params: PlatformParameters) => {
         let {
             apiKey,

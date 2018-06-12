@@ -1,4 +1,4 @@
-import {Injectable, Inject, Optional} from '@homebot/core';
+import {Injectable, Inject, Optional} from '@jsmon/core';
 import {LoggingAdapter, LogLevel} from './adapter';
 import {ConsoleAdapter} from './console.adapter';
 

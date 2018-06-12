@@ -1,5 +1,5 @@
-import {Injectable} from '@homebot/core';
-import {DeviceManager, DeviceController, Logger} from '@homebot/platform';
+import {Injectable} from '@jsmon/core';
+import {DeviceManager, DeviceController, Logger} from '@jsmon/platform';
 import {MqttDeviceAPI} from '../device.api';
 
 import {filter, takeUntil} from 'rxjs/operators';

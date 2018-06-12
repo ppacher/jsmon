@@ -1,5 +1,5 @@
-import {Provider, Optional, OnDestroy} from '@homebot/core';
-import {Device, Sensor, ParameterType, Logger} from '@homebot/platform';
+import {Provider, Optional, OnDestroy} from '@jsmon/core';
+import {Device, Sensor, ParameterType, Logger} from '@jsmon/platform';
 import {DarkSkyWeatherService} from './weather.service';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';

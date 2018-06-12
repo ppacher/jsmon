@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/platform-firetv",
+  "name": "@jsmon/platform-firetv",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
@@ -12,8 +12,8 @@
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
     "@types/jest": "^22.2.2",
     "@types/node": "^9.4.6",
     "jest": "^22.4.3",
@@ -25,11 +25,11 @@
     "adbkit": "^2.11.0"
   },
   "peerDependencies": {
-    "@homebot/platform": "0.0.1",
-    "@homebot/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
     "rxjs": "^5.5.6"
   },
-  "homebot": {
+  "jsmon": {
     "entry": "platform.js"
   },
   "jest": {

@@ -1,12 +1,12 @@
 
-import {PlatformParameters, PlatformFactories} from '@homebot/platform';
+import {PlatformParameters, PlatformFactories} from '@jsmon/platform';
 import { FireTVPlugin } from './index';
 import {FireTVDevice, FireTVConfig} from './firetv.device';
 
 export * from './firetv.device';
 export * from './index';
 
-export const homebot: PlatformFactories = {
+export const jsmon: PlatformFactories = {
     'FireTV': (params: PlatformParameters) => {
         if (!params['host']) {
             throw new Error(`Missing hostname for FireTV`);

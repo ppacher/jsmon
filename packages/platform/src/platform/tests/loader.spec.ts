@@ -1,8 +1,8 @@
 import {dirname, resolve} from 'path';
-import {Injector, Type, Provider} from '@homebot/core';
+import {Injector, Type, Provider} from '@jsmon/core';
 import {PlatformLoader} from '../loader';
 
-import {Case1Plugin, DummyService, DummyDevice, AnotherService, homebot} from './test-data/case1/entry';
+import {Case1Plugin, DummyService, DummyDevice, AnotherService, jsmon} from './test-data/case1/entry';
 
 const testDataDir = resolve(dirname(__filename), 'test-data');
 

@@ -1,5 +1,5 @@
 {
-  "name": "@homebot/platform-mpd",
+  "name": "@jsmon/platform-mpd",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
@@ -12,8 +12,8 @@
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
     "@types/jest": "^22.2.2",
     "jest": "^22.4.3",
     "rxjs": "^5.5.6",
@@ -21,15 +21,15 @@
     "typescript": "^2.9.1"
   },
   "peerDependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
     "rxjs": "^5.5.6"
   },
   "dependencies": {
     "mpc-js": "^1.2.1",
     "mpc-js-core": "^1.2.1"
   },
-  "homebot": {
+  "jsmon": {
     "entry": "platform.js"
   },
   "jest": {

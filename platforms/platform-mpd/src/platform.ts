@@ -1,11 +1,11 @@
-import { PlatformParameters, PlatformFactories } from '@homebot/platform';
+import { PlatformParameters, PlatformFactories } from '@jsmon/platform';
 import {MPDPlugin, MPDConfig} from './index';
 import {MPDDevice} from './mpd.device';
 
 export * from './mpd.device';
 export * from './index';
 
-export const homebot: PlatformFactories = {
+export const jsmon: PlatformFactories = {
     'MPD': (params: PlatformParameters) => {
         let {
             address,

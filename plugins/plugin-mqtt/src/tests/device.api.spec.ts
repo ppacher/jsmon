@@ -1,5 +1,5 @@
-import {DeviceMessage} from '@homebot/platform/devices/api';
-import {ParameterType} from '@homebot/platform';
+import {DeviceMessage} from '@jsmon/platform/devices/api';
+import {ParameterType} from '@jsmon/platform';
 import {MqttService, CommandHandler} from '../mqtt.service';
 import {MqttDeviceAPI, DiscoveryHandler} from '../device.api';
 
@@ -45,7 +45,7 @@ describe('MqttDeviceAPI', () => {
             api.initiateDiscovery();
 
             expect(publishSpy).toHaveBeenCalled();
-            expect(publishSpy.mock.calls[0][0]).toBe('homebot/discovery');
+            expect(publishSpy.mock.calls[0][0]).toBe('jsmon/discovery');
             expect(publishSpy.mock.calls[0][1]).toBe(null);
         });
         
@@ -56,10 +56,10 @@ describe('MqttDeviceAPI', () => {
             
             api.setupDiscoveryHandler(spy);
             
-            let sub = service.subscriptions.get('homebot/discovery');
+            let sub = service.subscriptions.get('jsmon/discovery');
             expect(sub).toBeDefined();
             
-            sub.next(['homebot/discovery', null]);
+            sub.next(['jsmon/discovery', null]);
             expect(spy).toHaveBeenCalled();
         });
 
@@ -80,7 +80,7 @@ describe('MqttDeviceAPI', () => {
             
             return new Promise((resolve, reject) => {
                 let publishSpy = jest.spyOn(service, 'publish').mockImplementation((topic, payload) => {
-                    expect(topic).toBe('homebot/device/myDevice')
+                    expect(topic).toBe('jsmon/device/myDevice')
                     expect(JSON.parse(payload)).toEqual(dev);
                     resolve();   
                 });
@@ -91,17 +91,17 @@ describe('MqttDeviceAPI', () => {
                 
                 api.setupDiscoveryHandler(spy);
 
-                let sub = service.subscriptions.get('homebot/discovery');
-                sub.next(['homebot/discovery', null]);
+                let sub = service.subscriptions.get('jsmon/discovery');
+                sub.next(['jsmon/discovery', null]);
             });
         });
         
         it('should support clearing the discovery handler', () => {
             api.setupDiscoveryHandler(async () => []);
-            expect(service.subscriptions.get('homebot/discovery')).toBeDefined();
+            expect(service.subscriptions.get('jsmon/discovery')).toBeDefined();
 
             api.setupDiscoveryHandler(null);
-            expect(service.subscriptions.get('homebot/discovery')).toBeUndefined();
+            expect(service.subscriptions.get('jsmon/discovery')).toBeUndefined();
         });
     });
     
@@ -116,12 +116,12 @@ describe('MqttDeviceAPI', () => {
                     });
                     
                 expect(subscribeSpy).toHaveBeenCalled();
-                expect(subscribeSpy.mock.calls[0][0]).toBe('homebot/device/mydevice/sensor/foo/value');
+                expect(subscribeSpy.mock.calls[0][0]).toBe('jsmon/device/mydevice/sensor/foo/value');
 
-                let sender = service.subscriptions.get('homebot/device/mydevice/sensor/foo/value');
+                let sender = service.subscriptions.get('jsmon/device/mydevice/sensor/foo/value');
                 expect(sender).toBeDefined();
 
-                sender.next(['homebot/device/mydevice/sensor/foo/value', new Buffer(JSON.stringify(10))]);
+                sender.next(['jsmon/device/mydevice/sensor/foo/value', new Buffer(JSON.stringify(10))]);
             });
         });
     });
@@ -136,7 +136,7 @@ describe('MqttDeviceAPI', () => {
             
             let sub = api.setupDeviceCommandHandler('mydevice', 'cmd1', spy);
 
-            expect(handleSpy).toHaveBeenCalledWith('homebot/device/mydevice/command/cmd1', spy);
+            expect(handleSpy).toHaveBeenCalledWith('jsmon/device/mydevice/command/cmd1', spy);
         })
     });
 })

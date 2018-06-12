@@ -1,4 +1,4 @@
-import {Plugin} from '@homebot/core';
+import {Plugin} from '@jsmon/core';
 import {MqttDeviceManagerAPI} from './device-frontend';
 
 @Plugin({

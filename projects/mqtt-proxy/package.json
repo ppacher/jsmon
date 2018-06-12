@@ -14,11 +14,11 @@
     "@types/node": "^9.4.6"
   },
   "dependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
-    "@homebot/plugin-httpserver": "0.0.1",
-    "@homebot/plugin-mqtt": "0.0.1",
-    "@homebot/plugin-storage-file": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
+    "@jsmon/plugin-httpserver": "0.0.1",
+    "@jsmon/plugin-mqtt": "0.0.1",
+    "@jsmon/plugin-storage-file": "0.0.1",
     "@types/minimist": "^1.2.0",
     "js-yaml": "^3.11.0",
     "jsonpath": "^1.0.0",

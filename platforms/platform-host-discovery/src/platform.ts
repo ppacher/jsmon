@@ -1,9 +1,9 @@
-import {PlatformParameters, PlatformFactories, PlatformSpec} from '@homebot/platform';
+import {PlatformParameters, PlatformFactories, PlatformSpec} from '@jsmon/platform';
 import { HostDiscoveryPlugin } from './index';
 import {HostsDiscoveryConfig, HostsDiscoveryDevice} from './host-discovery.device';
 import {NmapScanner} from './scanners';
 
-export const homebot: PlatformFactories = {
+export const jsmon: PlatformFactories = {
     'HostsDiscovery': (params: PlatformParameters) => {
         if (!params['target']) {
             throw new Error(`Missing targets for HostDiscovery`);

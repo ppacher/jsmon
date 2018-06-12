@@ -1,4 +1,4 @@
-import {ExtendableError} from '@homebot/core/error';
+import {ExtendableError} from '@jsmon/core/error';
 
 export function getEntryPointFileNotFoundError(path: string): Error {
     return new ExtendableError('FileNotFoundError', `The entry file ${path} of the platfrom does not exist`);
@@ -17,7 +17,7 @@ export function getInvalidPackageError(path: string, err: Error|string): Error {
 }
 
 export function getMissingHomebotExportError(path: string): Error {
-    return new ExtendableError('MissingHomebotExportError', `The module at ${path} does not export a homebot property`);
+    return new ExtendableError('MissingHomebotExportError', `The module at ${path} does not export a jsmon property`);
 }
 
 export function getPluginNotFoundError(name: string, errors: Error[]): Error {

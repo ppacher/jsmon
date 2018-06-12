@@ -1,5 +1,5 @@
-import {Injectable, Inject, Optional} from '@homebot/core';
-import {Logger} from '@homebot/platform';
+import {Injectable, Inject, Optional} from '@jsmon/core';
+import {Logger} from '@jsmon/platform';
 import {Client, connect, Packet, IClientOptions} from 'mqtt';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';

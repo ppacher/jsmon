@@ -1,4 +1,4 @@
-import {Injectable, Inject, Optional, OnDestroy} from '@homebot/core';
+import {Injectable, Inject, Optional, OnDestroy} from '@jsmon/core';
 import {StorageAdapter} from './storage.adapter';
 import {TimeSeriesStorage, QueryOptions, Value, ValueIterator} from './storage.interface';
 import {DeviceManager, DeviceController} from '../devices';

@@ -1,5 +1,5 @@
-import {Type} from '@homebot/core';
-import {PlatformParameters} from '@homebot/platform';
+import {Type} from '@jsmon/core';
+import {PlatformParameters} from '@jsmon/platform';
 import {existsSync, readFileSync} from 'fs';
 import {resolve, extname} from 'path';
 import {Observable} from 'rxjs/Observable';

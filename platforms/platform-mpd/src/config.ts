@@ -1,4 +1,4 @@
-import {Injectable, Provider} from '@homebot/core';
+import {Injectable, Provider} from '@jsmon/core';
 
 @Injectable()
 export class MPDConfig {

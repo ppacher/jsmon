@@ -1,4 +1,4 @@
-import {IterableDiffer, IterableChanges, IterableChangeRecord, createIterableDiffer} from '@homebot/core';
+import {IterableDiffer, IterableChanges, IterableChangeRecord, createIterableDiffer} from '@jsmon/core';
 import {ICommandDefinition, IParameterDefinition, ParameterType} from '../devices';
 
 export interface ParameterChangeRecord {
@@ -47,7 +47,7 @@ export type Parameter = [string, IParameterDefinition|ParameterType[]];
 
 
 /**
- * A {@link @homebot/core:TrackByFunction} from {@link ICommandDefinition}
+ * A {@link @jsmon/core:TrackByFunction} from {@link ICommandDefinition}
  */
 export function CommandTrackByFunction(idx: number, cmd: ICommandDefinition): string {
     return cmd.name!;

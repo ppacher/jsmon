@@ -1,5 +1,5 @@
-import {OnDestroy} from '@homebot/core';
-import {Device, Sensor, ParameterType} from '@homebot/platform';
+import {OnDestroy} from '@jsmon/core';
+import {Device, Sensor, ParameterType} from '@jsmon/platform';
 import * as sysinfo from 'systeminformation';
 import {Observable} from 'rxjs/Observable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';

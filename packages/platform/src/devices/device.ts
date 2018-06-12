@@ -6,7 +6,7 @@ import {
     ANNOTATIONS,
     PROP_METADATA,
     Type,
-} from '@homebot/core';
+} from '@jsmon/core';
 import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition} from '../proto';
 export {ParameterType, IParameterDefinition, ISensorSchema, ICommandDefinition} from '../proto';
 

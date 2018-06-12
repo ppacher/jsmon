@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PERSISTANCE=/home/$USER/homebot/_data
+PERSISTANCE=/home/$USER/jsmon/_data
 
 mkdir -p ${PERSISTANCE}/mqtt/{log,config,data}
 

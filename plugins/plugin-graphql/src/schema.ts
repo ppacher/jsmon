@@ -1,4 +1,4 @@
-import {Provider, Inject, Injectable} from '@homebot/core';
+import {Provider, Inject, Injectable} from '@jsmon/core';
 import {makeExecutableSchema} from 'graphql-tools';
 import {GraphQLSchema} from 'graphql';
 

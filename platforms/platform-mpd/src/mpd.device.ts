@@ -1,5 +1,5 @@
-import {Inject, OnDestroy} from '@homebot/core';
-import {Logger, Device, Command, Sensor, ParameterType} from '@homebot/platform';
+import {Inject, OnDestroy} from '@jsmon/core';
+import {Logger, Device, Command, Sensor, ParameterType} from '@jsmon/platform';
 import {MPD_CONFIG, MPDConfig} from './config';
 
 import {Observable} from 'rxjs/Observable';

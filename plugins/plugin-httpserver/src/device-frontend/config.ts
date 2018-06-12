@@ -1,5 +1,5 @@
-import {Provider} from '@homebot/core';
-import {DeviceController} from '@homebot/platform';
+import {Provider} from '@jsmon/core';
+import {DeviceController} from '@jsmon/platform';
 
 export class DeviceHttpApiConfig {
     constructor(

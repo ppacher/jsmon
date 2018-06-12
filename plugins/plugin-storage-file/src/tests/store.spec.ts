@@ -1,11 +1,11 @@
 import {JsonStore} from '../json-store';
 import {JsonStoreConfig} from '../config';
 
-import {Value} from '@homebot/platform';
+import {Value} from '@jsmon/platform';
 
 import {mkdirSync, existsSync, writeFileSync, unlinkSync, readFileSync, appendFileSync} from 'fs';
 import {join} from 'path';
-import {ISensorSchema, ParameterType} from '@homebot/platform';
+import {ISensorSchema, ParameterType} from '@jsmon/platform';
 
 // we are using rimraf instead of fs.rmdirSync as it allows deleting
 // non-empty directories

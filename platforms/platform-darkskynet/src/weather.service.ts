@@ -1,4 +1,4 @@
-import {Injectable, Provider, Optional} from '@homebot/core';
+import {Injectable, Provider, Optional} from '@jsmon/core';
 import {bindNodeCallback} from 'rxjs/observable/bindNodeCallback';
 import {Observable} from 'rxjs/Observable';
 import {get, Response} from 'request';

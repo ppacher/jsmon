@@ -1,6 +1,6 @@
-import {App, bootstrapApp, Injector, } from '@homebot/core';
-import {PlatformLoader, DeviceManager, DeviceController, Logger, PlatformModule} from '@homebot/platform';
-import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@homebot/plugin-mqtt';
+import {App, bootstrapApp, Injector, } from '@jsmon/core';
+import {PlatformLoader, DeviceManager, DeviceController, Logger, PlatformModule} from '@jsmon/platform';
+import {MqttPlugin, MqttDeviceApiPlugin, MqttDeviceManagerProxyPlugin} from '@jsmon/plugin-mqtt';
 
 import {ConfigLoader, Config} from './config';
 

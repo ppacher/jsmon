@@ -1,4 +1,4 @@
-import {Injectable, Inject} from '@homebot/core';
+import {Injectable, Inject} from '@jsmon/core';
 import {MPDConfig, MPD_CONFIG} from './config';
 
 import * as mpc from 'mpc-js';

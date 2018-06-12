@@ -1,4 +1,4 @@
-import {Provider} from '@homebot/core';
+import {Provider} from '@jsmon/core';
 
 export const LoggingAdapter = 'HomebotLoggingAdapter';
 export type LogLevel = 'debug'|'info'|'warn'|'error';

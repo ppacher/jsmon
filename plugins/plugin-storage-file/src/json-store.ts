@@ -1,4 +1,4 @@
-import {Injectable, Optional} from '@homebot/core';
+import {Injectable, Optional} from '@jsmon/core';
 import {
     TimeSeriesStorage,
     ISensorSchema,
@@ -7,7 +7,7 @@ import {
     Value,
     getSensorDiff,
     Logger
-} from '@homebot/platform';
+} from '@jsmon/platform';
 
 import {existsSync, statSync, readFile, writeFile, unlinkSync, appendFile, createReadStream} from 'fs';
 import {join} from 'path';
@@ -56,7 +56,7 @@ export class JsonStore implements TimeSeriesStorage {
             this._log = logger.createChild('json-store');
         }
                 
-        this._storageDir = resolveUserHome(cfg.storagePath || '~/.homebot/jsonstore');
+        this._storageDir = resolveUserHome(cfg.storagePath || '~/.jsmon/jsonstore');
         
         if (!existsSync(this._storageDir)) {
             this._error(`Storage path ${this._storageDir} does not exist`);
@@ -191,7 +191,7 @@ export class JsonStore implements TimeSeriesStorage {
      * On error the returned promise is rejected
      * 
      * @param deviceName The name of the device
-     * @param schema  The {@link @homebot/platform:ISensorSchema} of the sensor
+     * @param schema  The {@link @jsmon/platform:ISensorSchema} of the sensor
      */
     private _isDeviceSensorSchemaValid(deviceName: string, schema: ISensorSchema): Promise<boolean> {
         return new Promise((resolve, reject) => {
@@ -243,7 +243,7 @@ export class JsonStore implements TimeSeriesStorage {
      * @param sensorName The name of the sensor
      */
     private _getSchemaFilePath(deviceName: string, sensorName: string): string {
-        // ~/.homebot/jsonstore/{deviceName}-{sensorName}.json
+        // ~/.jsmon/jsonstore/{deviceName}-{sensorName}.json
         return join(this._storageDir, `${deviceName}-${sensorName}.json`);
     }
 
@@ -256,7 +256,7 @@ export class JsonStore implements TimeSeriesStorage {
      * @param sensorName The name of the sensor
      */
     private _getSensorDataFilePath(deviceName: string, sensorName: string): string {
-        // ~/.homebot/jsonstore/{deviceName}-{sensorName}-data.json
+        // ~/.jsmon/jsonstore/{deviceName}-{sensorName}-data.json
         return join(this._storageDir,`${deviceName}-${sensorName}-data`);
     }
     

@@ -1,4 +1,4 @@
-import {ExtendableError} from '@homebot/core/error';
+import {ExtendableError} from '@jsmon/core/error';
 
 export class ErrStoragePathNotExist extends ExtendableError {
     constructor(path: string) {

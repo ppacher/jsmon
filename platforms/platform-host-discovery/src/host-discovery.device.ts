@@ -1,6 +1,6 @@
-import {Type, Provider, Inject, Optional, OnDestroy, createIterableDiffer, IterableDiffer} from '@homebot/core';
-import {Device, Command, Sensor, Logger} from '@homebot/platform';
-import {ParameterType} from '@homebot/platform/proto';
+import {Type, Provider, Inject, Optional, OnDestroy, createIterableDiffer, IterableDiffer} from '@jsmon/core';
+import {Device, Command, Sensor, Logger} from '@jsmon/platform';
+import {ParameterType} from '@jsmon/platform/proto';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {interval} from 'rxjs/observable/interval';

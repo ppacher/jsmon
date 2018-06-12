@@ -1,5 +1,5 @@
-import { Optional, Injectable, Type, Injector, Provider, isDestroyable } from '@homebot/core';
-import { isPromiseLike, isObservableLike, stringify } from '@homebot/core/utils';
+import { Optional, Injectable, Type, Injector, Provider, isDestroyable } from '@jsmon/core';
+import { isPromiseLike, isObservableLike, stringify } from '@jsmon/core/utils';
 
 import {
     SensorProvider,

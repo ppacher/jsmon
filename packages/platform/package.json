@@ -1,7 +1,7 @@
 {
-  "name": "@homebot/platform",
+  "name": "@jsmon/platform",
   "version": "0.0.1",
-  "description": "Platform library of the HomeBot automation development framework",
+  "description": "Platform library of the jsmon automation development framework",
   "main": "index.js",
   "scripts": {
     "start": "npm run generate-types && npm run generate-src &&  npm run build-src && cp src/proto.{d.ts,js} dist/",
@@ -12,12 +12,12 @@
     "test:watch": "jest --watch"
   },
   "keywords": [
-    "homebot"
+    "jsmon"
   ],
   "author": "Patrick Pacher <patrick.pacher@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@homebot/core": "0.0.1",
+    "@jsmon/core": "0.0.1",
     "@types/jest": "^22.2.2",
     "@types/js-yaml": "^3.10.1",
     "@types/node": "^9.4.7",
@@ -28,7 +28,7 @@
     "typescript": "^2.9.1"
   },
   "peerDependencies": {
-    "@homebot/core": "^0.0.1",
+    "@jsmon/core": "^0.0.1",
     "reflect-metadata": "^0.1.12",
     "js-yaml": "^3.11.0",
     "rxjs": "^5.5.6"

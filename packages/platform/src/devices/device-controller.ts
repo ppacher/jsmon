@@ -5,8 +5,8 @@ import {Subject} from 'rxjs/Subject';
 import {_throw} from 'rxjs/observable/throw';
 import {fromPromise} from 'rxjs/observable/fromPromise';
 import {of} from 'rxjs/observable/of';
-import {isPromiseLike} from '@homebot/core/utils/utils';
-import {Injector, OnDestroy} from '@homebot/core';
+import {isPromiseLike} from '@jsmon/core/utils/utils';
+import {Injector, OnDestroy} from '@jsmon/core';
 
 import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, ISensorSchema, SensorProvider, ParameterTypeMap, ICommandDefinition} from './device';
 

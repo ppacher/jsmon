@@ -1,8 +1,8 @@
 import {resolve, dirname} from 'path';
 import {readFileSync, existsSync} from 'fs';
 
-import {isPromiseLike, stringify} from '@homebot/core/utils';
-import {isExtenableError} from '@homebot/core/error';
+import {isPromiseLike, stringify} from '@jsmon/core/utils';
+import {isExtenableError} from '@jsmon/core/error';
 import {Logger} from '../log';
 
 import {
@@ -24,7 +24,7 @@ import {
     Inject,
     Optional,
     normalizeProvider
-} from '@homebot/core';
+} from '@jsmon/core';
 import {DeviceManager, DeviceController} from '../devices';
 
 import * as errors from './errors';
@@ -257,13 +257,13 @@ export class PlatformLoader {
             throw errors.getCannotLoadEntryFileError(entryFile, err);
         }
         
-        if (!exports.hasOwnProperty('homebot')) {
+        if (!exports.hasOwnProperty('jsmon')) {
             throw errors.getMissingHomebotExportError(entryFile);
         }
         
         return {
             path: entryFile,
-            factories: exports.homebot,
+            factories: exports.jsmon,
         };
     }
     
@@ -283,15 +283,15 @@ export class PlatformLoader {
         try {
             let data = readFileSync(packagePath);
             let content = JSON.parse(data.toString()) as HomeBotPlatformExtension;
-            if (content.homebot !== undefined) {
-                entryFile = resolve(path, (content.homebot.entry || content.main));
+            if (content.jsmon !== undefined) {
+                entryFile = resolve(path, (content.jsmon.entry || content.main));
             }
         } catch(err) {
             throw errors.getInvalidPackageError(path, err);
         }
         
         if (entryFile === undefined) {
-            throw errors.getInvalidPackageError(path, 'no "homebot" configuration property found');
+            throw errors.getInvalidPackageError(path, 'no "jsmon" configuration property found');
         }
         
         return entryFile;

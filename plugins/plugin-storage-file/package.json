@@ -1,7 +1,7 @@
 {
-  "name": "@homebot/plugin-storage-file",
+  "name": "@jsmon/plugin-storage-file",
   "version": "0.0.1",
-  "description": "A simple example storage plugin for homebot using files",
+  "description": "A simple example storage plugin for jsmon using files",
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
@@ -9,13 +9,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "github.com/ppacher/homebot"
+    "url": "github.com/ppacher/jsmon"
   },
   "author": "Patrick Pacher",
   "license": "MIT",
   "devDependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
     "@types/jest": "^23.0.0",
     "@types/node": "^10.3.1",
     "jest": "^23.1.0",
@@ -26,8 +26,8 @@
     "typescript": "^2.9.1"
   },
   "peerDependencies": {
-    "@homebot/core": "0.0.1",
-    "@homebot/platform": "0.0.1",
+    "@jsmon/core": "0.0.1",
+    "@jsmon/platform": "0.0.1",
     "reflect-metadata": "^0.1.12",
     "rxjs": "^5.5.11"
   },

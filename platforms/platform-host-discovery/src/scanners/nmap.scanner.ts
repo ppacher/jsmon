@@ -1,4 +1,4 @@
-import {Injectable} from '@homebot/core';
+import {Injectable} from '@jsmon/core';
 import {HostScanner} from '../scanner.interface';
 
 const nmap = require('node-nmap');

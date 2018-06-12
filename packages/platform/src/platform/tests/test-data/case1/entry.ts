@@ -1,4 +1,4 @@
-import {Plugin, Injectable} from '@homebot/core';
+import {Plugin, Injectable} from '@jsmon/core';
 import {PlatformSpec} from '../../../factory';
 import {Device} from '../../../../devices';
 import { setTimeout } from 'timers';
@@ -56,7 +56,7 @@ function factory2(): Promise<PlatformSpec> {
     });
 };
 
-export const homebot = {
+export const jsmon = {
     'case1': factory,
     'case2': factory2,
 };
