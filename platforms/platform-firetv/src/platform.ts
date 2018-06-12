@@ -12,13 +12,19 @@ export const homebot: PlatformFactories = {
             throw new Error(`Missing hostname for FireTV`);
         }
         let name = params.name || 'FireTV';
+        let interval = params.interval;
+        
+        if (!!interval && typeof interval === 'string') {
+            interval = parseInt(interval);
+        } 
+        
         return {
             plugin: FireTVPlugin,
             devices: [{
                 class: FireTVDevice,
                 name: name || 'FireTV',
                 providers: [
-                    FireTVConfig.provide(new FireTVConfig(params['host'])),
+                    FireTVConfig.provide(new FireTVConfig(params['host'], interval)),
                 ],
             }]
         };

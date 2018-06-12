@@ -1,5 +1,6 @@
 const adb = require('adbkit');
 
+import {OnDestroy, isPromiseLike} from '@homebot/core';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {fromPromise} from 'rxjs/observable/fromPromise';
@@ -12,13 +13,27 @@ import {KeyCodes} from './keycodes';
 import {AppPackges, Intends} from './apps';
 import {Tokenizer, Node} from './dumpsys';
 
-export class FireTV {
+export class FireTV implements OnDestroy {
     private _client: any;
     private _id: string|undefined = undefined;
     private _onConnected: Subject<void> = new Subject();
     
     get ready(): Observable<void> {
         return this._onConnected;
+    }
+    
+    async onDestroy() {
+        if (!!this._client) {
+            try {
+                let res = this._client.disconnect();
+                
+                if (isPromiseLike(res)) {
+                    await res;
+                }
+            } catch(err) {
+
+            }
+        }
     }
 
     constructor(public readonly host: string, 
