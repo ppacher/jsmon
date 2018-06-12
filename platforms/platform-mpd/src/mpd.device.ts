@@ -1,32 +1,30 @@
-import {Inject} from '@homebot/core';
+import {Inject, OnDestroy} from '@homebot/core';
 import {Logger, Device, Command, Sensor, ParameterType} from '@homebot/platform';
 import {MPD_CONFIG, MPDConfig} from './config';
 
-//import {Observable, BehaviorSubject} from 'rxjs/Rx';
 import {Observable} from 'rxjs/Observable';
+import {Subject} from 'rxjs/Subject';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 
+import {map, tap, share, distinctUntilChanged, takeUntil} from 'rxjs/operators';
 import {interval} from 'rxjs/observable/interval';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/do';
-import 'rxjs/add/operator/share';
-import 'rxjs/add/operator/distinctUntilChanged';
 
 import * as mpc from 'mpc-js';
 
 function mapSubject<T, R>(b: BehaviorSubject<T>, fn: (val: T) => R): Observable<R> {
     return b.asObservable()
-        .map(fn);
+        .pipe(map(fn));
 }
 
 @Device({
    description: 'MPD server' 
 })
-export class MPDDevice {
+export class MPDDevice implements OnDestroy {
     private _mpd: mpc.MPC;
     
     private readonly _currentSong = new BehaviorSubject<mpc.PlaylistItem|null>(null);
     private readonly _status = new BehaviorSubject<mpc.Status|null>(null);
+    private readonly _destroyed: Subject<void> = new Subject();
     
     @Sensor('title', ParameterType.STRING, 'The title of the current song')
     get currentSongTitle() {
@@ -35,40 +33,37 @@ export class MPDDevice {
     
     @Sensor('artist', ParameterType.STRING, 'The artist of the current song')
     get currentSongArtist() {
-        return this._currentSong.asObservable()
-            .map(song => song  ? song.artist : '');
+        return mapSubject(this._currentSong, song => song ? song.artist : '');
     }
     
     @Sensor('album', ParameterType.STRING, 'The album of the current song')
     get currentSongAlbum() {
-        return this._currentSong.asObservable()
-            .map(song => song  ? song.album : '');
+        return mapSubject(this._currentSong, song => song ? song.album : '');
     }
     
     @Sensor('duration', ParameterType.NUMBER, 'The duration of the current song')
     get currentDuration() {
-        return this._currentSong.asObservable()
-            .map(song => song  ? song.duration : -1);
+        return mapSubject(this._currentSong, song => song ? song.duration : -1);
     }
     
     @Sensor('position', ParameterType.NUMBER, 'The position of the current song in the tracklist')
     get currentPosition() {
-        return this._currentSong.asObservable()
-            .map(song => song  ? song.position : -1);
+        return mapSubject(this._currentSong, song => song ? song.position : -1);
     }
     
     @Sensor('playing', ParameterType.BOOLEAN, 'Wether or not playback is active')
     get isPlaying() {
-        return this._status.asObservable()
-            .map(status => status  ? status.state === 'play' : false);
+        return mapSubject(this._status, status => status ? status.state === 'play' : false);
     }
     
     @Sensor('elapsed', ParameterType.NUMBER, 'The time elapsed in the current song')
     get elapsed() {
         return this._status.asObservable()
-            .map(status => status  ? status.elapsed : -1)
-            .map(val => isNaN(val) ? -1 : val)
-            .distinctUntilChanged();
+            .pipe(
+                map(status => status  ? status.elapsed : -1),
+                map(val => isNaN(val) ? -1 : val),
+                distinctUntilChanged()
+            );
     }
 
     @Command({
@@ -132,6 +127,18 @@ export class MPDDevice {
         return this._mpd.playback.pause(false);
     }
     
+    onDestroy() {
+        if (!!this._mpd) {
+            this._mpd.disconnect();
+        }
+        
+        this._destroyed.next();
+        this._destroyed.complete();
+        
+        this._currentSong.complete();
+        this._status.complete();
+    }
+    
     constructor(@Inject(MPD_CONFIG) private _config: MPDConfig, private _log: Logger) {
         this._mpd = new mpc.MPC();
         
@@ -180,8 +187,8 @@ export class MPDDevice {
         
         connect();
 
-        // TODO: unsubscribe
-        interval(5000)
+        interval(this._config.interval)
+            .pipe(takeUntil(this._destroyed))
             .subscribe(() => {
                 this._handlePlayerChange();
                 this._updateStatus();
