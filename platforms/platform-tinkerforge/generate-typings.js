@@ -41,12 +41,12 @@ function writeClassDefinitions(cls) {
         let dec = `${key}(`;
         
         let p = params.filter(p => p != '').map(p => {
-            if (p.trim() === 'resultCallback') {
-                return 'result: (...args: any[]) => void';
+            if (p.trim() === 'returnCallback') {
+                return 'result?: (...args: any[]) => void';
             }
             
             if (p.trim() === 'errorCallback') {
-                return 'error: (error: number) => void';
+                return 'error?: (error: number) => void';
             }
             
             return `${p.trim()}: any`
