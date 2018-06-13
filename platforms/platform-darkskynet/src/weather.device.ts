@@ -31,8 +31,8 @@ function get<T>(o: Observable<WeatherResponse>, fn: (r: WeatherResponse) => T): 
 })
 export class DarkSkyWeatherDevice implements OnDestroy {
 
-    private readonly _updates: Observable<WeatherResponse> = this._setup();
     private readonly _destroyed: Subject<void> = new Subject();
+    private readonly _updates: Observable<WeatherResponse> = this._setup();
     
     @Sensor({name: 'lastUpdate', type: ParameterType.NUMBER})
     readonly lastUpdate = get(this._updates, r => r.currently.time);
