@@ -50,7 +50,10 @@ export class PlatformDaemon {
                             this._logger.info(`${platform} -> ${feature.type}: Create service ${instance.constructor.name}`);
                         }
                     })
-                });;
+                })
+                .catch(err => {
+                    this._logger.error(`Failed to setup ${platform}:${feature.type}: ${err.toString()}`);
+                });
         })
     }
     

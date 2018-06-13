@@ -22,6 +22,7 @@
     "@jsmon/platform-host-discovery": "0.0.1",
     "@jsmon/platform-mpd": "0.0.1",
     "@jsmon/platform-sysinfo": "0.0.1",
+    "@jsmon/platform-tinkerforge": "0.0.1",
     "@jsmon/plugin-httpserver": "0.0.1",
     "@jsmon/plugin-mqtt": "0.0.1",
     "@types/jest": "^22.2.2",
