@@ -2,7 +2,7 @@ import {Device, Sensor, ParameterType} from '@jsmon/platform';
 import {BrickletMotionDetector} from 'tinkerforge';
 import {TinkerforgeService} from '../tinkerforge.service';
 import {Subject} from 'rxjs/Subject';
-import {Base} from './base';
+import {register, Base} from './base';
 
 @Device({
     description: 'Motion detector bricklet'
@@ -37,3 +37,4 @@ export class MotionDetector extends Base<BrickletMotionDetector>{
     }
 }
 
+register(BrickletMotionDetector, MotionDetector);

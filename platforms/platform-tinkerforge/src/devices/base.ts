@@ -35,5 +35,15 @@ export abstract class Base<T extends tf.All> implements OnDestroy {
         return val.pipe(takeUntil(this._destroyed)) as T;
     }
     
-    abstract setup(): void;
+    protected abstract setup(): void;
+}
+
+const _devices: Map<number, Type<Base<any>>> = new Map();
+
+export function register(type: {DEVICE_IDENTIFIER: number}, d: Type<Base<any>>) {
+    _devices.set(type.DEVICE_IDENTIFIER, d);
+}
+
+export function getClass(type: number): Type<Base<any>>|undefined {
+    return _devices.get(type);
 }
