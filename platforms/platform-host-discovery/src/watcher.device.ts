@@ -60,20 +60,31 @@ export class WatcherDevice implements OnDestroy {
             throw new Error(`Invalid target: Expected IP but received ${this._config.target}`);
         }
         
+        this._logger.debug(`Setting rescan interval to ${this._config.interval}`);
+        
         this.online = new Observable<boolean>(observer => {
             let interval = setInterval(() => this._scan(observer), this._config.interval);
 
             this._scan(observer);
 
-            return () => clearInterval(interval);     
+            return () => {
+                this._logger.debug(`Stopping scanning of ${this._config.target}`);
+                
+                clearInterval(interval);
+            };     
+            
         }).pipe(takeUntil(this._destroyed),share());
     }
 
     private async _scan(observer: Observer<boolean>)  {
+        
         // Skip this interval if we are already scanning
         if (this._scanning) {
+            this._logger.debug(`Scan for ${this._config.target} already running`);
             return;
         }
+        
+        this._logger.debug(`Starting scan for ${this._config.target}`);
         this._scanning = true;
         
         try {

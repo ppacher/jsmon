@@ -1,5 +1,5 @@
 import {Type, Provider, Inject, Optional, OnDestroy, createIterableDiffer, IterableDiffer} from '@jsmon/core';
-import {Device, Command, Sensor, Logger} from '@jsmon/platform';
+import {DeviceManager, Device, Command, Sensor, Logger, DeviceController} from '@jsmon/platform';
 import {ParameterType} from '@jsmon/platform/proto';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
@@ -8,12 +8,30 @@ import {takeUntil, filter} from 'rxjs/operators';
 
 import {ScanProvider, HostScanner, provideScanner} from './scanner.interface';
 
+/**
+ * Configuration for the {@link HostsDiscoveryDevice}
+ */
 export class HostsDiscoveryConfig {
+
+    /**
+     * Create a new config object
+     * 
+     * @param {string|string[]} target - One ore more IP/Subnet/Hostname definitions
+     * @param {number?} interval - The rescan interval in milliseconds
+     * @param {boolean?} dynamicDevice - Wether or not devices should be created for discovered hosts
+     */
     constructor(
         public readonly target: string|string[],
         public readonly interval: number = 10 * 1000, // Default: 10 seconds
+        public readonly dynamicDevice: boolean = false,
     ) {}
 
+    /**
+     * Returns dependency injection providers required for the {@link HostsDiscoveryDevice}
+     * 
+     * @param {HostsDiscoveryConfig} cfg - The configuration to provide via dependency injection
+     * @param {Type<HostScanner>} scanner - The scanner class to use
+     */
     static provide(cfg: HostsDiscoveryConfig, scanner: Type<HostScanner>): Provider[] {
         return [
             provideScanner(scanner),
@@ -25,6 +43,46 @@ export class HostsDiscoveryConfig {
     }
 }
 
+/**
+ * Injection token for the {@link HostDevice} that provides the device name
+ * 
+ * @internal
+ */
+const DeviceName: string = 'DeviceName'
+
+/**
+ * A simple device that is automatically created by the {@link HostsDiscoveryDevice}
+ * and provides the current online status of a given host/IP
+ *
+ * @implements {OnDestroy}
+ */
+@Device({
+    description: 'IP address monitoring'
+})
+export class HostDevice implements OnDestroy {
+    @Sensor({
+        name: 'online',
+        description: 'Wether or not the host is online'
+    })
+    readonly online: Subject<boolean> = new Subject<boolean>();
+
+    /**
+     * @internal
+     */
+    onDestroy() {
+        this.online.complete();
+    }
+
+    constructor(@Inject(DeviceName) public readonly target: string) {}
+}
+
+
+/**
+ * A device class that periodically scans a list of network targets and
+ * reports their availability
+ *
+ * @implements {OnDestroy}
+ */
 @Device({
     description: 'Monitor IPs in a network'
 })
@@ -55,25 +113,31 @@ export class HostsDiscoveryDevice implements OnDestroy {
     private _lastHosts: string[] = [];
     private _differ: IterableDiffer<string>;
     private _target: string[] = [];
+    private _activeDevices: HostDevice[] = [];
     
     constructor(@Optional() @Inject(ScanProvider) private _scanner: HostScanner,
-                config: HostsDiscoveryConfig,
+                private _config: HostsDiscoveryConfig,
+                private _deviceManager: DeviceManager,
                 @Optional() private _log: Logger) {
                 
         if (this._scanner === undefined) {
             throw new Error(`No scan provider defined! Did you forget to use provideScanner(...)`);
         }
         
-        if ((Array.isArray(config.target) && config.target.length === 0) || (!Array.isArray(config.target) && config.target === '')) {
+        if ((Array.isArray(_config.target) && _config.target.length === 0) || (!Array.isArray(_config.target) && _config.target === '')) {
             throw new Error(`No scan targets defined`);
         }
         
-        this._target = Array.isArray(config.target) ? config.target : [config.target];
+        this._target = Array.isArray(_config.target) ? _config.target : [_config.target];
         
         this._differ = createIterableDiffer();
         this._differ.diff([]);
         
-        interval(config.interval)
+        if (this._config.dynamicDevice) {
+            this._log.info(`Enabling dynamic device mode`);
+        }
+        
+        interval(_config.interval)
             .pipe(
                 filter(() => !this._scanActive),
                 takeUntil(this._destroyed),
@@ -83,6 +147,9 @@ export class HostsDiscoveryDevice implements OnDestroy {
             });
     }
     
+    /**
+     * @internal
+     */
     onDestroy() {
         this._destroyed.next();
         this._destroyed.complete();
@@ -119,12 +186,16 @@ export class HostsDiscoveryDevice implements OnDestroy {
                     if (deletedIPs.length > 0) {
                         this._info(`${deletedIPs.length} devices went offline`, {devices: deletedIPs.join(', ')});
                         this.lostHosts.next(deletedIPs);
+                        
+                        this._updateOfflineDevices(deletedIPs);
                     }
                     
                     
                     if (newIPs.length > 0) {
                         this._info(`${newIPs.length} devices went online`, {devices: newIPs.join(', ')});
                         this.newHosts.next(newIPs);
+                        
+                        this._updateOnlineDevices(newIPs);
                     }
                 }
                 
@@ -135,9 +206,49 @@ export class HostsDiscoveryDevice implements OnDestroy {
                 this._scanActive = false;
             })
             .catch(err => {
-                this._error('Failed to scan network: ', err)
+                this._error('Failed to scan network: ' + err.toString());
                 this._scanActive = false;
             });
+    }
+    
+    private _updateOfflineDevices(ips: string[]) {
+        if (!this._config.dynamicDevice) {
+            return;
+        }
+        
+        ips.forEach(ip => {
+            let dev = this._activeDevices.find(dev => dev.target === ip);
+            
+            if (!!dev) {
+                dev.online.next(false);
+            }
+        })
+    }
+    
+    private _updateOnlineDevices(ips: string[]) {
+        if (!this._config.dynamicDevice) {
+            return;
+        }
+        
+        ips.forEach(ip => {
+            let dev = this._activeDevices.find(dev => dev.target === ip);
+
+            if (!!dev) {
+                dev.online.next(true);
+            } else {
+                this._log.info(`Creating new device for ${ip}`);
+                
+                let controller = this._deviceManager.setupDevice(ip, HostDevice, undefined, [
+                    {
+                        provide: DeviceName,
+                        useValue: ip,
+                    }
+                ]);
+                
+                this._activeDevices.push(controller.instance);
+                controller.instance.online.next(true);
+            }
+        })
     }
 
     private _debug(msg: string, ...args: any[]): void {

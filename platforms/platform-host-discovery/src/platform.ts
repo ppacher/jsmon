@@ -13,6 +13,7 @@ export const jsmon: PlatformFactories = {
         const name = params.name;
         const targets = params['target'];
         let interval = params.interval;
+        let dynamicDevices = params.createDevices || false;
         
         if (!Array.isArray(targets) && typeof targets !== 'string') {
             throw new Error(`Invalid target configuration for HostsDiscovery device "${name}"`)   ;
@@ -33,7 +34,7 @@ export const jsmon: PlatformFactories = {
                     class: HostsDiscoveryDevice,
                     name: name,
                     providers: [
-                        ...HostsDiscoveryConfig.provide(new HostsDiscoveryConfig(targets), NmapScanner),
+                        ...HostsDiscoveryConfig.provide(new HostsDiscoveryConfig(targets, interval, dynamicDevices), NmapScanner),
                     ],
                 },
             ]
