@@ -25,7 +25,11 @@ function writeClassDefinitions(cls) {
     
     console.log('');
 
-    console.log(`\t\tconstructor(uid: string|number, ip: IPConnection);`)
+    if (cls.name !== 'IPConnection') {
+        console.log(`\t\tconstructor(uid: string|number, ip: IPConnection);`)
+    } else {
+        console.log(`\t\tconstructor();`)
+    }
     console.log('');
 
     let o = new cls('', con);

@@ -1,8 +1,8 @@
+import {Inject} from '@jsmon/core';
 import {Device, Sensor, ParameterType} from '@jsmon/platform';
 import {BrickletMotionDetector} from 'tinkerforge';
-import {TinkerforgeService} from '../tinkerforge.service';
 import {Subject} from 'rxjs/Subject';
-import {register, Base} from './base';
+import {register, Base, DeviceUID, TinkerforgeConnection} from './base';
 
 @Device({
     description: 'Motion detector bricklet'
@@ -15,24 +15,17 @@ export class MotionDetector extends Base<BrickletMotionDetector>{
     })
     readonly motionDetected: Subject<boolean> = this.destroyable(new Subject());
     
-    private _hasMotion: boolean = false;
-
-    constructor(uid: string|number, conn: TinkerforgeService) {
+    constructor(@Inject(DeviceUID) uid: string, conn: TinkerforgeConnection) {
         super(BrickletMotionDetector, uid, conn);
     }
     
     setup() {
-        this._device.on(BrickletMotionDetector.CALLBACK_MOTION_DETECTED, () => {
+        this.device.on(BrickletMotionDetector.CALLBACK_MOTION_DETECTED, () => {
             this.motionDetected.next(true);
-            this._hasMotion = true;
         });
         
-        this._device.on(BrickletMotionDetector.CALLBACK_DETECTION_CYCLE_ENDED, () => {
-            if (!this._hasMotion) {
-                this.motionDetected.next(false);
-            } else {
-                this._hasMotion = false;
-            }
+        this.device.on(BrickletMotionDetector.CALLBACK_DETECTION_CYCLE_ENDED, () => {
+            this.motionDetected.next(false);
         });
     }
 }

@@ -31,7 +31,7 @@ declare module 'tinkerforge' {
 		static readonly TASK_KIND_AUTO_RECONNECT: number;
 		static readonly TASK_KIND_AUTHENTICATE: number;
 
-		constructor(uid: string|number, ip: IPConnection);
+		constructor();
 
 		disconnectProbe(): void;
 		pushTask(handler: any, kind: any): void;

@@ -55,7 +55,7 @@ export class FireTVDevice implements OnDestroy {
     
     @Command({
         name: 'powerOn',
-        description: 'Power on the FireTV'
+        shortDescription: 'Power on the FireTV'
     })
     powerOn(): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -66,7 +66,7 @@ export class FireTVDevice implements OnDestroy {
     
     @Command({
         name: 'powerOff',
-        description: 'Power off the FireTV'
+        shortDescription: 'Power off the FireTV'
     })
     powerOff(): Promise<string>{
         return new Promise((resolve, reject) => {

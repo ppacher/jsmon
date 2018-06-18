@@ -1,8 +1,9 @@
+import {Inject} from '@jsmon/core';
 import {Device, Sensor, ParameterType} from '@jsmon/platform';
 import {BrickletAmbientLight} from 'tinkerforge';
-import {TinkerforgeService} from '../tinkerforge.service';
-import {Subject} from 'rxjs/Subject';
-import {register, Base} from './base';
+import {Observable} from 'rxjs/Observable';
+import {register, Base, DeviceUID, TinkerforgeConnection} from './base';
+import {map} from 'rxjs/operators';
 
 @Device({
     description: 'Ambient light bricklet'
@@ -13,18 +14,17 @@ export class AmbientLight extends Base<BrickletAmbientLight>{
         description: 'The current illuminance in Lux',
         type: ParameterType.NUMBER
     })
-    readonly illuminance: Subject<number> = this.destroyable(new Subject());
+    illuminance: Observable<number>|null = null;
     
-    constructor(uid: string|number, conn: TinkerforgeService) {
+    constructor(@Inject(DeviceUID) uid: string, conn: TinkerforgeConnection) {
         super(BrickletAmbientLight, uid, conn);
     }
     
     setup() {
-        this._device.on(BrickletAmbientLight.CALLBACK_ILLUMINANCE, (lx: number) => {
-            this.illuminance.next(lx/10);
-        });
+        this.illuminance = this.observeCallback<number>(BrickletAmbientLight.CALLBACK_ILLUMINANCE)
+            .pipe(map(lx => lx/10))
         
-        this._device.setIlluminanceCallbackPeriod(1000);
+        this.device.setIlluminanceCallbackPeriod(1000);
     }
 }
 

@@ -68,7 +68,7 @@ export class MPDDevice implements OnDestroy {
 
     @Command({
         name: 'find',
-        description: 'search for songs, artists and albums',
+        shortDescription: 'search for songs, artists and albums',
         parameters: {
             type: {
                 types: [ParameterType.STRING],
@@ -92,7 +92,7 @@ export class MPDDevice implements OnDestroy {
     
     @Command({
         name: 'play',
-        description: 'Start playback',
+        shortDescription: 'Start playback',
         parameters: {
             pos: {
                 types: [ParameterType.NUMBER],
