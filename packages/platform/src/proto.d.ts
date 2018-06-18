@@ -14,6 +14,38 @@ export enum ParameterType {
     ANY = 9
 }
 
+/** SIUnit enum. */
+export enum SIUnit {
+    Custom = 0,
+    Kilogram = 1,
+    Seconds = 2,
+    Ampere = 3,
+    Celcius = 4,
+    Kelvin = 5,
+    Mole = 6,
+    Candela = 7,
+    Lux = 8,
+    Radiant = 9,
+    Hertz = 10,
+    Newton = 11,
+    Pascal = 12,
+    Joule = 13,
+    Watt = 14,
+    Coulomb = 15,
+    Volt = 16,
+    Farad = 17,
+    Ohm = 18,
+    Siemens = 19,
+    Weber = 20,
+    Tesla = 21,
+    Henry = 22,
+    Lumen = 23,
+    Gray = 24,
+    Sievert = 25,
+    Katal = 26,
+    Meter = 27
+}
+
 /** DeviceHealthState enum. */
 export enum DeviceHealthState {
     ONLINE = 0,
@@ -33,6 +65,12 @@ export interface ISensorSchema {
 
     /** SensorSchema type */
     type?: (ParameterType|null);
+
+    /** SensorSchema unit */
+    unit?: (SIUnit|null);
+
+    /** SensorSchema customUnit */
+    customUnit?: (string|null);
 }
 
 /** Represents a SensorSchema. */
@@ -52,6 +90,12 @@ export class SensorSchema implements ISensorSchema {
 
     /** SensorSchema type. */
     public type: ParameterType;
+
+    /** SensorSchema unit. */
+    public unit: SIUnit;
+
+    /** SensorSchema customUnit. */
+    public customUnit: string;
 
     /**
      * Creates a new SensorSchema instance using the specified properties.

@@ -142,12 +142,15 @@ export class DeviceManager {
             .map(key => {
                 const def: Command = (commands[key].find(def => def instanceof Command) as Command)!;
 
-                return {
+                const schema: CommandSchema = {
                     name: def.name,
                     parameters: def.parameters || {},
                     handler: instance[key],
-                    description: def.description,
+                    shortDescription: def.shortDescription,
+                    longDescription: def.longDescription,
                 };
+                
+                return schema;
             });
         
         const sensorProviders: SensorProvider[] = Object.keys(commands)
@@ -156,10 +159,12 @@ export class DeviceManager {
             .map(key => {
                 const def = commands[key].find(def => def instanceof Sensor) as Sensor;
                 
-                return {
+                const provider: SensorProvider = {
                     ...def,
                     onChange: instance[key]
                 };
+                
+                return provider;
             });
         
         const controller = new DeviceController(name, instance, commandSchemas, sensorProviders, injector, undefined, description);

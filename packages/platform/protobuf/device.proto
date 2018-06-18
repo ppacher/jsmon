@@ -13,30 +13,99 @@ enum ParameterType {
     ANY = 9;
 }
 
+enum SIUnit {
+    Custom = 0;
+    Kilogram = 1;
+    Seconds = 2;
+    Ampere = 3;
+    Celcius = 4;
+    Kelvin = 5;
+    Mole = 6;
+    Candela = 7;
+    Lux = 8;
+    Radiant = 9;
+    Hertz = 10;
+    Newton = 11;
+    Pascal = 12;
+    Joule = 13;
+    Watt = 14;
+    Coulomb = 15;
+    Volt = 16;
+    Farad = 17;
+    Ohm = 18;
+    Siemens = 19;
+    Weber = 20;
+    Tesla = 21;
+    Henry = 22;
+    Lumen = 23;
+    Gray = 24;
+    Sievert = 25;
+    Katal = 26;
+    Meter = 27;
+}
+
 enum DeviceHealthState {
+    // The device is currently online and sensor updates are sent
     ONLINE = 0;
+    
+    // The device is currently offline or cannot be connected to
     OFFLINE = 1;
+    
+    // The device has entered some unknown error state and may not function
+    // as expected
     ERROR = 2;
+    
+    // The device state is completely unknown and may or may not function
+    // correctly
     UNKNOWN = 3;
 }
 
 message SensorSchema {
+    // A device-unique name of the sensor
     string name = 1;
+    
+    // An optional description of the sensor
     string description = 2;
+    
+    // The type of value produced by the sensor
     ParameterType type = 3;
+    
+    // The type of SI unit the sensor produces
+    // If set to SIUnit.Custom the custom_unit field will be used
+    SIUnit unit = 4;
+    
+    // An optional string field that describes the unit produced by the sensor
+    // The `unit` field must be set to SIUnit.Custom in order for this field to have
+    // any effect
+    string custom_unit = 5;
 }
 
 message ParameterDefinition {
+    // A command unique name for the parameter
     string name = 1;
+    
+    // One ore more types that can be assigned to the parameter
     repeated ParameterType types = 2;
+    
+    // Whether or not the parameter is optional, if omitted or set to false the
+    // parameter will be treated as required
     bool optional = 3;
+    
+    // An optional description of the parameter
     string description = 4;
 }
 
 message CommandDefinition {
+    // A device unique name of the command
     string name = 1;
+    
+    // A list of parameters accepted by the command
     repeated ParameterDefinition parameters = 2;
+    
+    // A optional, short description of the command
     string short_description = 3;
+    
+    // A optional, long and details description of the command
     string long_description = 4;
 }
 

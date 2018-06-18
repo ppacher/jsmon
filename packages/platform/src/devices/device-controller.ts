@@ -115,7 +115,7 @@ export class DeviceController<T = any> implements OnDestroy {
             
             return {
                 name: cmd.name,
-                shortDescription: cmd.description,
+                shortDescription: cmd.shortDescription,
                 parameters: params,
             }
         })

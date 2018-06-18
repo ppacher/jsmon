@@ -7,7 +7,7 @@ import {
     PROP_METADATA,
     Type,
 } from '@jsmon/core';
-import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition} from '../proto';
+import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition, SIUnit} from '../proto';
 export {ParameterType, IParameterDefinition, ISensorSchema, ICommandDefinition} from '../proto';
 
 export const ParameterTypeMap: {[key: number]: string} = {
@@ -27,8 +27,11 @@ export interface CommandSchema {
         [key: string]: IParameterDefinition|ParameterType[];
     };
     
-    /** An optional description for the command */
-    description?: string;
+    /** An optional short description for the command */
+    shortDescription?: string;
+    
+    /** An optional detailed description for the command */
+    longDescription?: string;
     
     /** The handle function to invoke for the command */
     handler: (params: Map<string, any>) => Promise<any>;
@@ -123,7 +126,11 @@ export interface CommandDecoratorSettings {
         [key: string]: IParameterDefinition|ParameterType[];
     };
 
-    description?: string;
+    /** An optional short description of the command */
+    shortDescription?: string;
+    
+    /** An optional long description of the command */
+    longDescription?: string;
 }
 
 /**
@@ -164,7 +171,7 @@ export const Command: CommandDecorator = makePropDecorator('Commands', (...args:
 
             return {
                 name: a.name,
-                description: a.description,
+                description: a.shortDescription,
                 parameters: a.parameters,
             };
         }
@@ -226,6 +233,16 @@ export const Sensor: SensorDecorator = makePropDecorator('Sensor', (...args: any
         };
     }
     
+    if (!!settings.customUnit && settings.customUnit !== '') {
+        if (settings.unit === undefined || settings.unit === null) {
+            settings.unit = SIUnit.Custom;
+        }
+        
+        if (settings.unit === SIUnit.Custom) {
+            throw new Error(`Custom units can only be used when unit=SIUnit.Custom`);
+        }
+    }
+
     return {
         name: settings.name,
         description: settings.description,
