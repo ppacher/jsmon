@@ -4,7 +4,7 @@ import {HTTPServer, RemoveRouteFn} from '../server';
 import {DeviceHttpApiConfig} from './config';
 import {Request, Response} from 'restify';
 import {query} from 'jsonpath';
-import { ICommandDefinition } from '@jsmon/platform/proto';
+import {ICommandDefinition} from '@jsmon/platform/proto';
 
 @Injectable()
 export class DeviceHttpApi {

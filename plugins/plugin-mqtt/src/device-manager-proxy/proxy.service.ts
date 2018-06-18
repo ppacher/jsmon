@@ -62,7 +62,8 @@ export class MqttDeviceManagerProxy {
             d.commands.map(cmd => {
                 return {
                     name: cmd.name,
-                    description: cmd.shortDescription,
+                    shortDescription: cmd.shortDescription,
+                    longDescription: cmd.longDescription,
                     parameters: cmd.parameters as any,
                     handler: (params: Map<string, any>) => {
                         this._log.info(`sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
@@ -76,6 +77,8 @@ export class MqttDeviceManagerProxy {
                 return {
                     name: sensor.name,
                     type: sensor.type,
+                    unit: sensor.unit,
+                    customUnit: sensor.customUnit,
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
                         .pipe(
