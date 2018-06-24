@@ -15,7 +15,7 @@ export class ThemeSwitcher {
       private overlayContainer: OverlayContainer,
       @Inject(DOCUMENT) private _document: Document,
     ) {
-        this.swtichTheme('jsmon-light-red-theme');
+        this.swtichTheme('jsmon-light-blue-theme');
     }
 
     getThemeList(): Theme[] {
