@@ -1,0 +1,38 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import '~@angular/material/theming';
+@import 'app/theme';
+@import 'theme';
+
+
+// Plus imports for other components in your app.
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat-core();
+
+.jsmon-light-red-theme {
+    @include angular-material-theme($jsmon-light-red-theme);
+    @include jsmon-app-theme($jsmon-light-red-theme);
+}
+
+.jsmon-light-blue-theme {
+    @include angular-material-theme($jsmon-light-blue-theme);
+    @include jsmon-app-theme($jsmon-light-blue-theme);
+}
+
+.jsmon-dark-red-theme {
+    @include angular-material-theme($jsmon-dark-red-theme);
+    @include jsmon-app-theme($jsmon-dark-red-theme);
+}
+
+.jsmon-dark-blue-theme {
+    @include angular-material-theme($jsmon-dark-blue-theme);
+    @include jsmon-app-theme($jsmon-dark-blue-theme);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}

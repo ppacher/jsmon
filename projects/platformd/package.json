@@ -25,6 +25,7 @@
     "@jsmon/platform-tinkerforge": "0.0.1",
     "@jsmon/plugin-httpserver": "0.0.1",
     "@jsmon/plugin-mqtt": "0.0.1",
+    "@jsmon/plugin-storage-file": "0.0.1",
     "@types/jest": "^22.2.2",
     "jest": "^22.4.3",
     "js-yaml": "^3.11.0",

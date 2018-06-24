@@ -1,0 +1,39 @@
+:host {
+    display: block;
+    padding: 2px;
+    overflow: hidden;
+}
+
+.sensor {
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+}
+
+.sensor-name {
+    margin-right: 10px;
+}
+
+.sensor-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: gray;
+}
+
+mat-card-title {
+    font-weight: lighter;
+    text-decoration: underline;
+
+}
+
+mat-card-header {
+    mat-icon {
+        position: absolute;
+        right: 10px;
+        cursor: pointer;
+        
+        &:hover {
+            color: gray;
+        }
+    }
+}

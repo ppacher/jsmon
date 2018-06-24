@@ -1,0 +1,47 @@
+:host {
+    display: block;
+    padding-bottom: 10px;
+    padding-top: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+/* Layout styles -----------------------------------*/
+@media (min-width: 620px) {
+    :host {
+        column-count: 2;
+        column-gap: 10px;
+    }
+    
+    jsmon-device-card {
+        break-inside: avoid;
+    }
+}
+
+@media (min-width: 960px) {
+    :host {
+        column-count: 3;
+        margin-left: 5vw;
+        margin-right: 5vw;
+        column-gap: 20px;
+    }
+}
+
+@media (min-width: 1300px) {
+    :host {
+        column-count: 4;
+    }
+}
+
+@media (min-width: 1700px) {
+    :host {
+        column-count: 6;
+    }
+}
+
+jsmon-device-card {
+    height: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 10px;
+}

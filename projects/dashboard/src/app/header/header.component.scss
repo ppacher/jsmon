@@ -1,0 +1,39 @@
+@import '~@angular/material/theming';
+
+@mixin jsmon-header($theme) {
+    $primary: map-get($theme, primary);
+    $background: map-get(map-get($theme, background), background);
+
+    .jsmon-header-component {
+        color: white;
+        background-color: mat-color($primary);
+        
+        a.active {
+            background-color: rgba(black, 0.1);
+        }
+
+        .theme-button {
+            color: mat-color($primary, darker);
+            background-color: mat-color($primary, lighter);
+            border: 2px solid inset rgba($background, 0.5);
+        }
+    }
+}
+
+:host {
+    display: block;
+    width: 100%;
+
+    a {
+        mat-icon {
+            font-size: 19px;
+            position: relative;
+            top: 1px;
+        }
+    }
+    
+    .theme-button {
+        float: right;
+    }
+}
+
