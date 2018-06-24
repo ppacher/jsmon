@@ -1,5 +1,5 @@
 import {Injectable, Injector, createIterableDiffer, TrackByFunction} from '@jsmon/core';
-import {DeviceManager, DeviceController, IParameterDefinition, Logger, Command, ParameterType, ISensorSchema} from '@jsmon/platform';
+import {DeviceManager, DeviceController, IParameterDefinition, Logger, Command, ParameterType, ISensorSchema, CommandSchema} from '@jsmon/platform';
 import {IDeviceDiscoveryAnnouncement, ICommandDefinition} from '@jsmon/platform/proto';
 import {MqttDeviceAPI} from '../device.api';
 
@@ -60,17 +60,24 @@ export class MqttDeviceManagerProxy {
             d.name,
             null,
             d.commands.map(cmd => {
-                return {
+                let params = {};
+                cmd.parameters.forEach(p => {
+                    params[p.name] = p;
+                });
+
+                let schema: CommandSchema = {
                     name: cmd.name,
-                    shortDescription: cmd.shortDescription,
-                    longDescription: cmd.longDescription,
-                    parameters: cmd.parameters as any,
+                    shortDescription: cmd.shortDescription || '',
+                    longDescription: cmd.longDescription || '',
+                    parameters: params,
                     handler: (params: Map<string, any>) => {
                         this._log.info(`sending RPC for ${d.name}.${cmd.name} with ${params.size} parameters`);
                         
                         return this._api.call(d.name, cmd.name, params);
                     }
                 };
+
+                return schema;
             }),
             d.sensors.map(sensor => {
                 let value: ISensorValue = sensorValues.find(v => v.deviceName === d.name && v.sensorName === sensor.name);
@@ -78,7 +85,6 @@ export class MqttDeviceManagerProxy {
                     name: sensor.name,
                     type: sensor.type,
                     unit: sensor.unit,
-                    customUnit: sensor.customUnit,
                     description: sensor.description,
                     onChange: this._api.watchSensor(d.name, sensor.name)
                         .pipe(

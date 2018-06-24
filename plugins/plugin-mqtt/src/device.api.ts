@@ -86,7 +86,7 @@ export class MqttDeviceAPI {
         } else {
             msg = device;
         }
-        
+
         let payload = DeviceDiscoveryAnnouncement.encode(msg).finish();
         
         this._mqtt.publish(`jsmon/device/${msg.device.name}`, new Buffer(payload));
@@ -153,8 +153,10 @@ export class MqttDeviceAPI {
             this._mqtt.call(`jsmon/device/${device}/command/${cmd}`, payload, 5*1000)
                 .pipe(
                     map(b => b.toString()),
-                    map(d => JSON.parse(d)),
+                    map(d => !!d && d.length > 0 ? JSON.parse(d) : undefined),
                     catchError((err: any) => {
+                        this._log.error(`Caught error during RPC ${device}.${cmd}: ${err.toString()}`);
+                        
                         let msg = err.toString();
 
                         if (err instanceof Error) {
@@ -203,6 +205,9 @@ export class MqttDeviceAPI {
             return device.call(cmd.name, params)
                 .toPromise()
                 .then(res => {
+                    if (res === undefined) {
+                        return new Buffer('');
+                    }
                     return new Buffer(JSON.stringify(res));
                 });
         });
