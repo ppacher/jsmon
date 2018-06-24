@@ -2,6 +2,8 @@
     display: block;
     padding: 2px;
     overflow: hidden;
+    
+    transition: opacity 500ms ease-in-out;
 }
 
 .sensor {

@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, Input} from '@angular/core';
+import {Component, OnInit, OnDestroy, Input, HostBinding} from '@angular/core';
 import {Sensor, Device, APIService, SensorValue, Command, ParameterType} from '../services';
 import {Subject, interval} from 'rxjs';
 import {takeUntil, switchMap, startWith} from 'rxjs/operators';
@@ -6,11 +6,10 @@ import {MatDialog} from '@angular/material';
 import {DeviceCommandDialogComponent, DeviceCommandDialogConfig} from 'src/app/device-command-dialog';
 import {humanize, Humanized} from '../utils';
 
-
 @Component({
   selector: 'jsmon-device-card',
   templateUrl: './device-card.component.html',
-  styleUrls: ['./device-card.component.scss']
+  styleUrls: ['./device-card.component.scss'],
 })
 export class DeviceCardComponent implements OnInit, OnDestroy {
 
@@ -21,6 +20,14 @@ export class DeviceCardComponent implements OnInit, OnDestroy {
   _commands: (Command & Humanized)[] = [];
 
   _firstLoad = true;
+
+  @HostBinding('style.opacity')
+  get visibility() {
+    if (this._firstLoad) {
+      return 0;
+    }
+    return 1;
+  }
 
   private readonly _destroyed: Subject<void> = new Subject();
 

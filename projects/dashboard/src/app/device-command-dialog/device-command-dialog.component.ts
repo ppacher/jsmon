@@ -1,5 +1,5 @@
 import {Component, OnInit, Inject, NgZone} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material';
+import {MAT_DIALOG_DATA, MatDialogRef, MatSnackBar} from '@angular/material';
 import {Device, Command, APIService, Parameter} from '../services';
 import {take} from 'rxjs/operators';
 import {Humanized, humanize} from '../utils';

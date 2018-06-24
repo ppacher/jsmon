@@ -2,9 +2,9 @@
 <h4 *ngIf="_config.command.shortDescription !== ''">{{_config.command.shortDescription}}</h4>
 <form ngForm #form="ngForm" (ngSubmit)="_execute()">
   <div class="form-content">
-    <div *ngIf="_errorMessage !== ''" class="command-error">
+    <mat-error *ngIf="_errorMessage !== ''" class="command-error">
       {{_errorMessage}}
-    </div>
+    </mat-error>
     <mat-progress-spinner color="accent" diameter="20" mode="indeterminate" *ngIf="_executing"></mat-progress-spinner>
 
     <div *ngFor="let param of _parameters">
@@ -34,7 +34,7 @@
   </div>
 
   <div class="action-buttons">
-    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">Execute</button>
+    <button mat-button type="submit" [disabled]="form.invalid">EXECUTE</button>
   </div>
 
 </form>
