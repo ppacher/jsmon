@@ -24,7 +24,7 @@ class _FlagSet extends FlagSet {
         super();
         
         if (!params) {
-            params = process.argv;
+            params = process.argv.slice(1);
         }
         
         this._parse(params);
@@ -33,7 +33,6 @@ class _FlagSet extends FlagSet {
     getFlag(name: string): FlagValue {
         return new FlagValue(this._flags.find(f => f.def.name == name).value);
     }
-    
 
     getArgByName(name: string): FlagValue {
         return null;
@@ -72,21 +71,24 @@ class _FlagSet extends FlagSet {
                 continue;
             }
             
-            if (flagValue !== '') {
-                this._setFlag(def, flagValue);
-                continue;
-            }
-            
             // we didn't have the flag value yet, use the next parameter
-            i++;
-            if (params.length < i) {
-                throw new Error(`Missing value for parameter ${flagName}`);
+            if (flagValue === '') {
+                i++;
+                if (params.length <= i) {
+                    throw new Error(`Missing value for parameter ${flagName}`);
+                }
+                flagValue = params[i];
             }
-            
-            flagValue = params[i];
             
             this._setFlag(def, flagValue);
         }
+
+        this._def.filter(def => !!def.required)
+            .forEach(flag => {
+                if (this._flags.find(f => f.def === flag) === undefined) {
+                    throw new Error(`Missing required parameter ${flag.name}`);
+                }
+            });
     }
 
     private _parseFlag(flag: string): [string, string] {
