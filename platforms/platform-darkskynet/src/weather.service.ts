@@ -22,7 +22,7 @@ export class DarkSkyAPIConfig {
     constructor(
         public readonly apiKey: string, 
         public readonly defaultLocation: Location,
-        public readonly defaultUnits: Units = 'auto',
+        public readonly defaultUnits: Units = 'si',
         public readonly defaultLanguage: Language = 'de',
         public readonly defaultExclude: FieldSet[] = [],
     ) {}
@@ -57,23 +57,30 @@ export class DarkSkyWeatherService {
     }
     
     fetch({exclude, unit, language, location}: FetchConfig = {}): Observable<WeatherResponse> {
-        exclude = exclude || this.config.defaultExclude;
-        unit = unit || this.config.defaultUnits;
-        language = language || this.config.defaultLanguage;
-        location = location || this.config.defaultLocation;
+        return new Observable(observer => {
+            exclude = exclude || this.config.defaultExclude;
+            unit = unit || this.config.defaultUnits;
+            language = language || this.config.defaultLanguage;
+            location = location || this.config.defaultLocation;
 
-        let url = `https://api.darksky.net/forecast/${this.config.apiKey}/${location.latitude},${location.longitude}?lang=${language}&units=${unit}`;
-        if (exclude.length > 0) {
-            url += '&exclude=' + exclude.join(',');
-        }
+            let url = `https://api.darksky.net/forecast/${this.config.apiKey}/${location.latitude},${location.longitude}?lang=${language}&units=${unit}`;
+            if (exclude.length > 0) {
+                url += '&exclude=' + exclude.join(',');
+            }
 
-        const fetch = bindNodeCallback((uri: string, cb: (err: any, res: WeatherResponse) => void) => {
-            get(uri, (err, res) => {
-                const parsed = JSON.parse(res.body);
-                return cb(err, parsed);
+            const fetch = bindNodeCallback((uri: string, cb: (err: any, res: WeatherResponse) => void) => {
+                get(uri, (err, res) => {
+                    const parsed = JSON.parse(res.body);
+                    return cb(err, parsed);
+                });
             });
+            
+            let sub = fetch(url).subscribe(observer);
+            
+            return () => {
+                sub.unsubscribe();
+            }
         });
-        return fetch(url);
     }
     
 }

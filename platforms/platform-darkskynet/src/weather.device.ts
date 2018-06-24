@@ -1,10 +1,10 @@
 import {Provider, Optional, OnDestroy} from '@jsmon/core';
-import {Device, Sensor, ParameterType, Logger} from '@jsmon/platform';
+import {Device, Sensor, ParameterType, Logger, Command} from '@jsmon/platform';
 import {DarkSkyWeatherService} from './weather.service';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {tap, flatMap, share, filter, startWith, catchError, map, takeUntil} from 'rxjs/operators';
+import {tap, flatMap, share, filter, startWith, catchError, map, takeUntil, combineLatest, take} from 'rxjs/operators';
 import {interval} from 'rxjs/observable/interval';
 import {of} from 'rxjs/observable/of';
 import {WeatherResponse} from './data';
@@ -31,13 +31,14 @@ function get<T>(o: Observable<WeatherResponse>, fn: (r: WeatherResponse) => T): 
 })
 export class DarkSkyWeatherDevice implements OnDestroy {
 
+    private readonly _triggerUpdate: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
     private readonly _destroyed: Subject<void> = new Subject();
     private readonly _updates: Observable<WeatherResponse> = this._setup();
     
-    @Sensor({name: 'lastUpdate', type: ParameterType.NUMBER})
+    @Sensor({name: 'lastUpdate', type: ParameterType.TIMESTAMP})
     readonly lastUpdate = get(this._updates, r => r.currently.time);
     
-    @Sensor({name: 'currentTemperature', type: ParameterType.NUMBER})
+    @Sensor({name: 'currentTemperature', type: ParameterType.NUMBER, unit: '°C'})
     readonly currentTemperature = get(this._updates, r => r.currently.temperature);
     
     @Sensor({name: 'currentSummary', type: ParameterType.STRING})
@@ -46,23 +47,36 @@ export class DarkSkyWeatherDevice implements OnDestroy {
     @Sensor({name: 'currentIcon', type: ParameterType.STRING})
     readonly currentIcon = get(this._updates, r => r.currently.icon);
     
-    @Sensor({name: 'nearestStormDistance', type: ParameterType.NUMBER})
+    @Sensor({name: 'nearestStormDistance', type: ParameterType.NUMBER, unit: 'km'})
     readonly nearestStormDistance = get(this._updates, r => r.currently.nearestStormDistance);
     
-    @Sensor({name: 'humidity', type: ParameterType.NUMBER})
+    @Sensor({name: 'humidity', type: ParameterType.NUMBER, unit: '%'})
     readonly humidity = get(this._updates, r => r.currently.humidity);
 
-    @Sensor({name: 'pressure', type: ParameterType.NUMBER})
+    @Sensor({name: 'pressure', type: ParameterType.NUMBER, unit: 'Pa'})
     readonly pressure = get(this._updates, r => r.currently.pressure);
     
-    @Sensor({name: 'windSpeed', type: ParameterType.NUMBER})
+    @Sensor({name: 'windSpeed', type: ParameterType.NUMBER, unit: 'm/s'})
     readonly windSpeed = get(this._updates, r => r.currently.windSpeed);
     
-    @Sensor({name: 'cloudCover', type: ParameterType.NUMBER})
+    @Sensor({name: 'cloudCover', type: ParameterType.NUMBER, unit: '%'})
     readonly cloudCover = get(this._updates, r => r.currently.cloudCover);
     
-    @Sensor({name: 'visibility', type: ParameterType.NUMBER})
+    @Sensor({name: 'visibility', type: ParameterType.NUMBER, unit: 'km'})
     readonly visibility = get(this._updates, r => r.currently.visibility);
+    
+    @Command({
+        name: 'update',
+        shortDescription: 'Update current weather conditions'
+    })
+    update(): Promise<any> {
+        return new Promise((resolve) => {
+            this._updates.pipe(take(1))
+                .subscribe(() => resolve());
+
+            this._triggerUpdate.next(undefined); 
+        });
+    }
     
     constructor(private _weather: DarkSkyWeatherService,
                 private _config: DarkSkyWeatherDeviceConfig,
@@ -94,6 +108,7 @@ export class DarkSkyWeatherDevice implements OnDestroy {
             .pipe(
                 takeUntil(this._destroyed),
                 startWith(-1), // start instant
+                combineLatest(this._triggerUpdate),
                 tap(() => {
                     if (!!this._log) {
                         this._log.debug(`updating weather information`);
