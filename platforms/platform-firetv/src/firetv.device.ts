@@ -9,7 +9,7 @@ import {Observable} from 'rxjs/Observable';
 import {interval} from 'rxjs/observable/interval';
 import {of} from 'rxjs/observable/of';
 
-import {switchMap, map, distinctUntilChanged, startWith, catchError, takeUntil} from 'rxjs/operators';
+import {switchMap, map, distinctUntilChanged, startWith, catchError, takeUntil, tap, share, combineLatest} from 'rxjs/operators';
 
 export class FireTVConfig {
     constructor(
@@ -34,6 +34,7 @@ export class FireTVDevice implements OnDestroy {
     private _app: BehaviorSubject<string|null> = new BehaviorSubject<string|null>(null);
     private _runningApps: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private readonly _destroyed: Subject<void> = new Subject();
+    private readonly _update: BehaviorSubject<undefined> = new BehaviorSubject(undefined);
 
     @Sensor({
         name: 'state',
@@ -60,7 +61,11 @@ export class FireTVDevice implements OnDestroy {
     powerOn(): Promise<string> {
         return new Promise((resolve, reject) => {
             this._device.turnOn()
-                .subscribe(() => resolve(`Successfully turned on`), err => reject(err));
+                .subscribe(() => {
+                    this._log.info('Updating states ...');
+                    this._update.next(undefined);
+                    resolve(`Successfully turned on`);
+                }, err => reject(err));
         });
     }
     
@@ -71,7 +76,11 @@ export class FireTVDevice implements OnDestroy {
     powerOff(): Promise<string>{
         return new Promise((resolve, reject) => {
             this._device.turnOff()
-                .subscribe(() => resolve('Successfully turned off'), err => reject(err));
+                .subscribe(() => {
+                    this._log.info('Updating states ...');
+                    this._update.next(undefined);
+                    resolve('Successfully turned off');
+                }, err => reject(err));
         });
     }
 
@@ -86,11 +95,16 @@ export class FireTVDevice implements OnDestroy {
     
     private _setup(): void {
         let update$ = interval(this._config.interval)
-            .pipe(takeUntil(this._destroyed))
+            .pipe(
+                takeUntil(this._destroyed),
+                startWith(-1),
+                combineLatest(() => this._update.pipe(tap(() => this._log.info('Polling FireTV after command execution')))),
+                tap(() => this._log.debug('polling FireTV')),
+                share()
+            )
 
         update$ 
             .pipe(
-                startWith(-1),
                 switchMap(() => this._device.getPowerState()),
                 catchError(err => {
                     this._log.error(err);
@@ -101,14 +115,12 @@ export class FireTVDevice implements OnDestroy {
         
         update$ 
             .pipe(
-                startWith(-1),
                 switchMap(() => this._device.currentApp()),
             )       
             .subscribe(app => this._app.next(app));
         
         update$ 
             .pipe(
-                startWith(-1),
                 switchMap(() => this._device.getRunningApps()),
             )       
             .subscribe(apps => this._runningApps.next(apps || []));
