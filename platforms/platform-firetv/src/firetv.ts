@@ -1,6 +1,7 @@
 const adb = require('adbkit');
 
 import {OnDestroy, isPromiseLike} from '@jsmon/core';
+import {Logger} from '@jsmon/platform';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {fromPromise} from 'rxjs/observable/fromPromise';
@@ -37,14 +38,21 @@ export class FireTV implements OnDestroy {
     }
 
     constructor(public readonly host: string, 
-                public readonly port: number = 5555) {
+                public readonly port: number = 5555,
+                private readonly _logger: Logger) {
         this._client = adb.createClient();
         
-        this._client.connect(this.host, this.port)
-            .then((id: string) => {
-                this._id = id;
-                this._onConnected.next();
-            });
+        const connect = () => {
+            this._client.connect(this.host, this.port)
+                .then((id: string) => {
+                    this._id = id;
+                    this._onConnected.next();
+                })
+                .catch((err: any) => {
+                    this._logger.error(`Failed to connect to FireTV: ${err.toString()}`);
+                    setTimeout(connect, 2000);
+                });
+        }
     }
     
     exec(cmd: string): Observable<Buffer> {

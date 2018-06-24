@@ -14,6 +14,7 @@ import {switchMap, map, distinctUntilChanged, startWith, catchError, takeUntil, 
 export class FireTVConfig {
     constructor(
         public readonly host: string,
+        public readonly port: number|undefined = undefined,
         public readonly interval: number = 5 * 1000 // Default: 5 seconds
     ) {}
 
@@ -85,7 +86,7 @@ export class FireTVDevice implements OnDestroy {
     }
 
     constructor(private _config: FireTVConfig, private _log: Logger) {
-        this._device = new FireTV(this._config.host);
+        this._device = new FireTV(this._config.host, this._config.port, this._log);
 
         // TODO: we need to wait for the device to be connected
         // until we can do the setup
