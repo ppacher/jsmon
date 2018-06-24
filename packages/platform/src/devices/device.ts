@@ -7,12 +7,13 @@ import {
     PROP_METADATA,
     Type,
 } from '@jsmon/core';
-import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition, SIUnit} from '../proto';
+import {IParameterDefinition, ParameterType, ISensorSchema, ICommandDefinition} from '../proto';
 export {ParameterType, IParameterDefinition, ISensorSchema, ICommandDefinition} from '../proto';
 
 export const ParameterTypeMap: {[key: number]: string} = {
     [ParameterType.ARRAY]: 'array',
     [ParameterType.BOOLEAN]: 'boolean',
+    [ParameterType.TIMESTAMP]: 'number',
     [ParameterType.NUMBER]: 'number',
     [ParameterType.OBJECT]: 'object',
     [ParameterType.STRING]: 'string',
@@ -145,14 +146,10 @@ export interface CommandDecorator {
     (settings: CommandDecoratorSettings): any;
     (name: string): any;
     (name: string, description: string): any;
-    (name: string, description: string, params: IParameterDefinition): any;
-    (name: string, params: IParameterDefinition): any;
 
     new (settings: CommandDecoratorSettings): Command;
     new (name: string): Command;
     new (name: string, description: string): Command;
-    new (name: string, description: string, params: IParameterDefinition): Command;
-    new (name: string, params: IParameterDefinition): Command;
 }
 
 /**
@@ -185,20 +182,9 @@ export const Command: CommandDecorator = makePropDecorator('Commands', (...args:
                 description: args[1],
             };
         }
-        
-        if (typeof args[1] === 'object') {
-            return {
-                name: name,
-                parameters: args[1]
-            };
-        }
     }
 
-    return {
-        name: name,
-        description: args[1],
-        parameters: args[2],
-    };
+    throw new Error(`Invalid @Command() decorator options`);
 });
 
 /**
@@ -206,10 +192,10 @@ export const Command: CommandDecorator = makePropDecorator('Commands', (...args:
  */
 export interface SensorDecorator {
     (settings: ISensorSchema): any;
-    (name: string, type: ParameterType, description?: string): any;
+    (name: string, type: ParameterType, description?: string, unit?: string): any;
 
     new (settings: ISensorSchema): Sensor;
-    new (name: string, type: ParameterType, description?: string): Sensor;
+    new (name: string, type: ParameterType, description?: string, unit?: string): Sensor;
 }
 
 /**
@@ -229,25 +215,17 @@ export const Sensor: SensorDecorator = makePropDecorator('Sensor', (...args: any
         settings = {
             name: args[0],
             type: args[1],
-            description: args[2],
+            description: args[2] || '',
+            unit: args[3] || ''
         };
     }
     
-    if (!!settings.customUnit && settings.customUnit !== '') {
-        if (settings.unit === undefined || settings.unit === null) {
-            settings.unit = SIUnit.Custom;
-        }
-        
-        if (settings.unit === SIUnit.Custom) {
-            throw new Error(`Custom units can only be used when unit=SIUnit.Custom`);
-        }
-    }
-
     return {
         name: settings.name,
         description: settings.description,
         type: settings.type,
-    }
+        unit: settings.unit,
+    };
 });
 
 /**

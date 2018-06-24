@@ -4,7 +4,7 @@
   "description": "Platform library of the jsmon automation development framework",
   "main": "index.js",
   "scripts": {
-    "start": "npm run generate-types && npm run generate-src &&  npm run build-src && cp src/proto.{d.ts,js} dist/",
+    "start": "npm run generate-types && npm run generate-src &&  npm run build-src && cp src/proto{,.light}.{d.ts,js} dist/",
     "build-src": "tsc && cp package.json dist/",
     "generate-src": "pbjs -w commonjs -t static-module -o src/proto.js protobuf/*.proto",
     "generate-types": "pbjs -t static-module protobuf/*.proto | pbts -o src/proto.d.ts - ",

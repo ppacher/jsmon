@@ -10,8 +10,8 @@ import {Injector, OnDestroy} from '@jsmon/core';
 
 import {DeviceHealthState, HealthCheck, ParameterType, CommandSchema, ISensorSchema, SensorProvider, ParameterTypeMap, ICommandDefinition} from './device';
 
-import {map, distinctUntilChanged, debounceTime, takeUntil} from 'rxjs/operators';
-import { IParameterDefinition } from 'proto';
+import {map, distinctUntilChanged, debounceTime, takeUntil, tap} from 'rxjs/operators';
+import {IParameterDefinition} from 'proto';
 
 /**
  * @class Device
@@ -107,15 +107,18 @@ export class DeviceController<T = any> implements OnDestroy {
                         name: key,
                         description: '',
                         types: p,
+                        optional: false
                     })
                 } else {
+                    p.name = key;
                     params.push(p)
                 }
             });
-            
+  
             return {
                 name: cmd.name,
                 shortDescription: cmd.shortDescription,
+                longDescription: cmd.longDescription,
                 parameters: params,
             }
         })
@@ -138,6 +141,7 @@ export class DeviceController<T = any> implements OnDestroy {
                 name: s.name,
                 description: s.description || '',
                 type: s.type,
+                unit: s.unit,
             }));
     }
 

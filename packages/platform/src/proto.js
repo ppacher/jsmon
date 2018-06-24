@@ -23,6 +23,7 @@ var $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
  * @property {number} BOOLEAN_ARRAY=7 BOOLEAN_ARRAY value
  * @property {number} OBJECT_ARRAY=8 OBJECT_ARRAY value
  * @property {number} ANY=9 ANY value
+ * @property {number} TIMESTAMP=10 TIMESTAMP value
  */
 $root.ParameterType = (function() {
     var valuesById = {}, values = Object.create(valuesById);
@@ -36,72 +37,7 @@ $root.ParameterType = (function() {
     values[valuesById[7] = "BOOLEAN_ARRAY"] = 7;
     values[valuesById[8] = "OBJECT_ARRAY"] = 8;
     values[valuesById[9] = "ANY"] = 9;
-    return values;
-})();
-
-/**
- * SIUnit enum.
- * @exports SIUnit
- * @enum {string}
- * @property {number} Custom=0 Custom value
- * @property {number} Kilogram=1 Kilogram value
- * @property {number} Seconds=2 Seconds value
- * @property {number} Ampere=3 Ampere value
- * @property {number} Celcius=4 Celcius value
- * @property {number} Kelvin=5 Kelvin value
- * @property {number} Mole=6 Mole value
- * @property {number} Candela=7 Candela value
- * @property {number} Lux=8 Lux value
- * @property {number} Radiant=9 Radiant value
- * @property {number} Hertz=10 Hertz value
- * @property {number} Newton=11 Newton value
- * @property {number} Pascal=12 Pascal value
- * @property {number} Joule=13 Joule value
- * @property {number} Watt=14 Watt value
- * @property {number} Coulomb=15 Coulomb value
- * @property {number} Volt=16 Volt value
- * @property {number} Farad=17 Farad value
- * @property {number} Ohm=18 Ohm value
- * @property {number} Siemens=19 Siemens value
- * @property {number} Weber=20 Weber value
- * @property {number} Tesla=21 Tesla value
- * @property {number} Henry=22 Henry value
- * @property {number} Lumen=23 Lumen value
- * @property {number} Gray=24 Gray value
- * @property {number} Sievert=25 Sievert value
- * @property {number} Katal=26 Katal value
- * @property {number} Meter=27 Meter value
- */
-$root.SIUnit = (function() {
-    var valuesById = {}, values = Object.create(valuesById);
-    values[valuesById[0] = "Custom"] = 0;
-    values[valuesById[1] = "Kilogram"] = 1;
-    values[valuesById[2] = "Seconds"] = 2;
-    values[valuesById[3] = "Ampere"] = 3;
-    values[valuesById[4] = "Celcius"] = 4;
-    values[valuesById[5] = "Kelvin"] = 5;
-    values[valuesById[6] = "Mole"] = 6;
-    values[valuesById[7] = "Candela"] = 7;
-    values[valuesById[8] = "Lux"] = 8;
-    values[valuesById[9] = "Radiant"] = 9;
-    values[valuesById[10] = "Hertz"] = 10;
-    values[valuesById[11] = "Newton"] = 11;
-    values[valuesById[12] = "Pascal"] = 12;
-    values[valuesById[13] = "Joule"] = 13;
-    values[valuesById[14] = "Watt"] = 14;
-    values[valuesById[15] = "Coulomb"] = 15;
-    values[valuesById[16] = "Volt"] = 16;
-    values[valuesById[17] = "Farad"] = 17;
-    values[valuesById[18] = "Ohm"] = 18;
-    values[valuesById[19] = "Siemens"] = 19;
-    values[valuesById[20] = "Weber"] = 20;
-    values[valuesById[21] = "Tesla"] = 21;
-    values[valuesById[22] = "Henry"] = 22;
-    values[valuesById[23] = "Lumen"] = 23;
-    values[valuesById[24] = "Gray"] = 24;
-    values[valuesById[25] = "Sievert"] = 25;
-    values[valuesById[26] = "Katal"] = 26;
-    values[valuesById[27] = "Meter"] = 27;
+    values[valuesById[10] = "TIMESTAMP"] = 10;
     return values;
 })();
 
@@ -132,8 +68,7 @@ $root.SensorSchema = (function() {
      * @property {string|null} [name] SensorSchema name
      * @property {string|null} [description] SensorSchema description
      * @property {ParameterType|null} [type] SensorSchema type
-     * @property {SIUnit|null} [unit] SensorSchema unit
-     * @property {string|null} [customUnit] SensorSchema customUnit
+     * @property {string|null} [unit] SensorSchema unit
      */
 
     /**
@@ -177,19 +112,11 @@ $root.SensorSchema = (function() {
 
     /**
      * SensorSchema unit.
-     * @member {SIUnit} unit
+     * @member {string} unit
      * @memberof SensorSchema
      * @instance
      */
-    SensorSchema.prototype.unit = 0;
-
-    /**
-     * SensorSchema customUnit.
-     * @member {string} customUnit
-     * @memberof SensorSchema
-     * @instance
-     */
-    SensorSchema.prototype.customUnit = "";
+    SensorSchema.prototype.unit = "";
 
     /**
      * Creates a new SensorSchema instance using the specified properties.
@@ -222,9 +149,7 @@ $root.SensorSchema = (function() {
         if (message.type != null && message.hasOwnProperty("type"))
             writer.uint32(/* id 3, wireType 0 =*/24).int32(message.type);
         if (message.unit != null && message.hasOwnProperty("unit"))
-            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.unit);
-        if (message.customUnit != null && message.hasOwnProperty("customUnit"))
-            writer.uint32(/* id 5, wireType 2 =*/42).string(message.customUnit);
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.unit);
         return writer;
     };
 
@@ -269,10 +194,7 @@ $root.SensorSchema = (function() {
                 message.type = reader.int32();
                 break;
             case 4:
-                message.unit = reader.int32();
-                break;
-            case 5:
-                message.customUnit = reader.string();
+                message.unit = reader.string();
                 break;
             default:
                 reader.skipType(tag & 7);
@@ -329,45 +251,12 @@ $root.SensorSchema = (function() {
             case 7:
             case 8:
             case 9:
+            case 10:
                 break;
             }
         if (message.unit != null && message.hasOwnProperty("unit"))
-            switch (message.unit) {
-            default:
-                return "unit: enum value expected";
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23:
-            case 24:
-            case 25:
-            case 26:
-            case 27:
-                break;
-            }
-        if (message.customUnit != null && message.hasOwnProperty("customUnit"))
-            if (!$util.isString(message.customUnit))
-                return "customUnit: string expected";
+            if (!$util.isString(message.unit))
+                return "unit: string expected";
         return null;
     };
 
@@ -428,123 +317,13 @@ $root.SensorSchema = (function() {
         case 9:
             message.type = 9;
             break;
-        }
-        switch (object.unit) {
-        case "Custom":
-        case 0:
-            message.unit = 0;
-            break;
-        case "Kilogram":
-        case 1:
-            message.unit = 1;
-            break;
-        case "Seconds":
-        case 2:
-            message.unit = 2;
-            break;
-        case "Ampere":
-        case 3:
-            message.unit = 3;
-            break;
-        case "Celcius":
-        case 4:
-            message.unit = 4;
-            break;
-        case "Kelvin":
-        case 5:
-            message.unit = 5;
-            break;
-        case "Mole":
-        case 6:
-            message.unit = 6;
-            break;
-        case "Candela":
-        case 7:
-            message.unit = 7;
-            break;
-        case "Lux":
-        case 8:
-            message.unit = 8;
-            break;
-        case "Radiant":
-        case 9:
-            message.unit = 9;
-            break;
-        case "Hertz":
+        case "TIMESTAMP":
         case 10:
-            message.unit = 10;
-            break;
-        case "Newton":
-        case 11:
-            message.unit = 11;
-            break;
-        case "Pascal":
-        case 12:
-            message.unit = 12;
-            break;
-        case "Joule":
-        case 13:
-            message.unit = 13;
-            break;
-        case "Watt":
-        case 14:
-            message.unit = 14;
-            break;
-        case "Coulomb":
-        case 15:
-            message.unit = 15;
-            break;
-        case "Volt":
-        case 16:
-            message.unit = 16;
-            break;
-        case "Farad":
-        case 17:
-            message.unit = 17;
-            break;
-        case "Ohm":
-        case 18:
-            message.unit = 18;
-            break;
-        case "Siemens":
-        case 19:
-            message.unit = 19;
-            break;
-        case "Weber":
-        case 20:
-            message.unit = 20;
-            break;
-        case "Tesla":
-        case 21:
-            message.unit = 21;
-            break;
-        case "Henry":
-        case 22:
-            message.unit = 22;
-            break;
-        case "Lumen":
-        case 23:
-            message.unit = 23;
-            break;
-        case "Gray":
-        case 24:
-            message.unit = 24;
-            break;
-        case "Sievert":
-        case 25:
-            message.unit = 25;
-            break;
-        case "Katal":
-        case 26:
-            message.unit = 26;
-            break;
-        case "Meter":
-        case 27:
-            message.unit = 27;
+            message.type = 10;
             break;
         }
-        if (object.customUnit != null)
-            message.customUnit = String(object.customUnit);
+        if (object.unit != null)
+            message.unit = String(object.unit);
         return message;
     };
 
@@ -565,8 +344,7 @@ $root.SensorSchema = (function() {
             object.name = "";
             object.description = "";
             object.type = options.enums === String ? "STRING" : 0;
-            object.unit = options.enums === String ? "Custom" : 0;
-            object.customUnit = "";
+            object.unit = "";
         }
         if (message.name != null && message.hasOwnProperty("name"))
             object.name = message.name;
@@ -575,9 +353,7 @@ $root.SensorSchema = (function() {
         if (message.type != null && message.hasOwnProperty("type"))
             object.type = options.enums === String ? $root.ParameterType[message.type] : message.type;
         if (message.unit != null && message.hasOwnProperty("unit"))
-            object.unit = options.enums === String ? $root.SIUnit[message.unit] : message.unit;
-        if (message.customUnit != null && message.hasOwnProperty("customUnit"))
-            object.customUnit = message.customUnit;
+            object.unit = message.unit;
         return object;
     };
 
@@ -799,6 +575,7 @@ $root.ParameterDefinition = (function() {
                 case 7:
                 case 8:
                 case 9:
+                case 10:
                     break;
                 }
         }
@@ -871,6 +648,10 @@ $root.ParameterDefinition = (function() {
                 case "ANY":
                 case 9:
                     message.types[i] = 9;
+                    break;
+                case "TIMESTAMP":
+                case 10:
+                    message.types[i] = 10;
                     break;
                 }
         }
@@ -1397,6 +1178,7 @@ $root.SensorValue = (function() {
             case 7:
             case 8:
             case 9:
+            case 10:
                 break;
             }
         if (message.value != null && message.hasOwnProperty("value"))
@@ -1461,6 +1243,10 @@ $root.SensorValue = (function() {
         case "ANY":
         case 9:
             message.type = 9;
+            break;
+        case "TIMESTAMP":
+        case 10:
+            message.type = 10;
             break;
         }
         if (object.value != null)
