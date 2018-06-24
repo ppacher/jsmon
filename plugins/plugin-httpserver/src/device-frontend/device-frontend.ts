@@ -4,7 +4,7 @@ import {HTTPServer, RemoveRouteFn} from '../server';
 import {DeviceHttpApiConfig} from './config';
 import {Request, Response} from 'restify';
 import {query} from 'jsonpath';
-import {ICommandDefinition} from '@jsmon/platform/proto';
+import {ICommandDefinition, CommandDefinition} from '@jsmon/platform/proto';
 
 @Injectable()
 export class DeviceHttpApi {
@@ -142,13 +142,13 @@ export class DeviceHttpApi {
     }
 
     private _getDeviceCommands(d: DeviceController, req: Request, res: Response): void {
-        const response = d.getCommandDefinitions().map((cmd: ICommandDefinition) => this._getCommandDescriptor(cmd));
+        const response = d.getCommandDefinitions();
         
         res.send(response);
     }
     
     private _getDeviceCommand(d: DeviceController, cmd: ICommandDefinition, req: Request, res: Response): void {
-        res.send(this._getCommandDescriptor(cmd));
+        res.send(cmd)
     }
     
     private _callDeviceCommand(d: DeviceController, cmd: ICommandDefinition, req: Request, res: Response): void {
@@ -173,14 +173,14 @@ export class DeviceHttpApi {
                         return;
                     }
                     
-                    if (Array.isArray(response) || typeof response === 'object') {
-                        res.send(response);
-                        return;
+                    if (result === undefined) {
+                        res.sendRaw(204);
+                    } else {
+                        res.sendRaw(200, ''+JSON.stringify(response), {'Content-Type': 'application/json'});
                     }
 
-                    res.sendRaw(''+response);
                 },
-                (err: any) => res.send({error: err}));
+                (err: any) => res.sendRaw(JSON.stringify({error: err})));
     }
 
     /**
@@ -242,14 +242,5 @@ export class DeviceHttpApi {
         });
         
         return params;
-    }
-    
-    private _getCommandDescriptor(cmd: ICommandDefinition): any {
-        return {
-            name: cmd.name,
-            parameters: cmd.parameters,
-            longDescription: cmd.longDescription,
-            shortDescription: cmd.shortDescription,
-        }
     }
 }
