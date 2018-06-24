@@ -87,7 +87,10 @@ export class MPDDevice implements OnDestroy {
             return Promise.reject('Not connected');
         }
 
-        return this._mpd.database.find([[params.get('type'), params.get('what')]]);
+        return this._mpd.database.find([[params.get('type'), params.get('what')]])
+            .catch((err: mpc.MPDError) => {
+                throw err.errorMessage;
+            });
     }
     
     @Command({
@@ -106,7 +109,10 @@ export class MPDDevice implements OnDestroy {
             return Promise.reject('Not connected');
         }
 
-        return this._mpd.playback.play(p.get('pos'));
+        return this._mpd.playback.play(p.get('pos'))
+            .catch((err: mpc.MPDError) => {
+                throw err.errorMessage;
+            });
     }
 
     @Command('pause', 'Pause playback')
@@ -115,7 +121,10 @@ export class MPDDevice implements OnDestroy {
             return Promise.reject('Not connected');
         }
 
-        return this._mpd.playback.pause(true);
+        return this._mpd.playback.pause(true)
+            .catch((err: mpc.MPDError) => {
+                throw err.errorMessage;
+            });
     }
     
     @Command('resume', 'Resume playback')
@@ -124,7 +133,10 @@ export class MPDDevice implements OnDestroy {
             return Promise.reject('Not connected');
         }
 
-        return this._mpd.playback.pause(false);
+        return this._mpd.playback.pause(false)
+            .catch((err: mpc.MPDError) => {
+                throw err.errorMessage;
+            });
     }
     
     onDestroy() {
