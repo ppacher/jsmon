@@ -132,12 +132,13 @@ console.log(token);
 A ValueProvider registeres an injection target that receives a constant/pre-created value. The following example uses an abstract class definition as well as [Custom Injection targets](#custom-injection-targets).
 
 ```typescript
-import {Provider, Injector, Inject} from '@jsmon/core';
+import {Provider, Injector, Inject, Injectable} from '@jsmon/core';
 
 abstract class Token extends string {}
 
 const XSRFToken = 'xxxx-yyyy-zzzz';
 
+@Injectable()
 class Example {
     constructor(
         token: Token,
@@ -203,7 +204,7 @@ assert(log1 === log2);
 ### Example
 
 ```typescript
-import {Provider, Injector} from '@jsmon/core';
+import {Provider, Injector, Injectable} from '@jsmon/core';
 
 export abstract class Console {
     abstract log(...args: any[]);
@@ -219,6 +220,7 @@ export abstract class LoggingAdapter {
     abstract log(...args: any[]);
 }
 
+@Injectable()
 export class ConsoleLogger extends LoggingAdapter {
     constructor(private console: Console) {}
     
@@ -227,6 +229,7 @@ export class ConsoleLogger extends LoggingAdapter {
     }
 }
 
+@Injectable()
 export class Logger {
     constructor(private adapter: LoggingAdapter)
 
