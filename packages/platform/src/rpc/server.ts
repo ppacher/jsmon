@@ -1,40 +1,57 @@
-import {Type} from '@jsmon/core';
+import {Type, OnDestroy} from '@jsmon/core';
 import {ProcedureCallResponse, ProcedureCallRequest, BarRequest, BarResponse, google} from '../proto';
 import {Handle, getServerHandlers, Server, getServerMetadata} from './annotations';
+import {ServerChannel, ServerTransport, Headers, Request} from './transport';
+import {Subscription} from 'rxjs/Subscription';
+import {Subject} from 'rxjs/Subject';
+import {takeUntil} from 'rxjs/operators';
+
 import * as protobuf from 'protobufjs';
 
+export class Context {
+
+}
+
 export interface HandlerFunction<T, U> {
-    (req: T): Promise<U>;
+    (ctx: Context, req: T): Promise<U>;
 }
 
 export class RPCServer<T extends Object> {
     private _dispatchTable: Map<string, HandlerFunction<any, any>> = new Map();
     protected _serviceDescriptor: protobuf.Service|null = null;
+    protected _root: protobuf.Namespace;
 
-    constructor(private _root: protobuf.Root, private _server: T) {
+    constructor(root: protobuf.Root|string, private _server: T) {
+        if (typeof root === 'string') {
+            this._root = protobuf.loadSync(root).resolveAll();
+        } else {
+            this._root = root.resolved ? root : root.resolveAll();
+        }
+        
         this._setupHandlers();
     }
     
-    dispatch<T, U>(method: string, request: T): Promise<U> {
-        const handler = this._dispatchTable.get(method);
+    dispatch<T extends protobuf.Message<any>, U extends protobuf.Message<any>>
+        (method: string, ctx: Context, request: T): Promise<U> {
         
+        const handler = this._dispatchTable.get(method);
         if (handler === undefined) {
             return Promise.reject(`Unknown method ${method}`);
         }
         
-        return handler(request);
+        return handler(ctx, request);
     }
     
-    async dispatchBlob<T, U>(method: string, request: Uint8Array): Promise<Uint8Array> {
+    async dispatchBlob<T extends protobuf.Message<any>, U extends protobuf.Message<any>>
+        (method: string, ctx: Context, request: Uint8Array): Promise<Uint8Array> {
+        
         const methodDesciptor = this._serviceDescriptor!.methods[method];
         if (methodDesciptor === undefined) {
             return Promise.reject(`Unknown method`);
         }
 
         let requestMessage: T = methodDesciptor.resolvedRequestType!.decode(request) as any as T;
-        
-        let responseMessage: U = await this.dispatch<T, U>(method, requestMessage);
-        
+        let responseMessage: U = await this.dispatch<T, U>(method, ctx, requestMessage);
         const response = methodDesciptor.resolvedResponseType!.encode(responseMessage).finish();
         
         return response;
@@ -64,8 +81,6 @@ export class RPCServer<T extends Object> {
             if (handler !== undefined) {
                 const fn = (this._server as any)[handler] as HandlerFunction<any, any>;
                 this._dispatchTable.set(method.name, fn.bind(this._server));
-                
-                console.log(`Registered ${cls.name}.${fn.name} for ${method.fullName}`);
             } else {
                 throw new Error(`Missing method handler for ${method.fullName}`);
             }
@@ -75,73 +90,97 @@ export class RPCServer<T extends Object> {
     }
 }
 
-export class GenericRPCServer<T> extends RPCServer<T> {
-    async dispatchCall(req: Uint8Array): Promise<Uint8Array> {
-        const requestMessage = ProcedureCallRequest.decode(req);
-        const method = this._serviceDescriptor!.methods[requestMessage.method];
+export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
+    private _destroyed: Subject<void> = new Subject();
+
+    constructor(root: protobuf.Root|string,
+                server: T,
+                private _transport: ServerTransport) {
+                
+        super(root, server);
         
+        this._transport.onConnection
+            .pipe(takeUntil(this._destroyed))
+            .subscribe(
+                channel => this._handleChannel(channel),
+                err => {},
+                () => this._shutdown()
+            )
+    }
+
+    onDestroy() {
+        this._shutdown();
+    }
+    
+    private _handleChannel(channel: ServerChannel): void {
+        console.log(`Client ${channel.client} connected`);
+        
+        channel.onRequest
+            .pipe(takeUntil(this._destroyed))
+            .subscribe(
+                request => this._serveRequest(request),
+                err => {
+
+                },
+                () => {
+                    console.log(`Client ${channel.client} disconnected`);
+                }
+            )
+    }
+    
+    private async _serveRequest(request: Request) {
+        const method = this._serviceDescriptor!.methods[request.method];
+        
+        if (method === undefined) {
+            // TODO: complete with error
+            return;
+        }
+
+        // Make sure the method has been completely resolved
         if (!method.resolved) {
             method.resolve();
         }
-
-        const responseType = method.resolvedResponseType!;
-        const requestType = method.resolvedRequestType!;
-
-        const methodParameter: protobuf.Message<any> = requestType.decode(requestMessage.payload!.value!); 
-
-        const result: protobuf.Message<any> = await super.dispatch<protobuf.Message<any>, protobuf.Message<any>>(requestMessage.method, methodParameter);
         
-        const resultAny: google.protobuf.Any = google.protobuf.Any.create({
-            type_url: responseType.fullName,
-            value: responseType.encode(result).finish(),
-        }) as any as google.protobuf.Any;
+        if (method.resolvedRequestType!.fullName !== request.requestMessage.type_url) {
+            // TODO: complete with error
+            return
+        }
+        
+        if (!request.requestMessage.value) {
+            // TODO: complete with error
+            return;
+        }
+        
+        const requestMessage = method.resolvedRequestType!.decode(request.requestMessage.value!);
+        const ctx = new Context();
+        let responseMessage: protobuf.Message<any>;
 
-        return ProcedureCallResponse.encode({
-            clientId: requestMessage.clientId,
-            requestId: requestMessage.requestId,
-            payload: resultAny,
-        }).finish();
+        try {
+            responseMessage = await this.dispatch(request.method, ctx, requestMessage);
+        } catch (err) {
+            // TODO: complete with error
+            return;
+        }
+        
+        if (!!responseMessage.$type) {
+            if (responseMessage.$type.name !== method.requestType) {
+                // TODO: complete with error
+                return;
+            }
+        }
+        
+        const result = google.protobuf.Any.create({
+            type_url: method.resolvedResponseType!.fullName,
+            value: method.resolvedResponseType!.encode(responseMessage).finish()
+        });
+
+        request.resolve(result, {/* TODO: add headers */});
+    }
+
+    private _shutdown() {
+        if (!this._destroyed.closed) {
+            this._destroyed.next();
+            this._destroyed.complete();
+        }
     }
 }
-
-
-//
-// Test code
-//
-
-@Server('Foo')
-export class Foo {
-
-    @Handle('Bar')
-    async bar(method: BarRequest): Promise<BarResponse> {
-        console.log(`Bar called with: `, method);
-        return new BarResponse(method);
-    }
-}
-
-
-let root = protobuf.loadSync('./protobuf/rpc.proto');
-const f = new Foo();
-
-const server = new GenericRPCServer(root, f);
-
-const payload = BarRequest.create({payload: 'foobar'});
-
-const req = ProcedureCallRequest.encode({
-    clientId: 'client',
-    requestId: 'request-1',
-    method: 'Bar',
-    payload: google.protobuf.Any.create({
-        type_url: '.BarRequest',
-        value: BarRequest.encode(payload).finish()
-    }),
-}).finish();
-
-
-server.dispatchCall(req)
-    .then(res => {
-        const msg = ProcedureCallResponse.decode(res);
-        const barResponse = BarResponse.decode(msg.payload!.value!);
-
-        console.log(barResponse);
-    });
