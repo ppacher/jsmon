@@ -44,10 +44,12 @@ Providers are responsible for defining injection targets and how they should be 
 
 Currently there are 4 different provider types available:
 
-* ClassProvider
-* FactoryProvider
-* ValueProvider
-* ExistingProvider
+* [ClassProvider](#classprovider)
+* [FactoryProvider](#factoryprovider)
+* [ValueProvider](#valueprovider)
+* [ExistingProvider](#existingprovider)
+
+There's also a more [complete example](#example) at the end of the section.
   
 All of them are part of the `Provider` type exposed by `@jsmon/core/di`.
 
@@ -165,6 +167,91 @@ const example: Example = injector.get(Example);
 
 ```
 
+### ExistingProvider
+
+An `ExistingProvider` can be used when the injection target is already provided but with a different injection token.
+When the injector encounters an `ExistingProvider` it will re-use the already created instance the provider refers to or
+create a new one.
+
+```typescript
+import {Provider, Injector} from '@jsmon/core';
+
+abstract class Logger {
+    abstract log(...args: any[]): void;
+}
+
+class MyLogger extends Logger {
+    log(...args: any[]) {
+        console.log(...args);
+    }
+}
+
+const injector = new Injector([
+    MyLogger, // this is a ClassProvider/TypeProvider
+    {
+        provide: Logger,
+        useExisting: MyLogger
+    }
+])
+
+const log1 = injector.get(MyLogger);
+const log2 = injector.get(Logger);
+
+assert(log1 === log2);
+```
+
+### Example
+
+```typescript
+import {Provider, Injector} from '@jsmon/core';
+
+export abstract class Console {
+    abstract log(...args: any[]);
+}
+
+// A value provider for console
+export const ConsoleProvider: Provider = {
+    provide: Console,
+    useValue: console,
+};
+
+export abstract class LoggingAdapter {
+    abstract log(...args: any[]);
+}
+
+export class ConsoleLogger extends LoggingAdapter {
+    constructor(private console: Console) {}
+    
+    log(...args: any[]): void {
+        this.console.log(...args);
+    }
+}
+
+export class Logger {
+    constructor(private adapter: LoggingAdapter)
+
+    log(...args: any[]): void {
+        this.adapter.log(...args);
+    }
+}
+
+const injector = new Injector([
+    ConsoleProvider, // ValueProvider
+    ConsoleLogger, // Class/Type Provider
+    {
+        provide: LoggingAdapter,
+        useExisting: ConsoleLogger,
+    },
+    Logger
+]);
+
+const logger = injector.get(Logger);
+//
+// logger will receive ConsoleLogger as it's LoggingAdapter and
+// ConsoleLogger will get the `console`.
+//
+
+```
 ## Custom Injection targets
 
 ## Hierachical Injectors
