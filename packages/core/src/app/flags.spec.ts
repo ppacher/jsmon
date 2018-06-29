@@ -18,6 +18,14 @@ describe('FlagSet', () => {
         expect(flags.getFlag('bar').string()).toBe('bar');
     });
     
+    it('should throw for unknown long flags', () => {
+        expect(() => createFlagSet([{name: 'foo', required: true}], ['--bar'])).toThrow();
+    });
+    
+    it('should throw for unknown short flags', () => {
+        expect(() => createFlagSet([{name: 'foo', required: true}], ['-b'])).toThrow();
+    });
+    
     it('should throw for missing values', () => {
         expect(() => createFlagSet([{name: 'foo', required: true}], [])).toThrow();
     });

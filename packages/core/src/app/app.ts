@@ -20,7 +20,7 @@ export interface FlagDescriptor {
     /* Wether or not the flag can be specified multiple times */
     multiple?: boolean;
 
-    /** Wether or not the flag is a boolean value and does not require a value */
+    /** Wether or not the flag is a boolean and does not require a value */
     boolean?: boolean;
 }
 
