@@ -46,8 +46,8 @@ Currently there are 4 different provider types available:
 
 * ClassProvider
 * FactoryProvider
-* ExistingProvider
 * ValueProvider
+* ExistingProvider
   
 All of them are part of the `Provider` type exposed by `@jsmon/core/di`.
 
@@ -123,6 +123,46 @@ console.log(token);
 // should print
 //
 //  'foobar'
+```
+
+### ValueProvider
+
+A ValueProvider registeres an injection target that receives a constant/pre-created value. The following example uses an abstract class definition as well as [Custom Injection targets](#custom-injection-targets).
+
+```typescript
+import {Provider, Injector, Inject} from '@jsmon/core';
+
+abstract class Token extends string {}
+
+const XSRFToken = 'xxxx-yyyy-zzzz';
+
+class Example {
+    constructor(
+        token: Token,
+        @Inject('XSRF') xsrf: string,
+    ) {
+        assert(token === xsrf);
+    }
+}
+
+const injector = new Injector([
+    {
+        provide: 'XSRF',
+        useValue: XSRFToken,
+    },
+    {
+        provide: Token,
+        useValue: XSRFToken
+    }
+]);
+
+const token = injector.get(Token);
+const xsrf = injector.get('XSRF');
+
+assert(token === xsrf);
+
+const example: Example = injector.get(Example);
+
 ```
 
 ## Custom Injection targets
