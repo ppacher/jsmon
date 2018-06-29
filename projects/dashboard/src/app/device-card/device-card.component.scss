@@ -14,11 +14,13 @@
 
 .sensor-name {
     margin-right: 10px;
+    font-weight: lighter;
 }
 
 .sensor-value {
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: lighter;
     opacity: 0.6;
 }
 
