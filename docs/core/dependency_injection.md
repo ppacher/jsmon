@@ -40,7 +40,7 @@ car.turnOn();
 
 ## Providers
 
-Providers are responsible for defining injection targets and how the should be constructed. Each injector provides it's own set of injection providers and queries parent injectors if a dependency cannot be satisfied by the injector itself.  
+Providers are responsible for defining injection targets and how they should be constructed. Each injector provides it's own set of injection providers and queries parent injectors if a dependency cannot be satisfied by the injector itself.  
 
 Currently there are 4 different provider types available:
 
@@ -76,7 +76,7 @@ const fooProvider: Provider = Foo;
 
 // One can also directly specify a class provider using a different token
 // See `Custom Injetion targets` for more information
-const barProvier: Provider = {
+const barProvider: Provider = {
     provide: Bar,
     useClass: Bar
 };
@@ -91,8 +91,39 @@ const b: Bar = injector.get(Bar);
 //
 ```
 
+In the above example, if `class Foo` would have constructor parameters the dependecy injector would try to resolve them as well.
 
+### FactoryProvider
 
+Factory providers can be used if custom logic is required when constructing dependency injection target. 
+
+> **Note**: currently FactoryProviders cannot have an dependencies. This will be fixed soon.
+
+```typescript
+import {Provider, Injector} from '@jsmon/core';
+
+abstract class MyClass {
+    value: string;
+}
+
+const tokenProvider: Provider = {
+    provide: MyClass,
+    useFactory: () => {
+        return {
+            value: 'foobar';
+        }
+    }
+}
+
+const injector = new Injector([tokenProvider]);
+
+const token = injector.get(MyClass).value;
+console.log(token);
+
+// should print
+//
+//  'foobar'
+```
 
 ## Custom Injection targets
 
