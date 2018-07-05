@@ -2354,6 +2354,8 @@ $root.ProcedureCallResponse = (function() {
      * @property {string|null} [requestId] ProcedureCallResponse requestId
      * @property {Object.<string,string>|null} [headers] ProcedureCallResponse headers
      * @property {google.protobuf.IAny|null} [payload] ProcedureCallResponse payload
+     * @property {boolean|null} [error] ProcedureCallResponse error
+     * @property {string|null} [errorMessage] ProcedureCallResponse errorMessage
      */
 
     /**
@@ -2405,6 +2407,22 @@ $root.ProcedureCallResponse = (function() {
     ProcedureCallResponse.prototype.payload = null;
 
     /**
+     * ProcedureCallResponse error.
+     * @member {boolean} error
+     * @memberof ProcedureCallResponse
+     * @instance
+     */
+    ProcedureCallResponse.prototype.error = false;
+
+    /**
+     * ProcedureCallResponse errorMessage.
+     * @member {string} errorMessage
+     * @memberof ProcedureCallResponse
+     * @instance
+     */
+    ProcedureCallResponse.prototype.errorMessage = "";
+
+    /**
      * Creates a new ProcedureCallResponse instance using the specified properties.
      * @function create
      * @memberof ProcedureCallResponse
@@ -2437,6 +2455,10 @@ $root.ProcedureCallResponse = (function() {
                 writer.uint32(/* id 3, wireType 2 =*/26).fork().uint32(/* id 1, wireType 2 =*/10).string(keys[i]).uint32(/* id 2, wireType 2 =*/18).string(message.headers[keys[i]]).ldelim();
         if (message.payload != null && message.hasOwnProperty("payload"))
             $root.google.protobuf.Any.encode(message.payload, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        if (message.error != null && message.hasOwnProperty("error"))
+            writer.uint32(/* id 5, wireType 0 =*/40).bool(message.error);
+        if (message.errorMessage != null && message.hasOwnProperty("errorMessage"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.errorMessage);
         return writer;
     };
 
@@ -2487,6 +2509,12 @@ $root.ProcedureCallResponse = (function() {
                 break;
             case 4:
                 message.payload = $root.google.protobuf.Any.decode(reader, reader.uint32());
+                break;
+            case 5:
+                message.error = reader.bool();
+                break;
+            case 6:
+                message.errorMessage = reader.string();
                 break;
             default:
                 reader.skipType(tag & 7);
@@ -2542,6 +2570,12 @@ $root.ProcedureCallResponse = (function() {
             if (error)
                 return "payload." + error;
         }
+        if (message.error != null && message.hasOwnProperty("error"))
+            if (typeof message.error !== "boolean")
+                return "error: boolean expected";
+        if (message.errorMessage != null && message.hasOwnProperty("errorMessage"))
+            if (!$util.isString(message.errorMessage))
+                return "errorMessage: string expected";
         return null;
     };
 
@@ -2573,6 +2607,10 @@ $root.ProcedureCallResponse = (function() {
                 throw TypeError(".ProcedureCallResponse.payload: object expected");
             message.payload = $root.google.protobuf.Any.fromObject(object.payload);
         }
+        if (object.error != null)
+            message.error = Boolean(object.error);
+        if (object.errorMessage != null)
+            message.errorMessage = String(object.errorMessage);
         return message;
     };
 
@@ -2595,6 +2633,8 @@ $root.ProcedureCallResponse = (function() {
             object.clientId = "";
             object.requestId = "";
             object.payload = null;
+            object.error = false;
+            object.errorMessage = "";
         }
         if (message.clientId != null && message.hasOwnProperty("clientId"))
             object.clientId = message.clientId;
@@ -2608,6 +2648,10 @@ $root.ProcedureCallResponse = (function() {
         }
         if (message.payload != null && message.hasOwnProperty("payload"))
             object.payload = $root.google.protobuf.Any.toObject(message.payload, options);
+        if (message.error != null && message.hasOwnProperty("error"))
+            object.error = message.error;
+        if (message.errorMessage != null && message.hasOwnProperty("errorMessage"))
+            object.errorMessage = message.errorMessage;
         return object;
     };
 
@@ -2623,448 +2667,6 @@ $root.ProcedureCallResponse = (function() {
     };
 
     return ProcedureCallResponse;
-})();
-
-$root.BarRequest = (function() {
-
-    /**
-     * Properties of a BarRequest.
-     * @exports IBarRequest
-     * @interface IBarRequest
-     * @property {string|null} [payload] BarRequest payload
-     */
-
-    /**
-     * Constructs a new BarRequest.
-     * @exports BarRequest
-     * @classdesc Represents a BarRequest.
-     * @implements IBarRequest
-     * @constructor
-     * @param {IBarRequest=} [properties] Properties to set
-     */
-    function BarRequest(properties) {
-        if (properties)
-            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null)
-                    this[keys[i]] = properties[keys[i]];
-    }
-
-    /**
-     * BarRequest payload.
-     * @member {string} payload
-     * @memberof BarRequest
-     * @instance
-     */
-    BarRequest.prototype.payload = "";
-
-    /**
-     * Creates a new BarRequest instance using the specified properties.
-     * @function create
-     * @memberof BarRequest
-     * @static
-     * @param {IBarRequest=} [properties] Properties to set
-     * @returns {BarRequest} BarRequest instance
-     */
-    BarRequest.create = function create(properties) {
-        return new BarRequest(properties);
-    };
-
-    /**
-     * Encodes the specified BarRequest message. Does not implicitly {@link BarRequest.verify|verify} messages.
-     * @function encode
-     * @memberof BarRequest
-     * @static
-     * @param {IBarRequest} message BarRequest message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    BarRequest.encode = function encode(message, writer) {
-        if (!writer)
-            writer = $Writer.create();
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            writer.uint32(/* id 1, wireType 2 =*/10).string(message.payload);
-        return writer;
-    };
-
-    /**
-     * Encodes the specified BarRequest message, length delimited. Does not implicitly {@link BarRequest.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof BarRequest
-     * @static
-     * @param {IBarRequest} message BarRequest message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    BarRequest.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a BarRequest message from the specified reader or buffer.
-     * @function decode
-     * @memberof BarRequest
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {BarRequest} BarRequest
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    BarRequest.decode = function decode(reader, length) {
-        if (!(reader instanceof $Reader))
-            reader = $Reader.create(reader);
-        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.BarRequest();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-            case 1:
-                message.payload = reader.string();
-                break;
-            default:
-                reader.skipType(tag & 7);
-                break;
-            }
-        }
-        return message;
-    };
-
-    /**
-     * Decodes a BarRequest message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof BarRequest
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {BarRequest} BarRequest
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    BarRequest.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a BarRequest message.
-     * @function verify
-     * @memberof BarRequest
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    BarRequest.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            if (!$util.isString(message.payload))
-                return "payload: string expected";
-        return null;
-    };
-
-    /**
-     * Creates a BarRequest message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof BarRequest
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {BarRequest} BarRequest
-     */
-    BarRequest.fromObject = function fromObject(object) {
-        if (object instanceof $root.BarRequest)
-            return object;
-        var message = new $root.BarRequest();
-        if (object.payload != null)
-            message.payload = String(object.payload);
-        return message;
-    };
-
-    /**
-     * Creates a plain object from a BarRequest message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof BarRequest
-     * @static
-     * @param {BarRequest} message BarRequest
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
-    BarRequest.toObject = function toObject(message, options) {
-        if (!options)
-            options = {};
-        var object = {};
-        if (options.defaults)
-            object.payload = "";
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            object.payload = message.payload;
-        return object;
-    };
-
-    /**
-     * Converts this BarRequest to JSON.
-     * @function toJSON
-     * @memberof BarRequest
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
-    BarRequest.prototype.toJSON = function toJSON() {
-        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-    };
-
-    return BarRequest;
-})();
-
-$root.BarResponse = (function() {
-
-    /**
-     * Properties of a BarResponse.
-     * @exports IBarResponse
-     * @interface IBarResponse
-     * @property {string|null} [payload] BarResponse payload
-     */
-
-    /**
-     * Constructs a new BarResponse.
-     * @exports BarResponse
-     * @classdesc Represents a BarResponse.
-     * @implements IBarResponse
-     * @constructor
-     * @param {IBarResponse=} [properties] Properties to set
-     */
-    function BarResponse(properties) {
-        if (properties)
-            for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null)
-                    this[keys[i]] = properties[keys[i]];
-    }
-
-    /**
-     * BarResponse payload.
-     * @member {string} payload
-     * @memberof BarResponse
-     * @instance
-     */
-    BarResponse.prototype.payload = "";
-
-    /**
-     * Creates a new BarResponse instance using the specified properties.
-     * @function create
-     * @memberof BarResponse
-     * @static
-     * @param {IBarResponse=} [properties] Properties to set
-     * @returns {BarResponse} BarResponse instance
-     */
-    BarResponse.create = function create(properties) {
-        return new BarResponse(properties);
-    };
-
-    /**
-     * Encodes the specified BarResponse message. Does not implicitly {@link BarResponse.verify|verify} messages.
-     * @function encode
-     * @memberof BarResponse
-     * @static
-     * @param {IBarResponse} message BarResponse message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    BarResponse.encode = function encode(message, writer) {
-        if (!writer)
-            writer = $Writer.create();
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            writer.uint32(/* id 1, wireType 2 =*/10).string(message.payload);
-        return writer;
-    };
-
-    /**
-     * Encodes the specified BarResponse message, length delimited. Does not implicitly {@link BarResponse.verify|verify} messages.
-     * @function encodeDelimited
-     * @memberof BarResponse
-     * @static
-     * @param {IBarResponse} message BarResponse message or plain object to encode
-     * @param {$protobuf.Writer} [writer] Writer to encode to
-     * @returns {$protobuf.Writer} Writer
-     */
-    BarResponse.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    /**
-     * Decodes a BarResponse message from the specified reader or buffer.
-     * @function decode
-     * @memberof BarResponse
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @param {number} [length] Message length if known beforehand
-     * @returns {BarResponse} BarResponse
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    BarResponse.decode = function decode(reader, length) {
-        if (!(reader instanceof $Reader))
-            reader = $Reader.create(reader);
-        var end = length === undefined ? reader.len : reader.pos + length, message = new $root.BarResponse();
-        while (reader.pos < end) {
-            var tag = reader.uint32();
-            switch (tag >>> 3) {
-            case 1:
-                message.payload = reader.string();
-                break;
-            default:
-                reader.skipType(tag & 7);
-                break;
-            }
-        }
-        return message;
-    };
-
-    /**
-     * Decodes a BarResponse message from the specified reader or buffer, length delimited.
-     * @function decodeDelimited
-     * @memberof BarResponse
-     * @static
-     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-     * @returns {BarResponse} BarResponse
-     * @throws {Error} If the payload is not a reader or valid buffer
-     * @throws {$protobuf.util.ProtocolError} If required fields are missing
-     */
-    BarResponse.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    /**
-     * Verifies a BarResponse message.
-     * @function verify
-     * @memberof BarResponse
-     * @static
-     * @param {Object.<string,*>} message Plain object to verify
-     * @returns {string|null} `null` if valid, otherwise the reason why it is not
-     */
-    BarResponse.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            if (!$util.isString(message.payload))
-                return "payload: string expected";
-        return null;
-    };
-
-    /**
-     * Creates a BarResponse message from a plain object. Also converts values to their respective internal types.
-     * @function fromObject
-     * @memberof BarResponse
-     * @static
-     * @param {Object.<string,*>} object Plain object
-     * @returns {BarResponse} BarResponse
-     */
-    BarResponse.fromObject = function fromObject(object) {
-        if (object instanceof $root.BarResponse)
-            return object;
-        var message = new $root.BarResponse();
-        if (object.payload != null)
-            message.payload = String(object.payload);
-        return message;
-    };
-
-    /**
-     * Creates a plain object from a BarResponse message. Also converts values to other types if specified.
-     * @function toObject
-     * @memberof BarResponse
-     * @static
-     * @param {BarResponse} message BarResponse
-     * @param {$protobuf.IConversionOptions} [options] Conversion options
-     * @returns {Object.<string,*>} Plain object
-     */
-    BarResponse.toObject = function toObject(message, options) {
-        if (!options)
-            options = {};
-        var object = {};
-        if (options.defaults)
-            object.payload = "";
-        if (message.payload != null && message.hasOwnProperty("payload"))
-            object.payload = message.payload;
-        return object;
-    };
-
-    /**
-     * Converts this BarResponse to JSON.
-     * @function toJSON
-     * @memberof BarResponse
-     * @instance
-     * @returns {Object.<string,*>} JSON object
-     */
-    BarResponse.prototype.toJSON = function toJSON() {
-        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-    };
-
-    return BarResponse;
-})();
-
-$root.Foo = (function() {
-
-    /**
-     * Constructs a new Foo service.
-     * @exports Foo
-     * @classdesc Represents a Foo
-     * @extends $protobuf.rpc.Service
-     * @constructor
-     * @param {$protobuf.RPCImpl} rpcImpl RPC implementation
-     * @param {boolean} [requestDelimited=false] Whether requests are length-delimited
-     * @param {boolean} [responseDelimited=false] Whether responses are length-delimited
-     */
-    function Foo(rpcImpl, requestDelimited, responseDelimited) {
-        $protobuf.rpc.Service.call(this, rpcImpl, requestDelimited, responseDelimited);
-    }
-
-    (Foo.prototype = Object.create($protobuf.rpc.Service.prototype)).constructor = Foo;
-
-    /**
-     * Creates new Foo service using the specified rpc implementation.
-     * @function create
-     * @memberof Foo
-     * @static
-     * @param {$protobuf.RPCImpl} rpcImpl RPC implementation
-     * @param {boolean} [requestDelimited=false] Whether requests are length-delimited
-     * @param {boolean} [responseDelimited=false] Whether responses are length-delimited
-     * @returns {Foo} RPC service. Useful where requests and/or responses are streamed.
-     */
-    Foo.create = function create(rpcImpl, requestDelimited, responseDelimited) {
-        return new this(rpcImpl, requestDelimited, responseDelimited);
-    };
-
-    /**
-     * Callback as used by {@link Foo#bar}.
-     * @memberof Foo
-     * @typedef BarCallback
-     * @type {function}
-     * @param {Error|null} error Error, if any
-     * @param {BarResponse} [response] BarResponse
-     */
-
-    /**
-     * Calls Bar.
-     * @function bar
-     * @memberof Foo
-     * @instance
-     * @param {IBarRequest} request BarRequest message or plain object
-     * @param {Foo.BarCallback} callback Node-style callback called with the error, if any, and BarResponse
-     * @returns {undefined}
-     * @variation 1
-     */
-    Foo.prototype.bar = function bar(request, callback) {
-        return this.rpcCall(bar, $root.BarRequest, $root.BarResponse, request, callback);
-    };
-
-    /**
-     * Calls Bar.
-     * @function bar
-     * @memberof Foo
-     * @instance
-     * @param {IBarRequest} request BarRequest message or plain object
-     * @returns {Promise<BarResponse>} Promise
-     * @variation 2
-     */
-
-    return Foo;
 })();
 
 $root.google = (function() {

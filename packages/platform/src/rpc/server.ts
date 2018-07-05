@@ -1,5 +1,6 @@
 import {Type, OnDestroy} from '@jsmon/core';
-import {ProcedureCallResponse, ProcedureCallRequest, BarRequest, BarResponse, google} from '../proto';
+import {ProcedureCallResponse, ProcedureCallRequest, google} from '../proto';
+import {Logger, NoopLogAdapter} from '../log';
 import {Handle, getServerHandlers, Server, getServerMetadata} from './annotations';
 import {ServerChannel, ServerTransport, Headers, Request} from './transport';
 import {Subscription} from 'rxjs/Subscription';
@@ -9,7 +10,15 @@ import {takeUntil} from 'rxjs/operators';
 import * as protobuf from 'protobufjs';
 
 export class Context {
+    private _headers: Headers = {};
 
+    setHeader(name: string, value: string) {
+        this._headers[name] = value;
+    }
+    
+    get headers() {
+        return this._headers;
+    }
 }
 
 export interface HandlerFunction<T, U> {
@@ -91,16 +100,19 @@ export class RPCServer<T extends Object> {
 }
 
 export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
-    private _destroyed: Subject<void> = new Subject();
+    private _destroyed: Subject<void>|null = new Subject();
 
     constructor(root: protobuf.Root|string,
                 server: T,
-                private _transport: ServerTransport) {
-                
+                private _transport: ServerTransport,
+                private _log: Logger = new Logger(new NoopLogAdapter())) {
+                        
         super(root, server);
         
+        this._log = this._log.createChild(`${this._serviceDescriptor!.fullName}`);
+        
         this._transport.onConnection
-            .pipe(takeUntil(this._destroyed))
+            .pipe(takeUntil(this._destroyed!))
             .subscribe(
                 channel => this._handleChannel(channel),
                 err => {},
@@ -113,17 +125,17 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
     }
     
     private _handleChannel(channel: ServerChannel): void {
-        console.log(`Client ${channel.client} connected`);
+        this._log.info(`Client ${channel.client} connected`);
         
         channel.onRequest
-            .pipe(takeUntil(this._destroyed))
+            .pipe(takeUntil(this._destroyed!))
             .subscribe(
                 request => this._serveRequest(request),
                 err => {
 
                 },
                 () => {
-                    console.log(`Client ${channel.client} disconnected`);
+                    this._log.info(`Client ${channel.client} disconnected`);
                 }
             )
     }
@@ -132,23 +144,27 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
         const method = this._serviceDescriptor!.methods[request.method];
         
         if (method === undefined) {
-            // TODO: complete with error
+            await request.fail('Missing method name');
             return;
         }
+
+        this._log.debug(`serving request for ${method.name}`);
 
         // Make sure the method has been completely resolved
         if (!method.resolved) {
             method.resolve();
         }
         
-        if (method.resolvedRequestType!.fullName !== request.requestMessage.type_url) {
-            // TODO: complete with error
-            return
+        if (!!request.requestMessage && method.resolvedRequestType!.fullName !== request.requestMessage.type_url) {
+            this._log.warn(`failed to serve request: request type and payload did not match`);
+            console.log(`Invalid request message types. Expected ${method.resolvedRequestType!.fullName} but got ${request.requestMessage.type_url}`);
+            return await request.fail('Internal server error');
         }
         
-        if (!request.requestMessage.value) {
-            // TODO: complete with error
-            return;
+        if (!request.requestMessage || request.requestMessage.value === null || request.requestMessage.value!.length === 0) {
+            this._log.warn(`failed to serve request: missing body`);
+            console.log('missing body');
+            return await request.fail('Missing request body');
         }
         
         const requestMessage = method.resolvedRequestType!.decode(request.requestMessage.value!);
@@ -158,14 +174,20 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
         try {
             responseMessage = await this.dispatch(request.method, ctx, requestMessage);
         } catch (err) {
-            // TODO: complete with error
-            return;
+            return await request.fail('Internal server error');
         }
         
+        if (!responseMessage) {
+            this._log.error(`Handler for "${method.name}" did not return a value`);
+            console.log('Missing response')
+            return await request.fail('Internal server error');
+        }
+        
+        // Sanity check if the responseMessage contains reflection information
         if (!!responseMessage.$type) {
-            if (responseMessage.$type.name !== method.requestType) {
-                // TODO: complete with error
-                return;
+            if (responseMessage.$type.name !== method.responseType) {
+                console.log(`Wrong response type. Got: "${responseMessage.$type.name}" Expected: "${method.responseType}"`)
+                return await request.fail('Internal server error');
             }
         }
         
@@ -174,13 +196,17 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
             value: method.resolvedResponseType!.encode(responseMessage).finish()
         });
 
-        request.resolve(result, {/* TODO: add headers */});
+        return await request.resolve(result, ctx.headers);
     }
 
     private _shutdown() {
-        if (!this._destroyed.closed) {
-            this._destroyed.next();
-            this._destroyed.complete();
+        if (this._destroyed !== null) {
+            let sub = this._destroyed!;
+            this._destroyed = null;
+
+            this._log.info(`RPCServer[${this._serviceDescriptor!.name}] shutdown`);
+            sub.next();
+            sub.complete();
         }
     }
 }

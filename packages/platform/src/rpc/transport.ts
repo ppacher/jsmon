@@ -19,6 +19,9 @@ export interface Request {
     
     /* Sends the response to the client */
     resolve(response: google.protobuf.IAny, headers?: Headers): Promise<void>;
+    
+    /* Send an error message to the client */
+    fail(errorMessage: string): Promise<void>;
 }
 
 export interface ServerChannel {
