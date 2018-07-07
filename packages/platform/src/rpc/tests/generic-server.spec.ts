@@ -28,11 +28,18 @@ class EchoService {
 
     response: any = undefined;
     
+    throw: any = undefined;
+    
     calls: Subject<any> = new Subject();
 
     @Handle('Echo')
     async echo(request: any): Promise<any> {
-        setTimeout(() => this.calls.next(request), 100);
+        setTimeout(() => this.calls.next(request), 1);
+
+        if (this.throw !== undefined) {
+            throw this.throw;
+        }
+
         console.log(`EchoService.Echo called`);
         return this.response;
     }
@@ -151,6 +158,48 @@ describe('GenericServer', () => {
                     channel.requests.next(request);
                 });
             });
+
+            it('should return an error if the handler throws', () => {
+                const request = new TestRequest();
+                request.method = 'Echo';
+                
+                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
+                const response = root.root.lookupType('Response').create({echo: 'foo'});
+                const responseAny = google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
+
+                service.throw = new Error(`Something went wrong`);
+
+                return new Promise((resolve, _) => {
+                    service.calls.pipe(take(1))
+                        .subscribe(() => {
+                            expect(request.hasBeenFailed('Internal server error')).toBeTruthy()
+                            resolve();
+                        });
+
+                    channel.requests.next(request);
+                });
+            });
+
+            it('should return if the handle returns no response', () => {
+                const request = new TestRequest();
+                request.method = 'Echo';
+                
+                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
+                const response = root.root.lookupType('Response').create({echo: 'foo'});
+                const responseAny = google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
+
+                //service.throw = new Error(`Something went wrong`);
+
+                return new Promise((resolve, _) => {
+                    service.calls.pipe(take(1))
+                        .subscribe(() => {
+                            expect(request.hasBeenFailed('Internal server error')).toBeTruthy()
+                            resolve();
+                        });
+
+                    channel.requests.next(request);
+                });
+            })
         });
     });
 });
