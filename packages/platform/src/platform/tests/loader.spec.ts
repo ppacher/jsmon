@@ -96,7 +96,7 @@ describe('PlatformLoader', () => {
     describe('plugin bootstrapping', () => {
         it('should bootstrap the plugin', async () => {
             let provideSpy = jest.spyOn(injector, 'createChild');
-            let getSpy = jest.spyOn(injector, 'get').mockImplementation((...args: any[]) => console.log(args));
+            let getSpy = jest.spyOn(injector, 'get').mockImplementation((...args: any[]) => {});
             
             await loader.bootstrapPlugin('case1', Case1Plugin);
             

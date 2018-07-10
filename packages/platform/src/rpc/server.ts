@@ -157,13 +157,13 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
         
         if (!!request.requestMessage && method.resolvedRequestType!.fullName !== request.requestMessage.type_url) {
             this._log.warn(`failed to serve request: request type and payload did not match`);
-            console.log(`Invalid request message types. Expected ${method.resolvedRequestType!.fullName} but got ${request.requestMessage.type_url}`);
+            this._log.error(`Invalid request message types. Expected ${method.resolvedRequestType!.fullName} but got ${request.requestMessage.type_url}`);
             return await request.fail('Internal server error');
         }
         
         if (!request.requestMessage || request.requestMessage.value === null || request.requestMessage.value!.length === 0) {
             this._log.warn(`failed to serve request: missing body`);
-            console.log('missing body');
+            this._log.error('missing body');
             return await request.fail('Missing request body');
         }
         
@@ -179,14 +179,14 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
         
         if (!responseMessage) {
             this._log.error(`Handler for "${method.name}" did not return a value`);
-            console.log('Missing response')
+            this._log.error('Missing response')
             return await request.fail('Internal server error');
         }
         
         // Sanity check if the responseMessage contains reflection information
         if (!!responseMessage.$type) {
             if (responseMessage.$type.name !== method.responseType) {
-                console.log(`Wrong response type. Got: "${responseMessage.$type.name}" Expected: "${method.responseType}"`)
+                this._log.error(`Wrong response type. Got: "${responseMessage.$type.name}" Expected: "${method.responseType}"`)
                 return await request.fail('Internal server error');
             }
         }
