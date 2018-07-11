@@ -8,11 +8,11 @@ export class FlagValue {
 
 export abstract class FlagSet {
     /** Returns a FlagValue for the flag with the given name */
-    abstract getFlag(name: string): FlagValue;
+    abstract getFlag(name: string): FlagValue|null;
     
-    abstract getArgByName(name: string): FlagValue;
+    abstract getArgByName(name: string): FlagValue|null;
 
-    abstract getArgByIdx(idx: number): FlagValue;
+    abstract getArgByIdx(idx: number): FlagValue|null;
 
     abstract countArgs(): number;
 }
@@ -23,27 +23,31 @@ class _FlagSet extends FlagSet {
     constructor(private _def: FlagDescriptor[], params?: string[]) {
         super();
         
-        if (!params) {
+        if (params === undefined) {
             params = process.argv.slice(1);
         }
         
         this._parse(params);
     }
 
-    getFlag(name: string): FlagValue {
-        return new FlagValue(this._flags.find(f => f.def.name == name).value);
+    getFlag(name: string): FlagValue|null {
+        const flag = this._flags.find(f => f.def.name === name);
+        if (flag === undefined) {
+            return null;
+        }
+        return new FlagValue(flag.value);
     }
 
-    getArgByName(name: string): FlagValue {
-        return null;
+    getArgByName(name: string): FlagValue|null {
+        throw new Error(`Not yet implemented`);
     }
     
-    getArgByIdx(idx: number): FlagValue {
-        return null;
+    getArgByIdx(idx: number): FlagValue|null {
+        throw new Error(`Not yet implemented`);
     }
     
     countArgs(): number {
-        return 0;
+        return this._flags.length;
     }
     
     private _parse(params: string[]) {
