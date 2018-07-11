@@ -1,4 +1,4 @@
-import {google, ProcedureCallRequest, ProcedureCallResponse} from '../proto';
+import {google, ProcedureCallRequest, ProcedureCallResponse} from '../../proto';
 import {Observable} from 'rxjs/Observable';
 
 
@@ -33,3 +33,4 @@ export interface ServerChannel {
 export interface ServerTransport {
     onConnection: Observable<ServerChannel>
 }
+

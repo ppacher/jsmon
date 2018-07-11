@@ -1,11 +1,12 @@
 import {Injector} from '@jsmon/core';
-import {ServerTransport} from '../transport';
-import {ConsoleAdapter, useLoggingAdapter, Logger} from '../../log';
+import {ServerTransport} from '../../server/transport';
+import {ConsoleAdapter, useLoggingAdapter, Logger} from '../../../log';
 import {MqttRequest, MqttRpcServerTransport} from './server_transport';
-import {MqttService} from '../../net/mqtt/index';
+import {MqttService} from '../../../net/mqtt/index';
 import {Observable} from 'rxjs/Observable';
 import {Subscriber} from 'rxjs/Subscriber';
-import {ProcedureCallRequest, google, ProcedureCallResponse} from '../../proto';
+import {ProcedureCallRequest, google, ProcedureCallResponse} from '../../../proto';
+import { MQTT_RPC_SERVER_NAME, MQTT_RPC_SERVICE_NAME } from './common';
 
 export class DummyMqttService {
     observer: Subscriber<[string, Buffer]>|null = null;
@@ -38,6 +39,8 @@ describe('MqttRpcServerTransport', () => {
             },
             MqttRpcServerTransport,
             Logger,
+            {provide: MQTT_RPC_SERVER_NAME, useValue: "server"},
+            {provide: MQTT_RPC_SERVICE_NAME, useValue: 'Service'},
             useLoggingAdapter(new ConsoleAdapter()),
         ]);
         
@@ -52,7 +55,7 @@ describe('MqttRpcServerTransport', () => {
     });
     
     it('should subscribe to RPC topics', () => {
-        expect(service.topic).toBe('jsmon/rpc/+/+');
+        expect(service.topic).toBe('jsmon/rpc/server/Service');
         expect(service.observer).toBeTruthy();
     });
     

@@ -569,6 +569,294 @@ export class DeviceDefinition implements IDeviceDefinition {
     public toJSON(): { [k: string]: any };
 }
 
+/** Properties of a ParameterValue. */
+export interface IParameterValue {
+
+    /** ParameterValue name */
+    name?: (string|null);
+
+    /** ParameterValue value */
+    value?: (string|null);
+}
+
+/** Represents a ParameterValue. */
+export class ParameterValue implements IParameterValue {
+
+    /**
+     * Constructs a new ParameterValue.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: IParameterValue);
+
+    /** ParameterValue name. */
+    public name: string;
+
+    /** ParameterValue value. */
+    public value: string;
+
+    /**
+     * Creates a new ParameterValue instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns ParameterValue instance
+     */
+    public static create(properties?: IParameterValue): ParameterValue;
+
+    /**
+     * Encodes the specified ParameterValue message. Does not implicitly {@link ParameterValue.verify|verify} messages.
+     * @param message ParameterValue message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: IParameterValue, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified ParameterValue message, length delimited. Does not implicitly {@link ParameterValue.verify|verify} messages.
+     * @param message ParameterValue message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: IParameterValue, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a ParameterValue message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns ParameterValue
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): ParameterValue;
+
+    /**
+     * Decodes a ParameterValue message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns ParameterValue
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): ParameterValue;
+
+    /**
+     * Verifies a ParameterValue message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a ParameterValue message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns ParameterValue
+     */
+    public static fromObject(object: { [k: string]: any }): ParameterValue;
+
+    /**
+     * Creates a plain object from a ParameterValue message. Also converts values to other types if specified.
+     * @param message ParameterValue
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: ParameterValue, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this ParameterValue to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+}
+
+/** Properties of a DeviceCommandRequest. */
+export interface IDeviceCommandRequest {
+
+    /** DeviceCommandRequest method */
+    method?: (string|null);
+
+    /** DeviceCommandRequest parameters */
+    parameters?: (IParameterValue[]|null);
+}
+
+/** Represents a DeviceCommandRequest. */
+export class DeviceCommandRequest implements IDeviceCommandRequest {
+
+    /**
+     * Constructs a new DeviceCommandRequest.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: IDeviceCommandRequest);
+
+    /** DeviceCommandRequest method. */
+    public method: string;
+
+    /** DeviceCommandRequest parameters. */
+    public parameters: IParameterValue[];
+
+    /**
+     * Creates a new DeviceCommandRequest instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns DeviceCommandRequest instance
+     */
+    public static create(properties?: IDeviceCommandRequest): DeviceCommandRequest;
+
+    /**
+     * Encodes the specified DeviceCommandRequest message. Does not implicitly {@link DeviceCommandRequest.verify|verify} messages.
+     * @param message DeviceCommandRequest message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: IDeviceCommandRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified DeviceCommandRequest message, length delimited. Does not implicitly {@link DeviceCommandRequest.verify|verify} messages.
+     * @param message DeviceCommandRequest message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: IDeviceCommandRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a DeviceCommandRequest message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns DeviceCommandRequest
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): DeviceCommandRequest;
+
+    /**
+     * Decodes a DeviceCommandRequest message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns DeviceCommandRequest
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): DeviceCommandRequest;
+
+    /**
+     * Verifies a DeviceCommandRequest message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a DeviceCommandRequest message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns DeviceCommandRequest
+     */
+    public static fromObject(object: { [k: string]: any }): DeviceCommandRequest;
+
+    /**
+     * Creates a plain object from a DeviceCommandRequest message. Also converts values to other types if specified.
+     * @param message DeviceCommandRequest
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: DeviceCommandRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this DeviceCommandRequest to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+}
+
+/** Properties of a DeviceCommandResponse. */
+export interface IDeviceCommandResponse {
+
+    /** DeviceCommandResponse method */
+    method?: (string|null);
+
+    /** DeviceCommandResponse payload */
+    payload?: (string|null);
+}
+
+/** Represents a DeviceCommandResponse. */
+export class DeviceCommandResponse implements IDeviceCommandResponse {
+
+    /**
+     * Constructs a new DeviceCommandResponse.
+     * @param [properties] Properties to set
+     */
+    constructor(properties?: IDeviceCommandResponse);
+
+    /** DeviceCommandResponse method. */
+    public method: string;
+
+    /** DeviceCommandResponse payload. */
+    public payload: string;
+
+    /**
+     * Creates a new DeviceCommandResponse instance using the specified properties.
+     * @param [properties] Properties to set
+     * @returns DeviceCommandResponse instance
+     */
+    public static create(properties?: IDeviceCommandResponse): DeviceCommandResponse;
+
+    /**
+     * Encodes the specified DeviceCommandResponse message. Does not implicitly {@link DeviceCommandResponse.verify|verify} messages.
+     * @param message DeviceCommandResponse message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encode(message: IDeviceCommandResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Encodes the specified DeviceCommandResponse message, length delimited. Does not implicitly {@link DeviceCommandResponse.verify|verify} messages.
+     * @param message DeviceCommandResponse message or plain object to encode
+     * @param [writer] Writer to encode to
+     * @returns Writer
+     */
+    public static encodeDelimited(message: IDeviceCommandResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+    /**
+     * Decodes a DeviceCommandResponse message from the specified reader or buffer.
+     * @param reader Reader or buffer to decode from
+     * @param [length] Message length if known beforehand
+     * @returns DeviceCommandResponse
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): DeviceCommandResponse;
+
+    /**
+     * Decodes a DeviceCommandResponse message from the specified reader or buffer, length delimited.
+     * @param reader Reader or buffer to decode from
+     * @returns DeviceCommandResponse
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): DeviceCommandResponse;
+
+    /**
+     * Verifies a DeviceCommandResponse message.
+     * @param message Plain object to verify
+     * @returns `null` if valid, otherwise the reason why it is not
+     */
+    public static verify(message: { [k: string]: any }): (string|null);
+
+    /**
+     * Creates a DeviceCommandResponse message from a plain object. Also converts values to their respective internal types.
+     * @param object Plain object
+     * @returns DeviceCommandResponse
+     */
+    public static fromObject(object: { [k: string]: any }): DeviceCommandResponse;
+
+    /**
+     * Creates a plain object from a DeviceCommandResponse message. Also converts values to other types if specified.
+     * @param message DeviceCommandResponse
+     * @param [options] Conversion options
+     * @returns Plain object
+     */
+    public static toObject(message: DeviceCommandResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+    /**
+     * Converts this DeviceCommandResponse to JSON.
+     * @returns JSON object
+     */
+    public toJSON(): { [k: string]: any };
+}
+
 /** Properties of an InitiateDeviceDiscovery. */
 export interface IInitiateDeviceDiscovery {
 
@@ -753,6 +1041,51 @@ export class DeviceDiscoveryAnnouncement implements IDeviceDiscoveryAnnouncement
      * @returns JSON object
      */
     public toJSON(): { [k: string]: any };
+}
+
+/** Represents a DeviceService */
+export class DeviceService extends $protobuf.rpc.Service {
+
+    /**
+     * Constructs a new DeviceService service.
+     * @param rpcImpl RPC implementation
+     * @param [requestDelimited=false] Whether requests are length-delimited
+     * @param [responseDelimited=false] Whether responses are length-delimited
+     */
+    constructor(rpcImpl: $protobuf.RPCImpl, requestDelimited?: boolean, responseDelimited?: boolean);
+
+    /**
+     * Creates new DeviceService service using the specified rpc implementation.
+     * @param rpcImpl RPC implementation
+     * @param [requestDelimited=false] Whether requests are length-delimited
+     * @param [responseDelimited=false] Whether responses are length-delimited
+     * @returns RPC service. Useful where requests and/or responses are streamed.
+     */
+    public static create(rpcImpl: $protobuf.RPCImpl, requestDelimited?: boolean, responseDelimited?: boolean): DeviceService;
+
+    /**
+     * Calls ExecuteCommand.
+     * @param request DeviceCommandRequest message or plain object
+     * @param callback Node-style callback called with the error, if any, and DeviceCommandResponse
+     */
+    public executeCommand(request: IDeviceCommandRequest, callback: DeviceService.ExecuteCommandCallback): void;
+
+    /**
+     * Calls ExecuteCommand.
+     * @param request DeviceCommandRequest message or plain object
+     * @returns Promise
+     */
+    public executeCommand(request: IDeviceCommandRequest): Promise<DeviceCommandResponse>;
+}
+
+export namespace DeviceService {
+
+    /**
+     * Callback as used by {@link DeviceService#executeCommand}.
+     * @param error Error, if any
+     * @param [response] DeviceCommandResponse
+     */
+    type ExecuteCommandCallback = (error: (Error|null), response?: DeviceCommandResponse) => void;
 }
 
 /** Properties of a ProcedureCallRequest. */

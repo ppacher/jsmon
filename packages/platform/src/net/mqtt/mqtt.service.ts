@@ -1,11 +1,11 @@
 import {Injectable, Inject, Optional} from '@jsmon/core';
 import {Logger} from '../../log';
 import {Client, connect, Packet, IClientOptions} from 'mqtt';
-import {Subject} from 'rxjs/Subject';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 import {Observer} from 'rxjs/Observer';
 import {Subscription} from 'rxjs/Subscription';
-import {take} from 'rxjs/operators';
+import {take, filter, map} from 'rxjs/operators';
 
 export const MQTT_BROKER_URL = 'mqtt-broker-url';
 export const MQTT_CLIENT_CONNECT = 'mqtt-client-connect';
@@ -32,12 +32,13 @@ export interface ProcedureCall {
 export class MqttService {
     private _client: Client;
     private _log: Logger; 
-    private _connected: Subject<void> = new Subject();
+    private _connected: BehaviorSubject<boolean> = new BehaviorSubject(false);
     private _topics: Map<string, number> = new Map();
     private _messageCallbacks: Set<MessageHandler> = new Set();
     
     get onConnect(): Observable<void> {
-        return this._connected.asObservable();
+        return this._connected.asObservable()
+            .pipe(filter(connected => !!connected), map(() => {}));
     }
 
     constructor(
@@ -51,7 +52,7 @@ export class MqttService {
 
         this._client.on('connect', () => {
             this._log.info(`successfully connected`);
-            this._connected.next();
+            this._connected.next(true);
         });
 
         this._client.on('message', (topic, payload, packet) => {
@@ -197,6 +198,7 @@ export class MqttService {
                     this._client.unsubscribe(topic);                    
                 } else {
                     this._topics.set(topic, count);
+                    
                 }
             };
         });

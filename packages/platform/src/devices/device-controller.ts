@@ -60,11 +60,18 @@ export class DeviceController<T = any> implements OnDestroy {
             });    
     }
     
+    /**
+     * @internal
+     * Called when the parent injector is being disposed 
+     */
     onDestroy() {
         this._destroy.next();
         this._destroy.complete();
     }
     
+    /**
+     * Dispose the device controller and it's injector
+     */
     dispose(): void {
         this._injector.dispose();
     }
@@ -95,6 +102,9 @@ export class DeviceController<T = any> implements OnDestroy {
         );
     }
 
+    /**
+     * Returns a readonly array of available commands 
+     */
     getCommandDefinitions(): ReadonlyArray<ICommandDefinition> {
         return this._commands.map(cmd => {
             let params: IParameterDefinition[] = [];
@@ -145,6 +155,10 @@ export class DeviceController<T = any> implements OnDestroy {
             }));
     }
 
+    /**
+     * Returns an observable that emits an object containing all sensor values
+     * whenever a sensor emits a new value 
+     */
     watchSensors(): Observable<{[key: string]: any}> {
         return this._sensorValues.asObservable()
             .pipe(
@@ -154,6 +168,11 @@ export class DeviceController<T = any> implements OnDestroy {
             );
     }
     
+    /**
+     * Returns an observable that emits a given sensors value on change
+     * 
+     * @param {string} name The name of the sensor to watch
+     */
     watchSensor(name: string): Observable<any> {
         if (this._sensors.find(s => s.name === name) === undefined) {
             return _throw(new Error(`Unknown sensor name: ${name}`));
@@ -168,10 +187,18 @@ export class DeviceController<T = any> implements OnDestroy {
             );
     }
     
+    /**
+     * Returns an object containing all sensor values
+     */
     getSensorValues(): {[key: string]: any} {
-        return this._sensorValues.getValue();
+        return {...this._sensorValues.getValue()};
     }
     
+    /**
+     * Returns the current value of a given sensor
+     * 
+     * @param {string} name The name of the sensor
+     */
     getSensorValue(name: string): any {
         if (this._sensors.find(s => s.name === name) === undefined) {
             throw new Error(`Unknown sensor name: ${name}`);
@@ -196,6 +223,8 @@ export class DeviceController<T = any> implements OnDestroy {
     }
     
     /**
+     * @internal
+     * 
      * Validates a parameter map against a schema definition
      * 
      * @param schema  The {@link CommandSchema} definition

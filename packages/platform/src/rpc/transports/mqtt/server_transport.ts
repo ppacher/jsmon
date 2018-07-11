@@ -1,22 +1,12 @@
-import {Injectable, OnDestroy, Optional} from '@jsmon/core';
-import {MqttService} from '../../net/mqtt';
-import {Headers, Request, ServerChannel, ServerTransport} from '../transport';
+import {Injectable, OnDestroy, Optional, Inject} from '@jsmon/core';
+import {MqttService} from '../../../net/mqtt';
+import {Headers, Request, ServerChannel, ServerTransport} from '../../server/transport';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import {takeUntil} from 'rxjs/operators';
-import {Logger, NoopLogAdapter} from '../../log';
-import {ProcedureCallRequest, ProcedureCallResponse, google} from '../../proto';
-
-/**
- * The topic used to listen for incoming RPC requests
- * `jsmon/rcp/{ServerName}/{ServiceName}`
- * 
- * The name of the method is encoded within the request body. See `ProcedureCallRequest` from 
- * {@link ../../../protobuf/rpc.proto}
- */
-const RPCTopicListener = `jsmon/rpc/+/+`;
-
-const ResponseTopicHeader = 'JSMON-MQTT-ReplyTo';
+import {Logger, NoopLogAdapter} from '../../../log';
+import {ProcedureCallRequest, ProcedureCallResponse, google} from '../../../proto';
+import {MQTT_RPC_SERVER_NAME, MQTT_RPC_SERVICE_NAME, ResponseTopicHeader} from './common';
 
 /**
  * @class MqttRpcServerTransport
@@ -37,7 +27,13 @@ export class MqttRpcServerTransport implements ServerTransport, ServerChannel, O
     private readonly _requests: Subject<Request> = new Subject();
 
     constructor(private _mqtt: MqttService,
+                @Inject(MQTT_RPC_SERVER_NAME) @Optional() private _serverName: string,
+                @Inject(MQTT_RPC_SERVICE_NAME) @Optional() private _serviceName: string,
                 @Optional() private _log: Logger = new Logger(new NoopLogAdapter())) {
+        
+        if (this._serverName === undefined) {
+            throw new Error(`MqttRpcServerTransport: MQTT_RPC_SERVER_NAME not provided`);
+        }
         
         this._log = this._log.createChild(`mqtt-rpc-transport`);
 
@@ -50,7 +46,7 @@ export class MqttRpcServerTransport implements ServerTransport, ServerChannel, O
             return () => {};
         });
         
-        this._mqtt.subscribe(RPCTopicListener)
+        this._mqtt.subscribe(`jsmon/rpc/${this._serverName}/${this._serviceName}`)
             .pipe(takeUntil(this._destroyed))
             .subscribe(request => this._handleRequest(request));
     }

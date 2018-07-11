@@ -91,6 +91,21 @@ message DeviceDefinition {
     repeated CommandDefinition commands = 5;
 }
 
+message ParameterValue {
+    string name = 1;
+    string value = 2; // JSON encoded
+}
+
+message DeviceCommandRequest {
+    string method = 1; 
+    repeated ParameterValue parameters = 2;
+}
+
+message DeviceCommandResponse {
+    string method = 1;
+    string payload = 2; // JSON encoded
+}
+
 message InitiateDeviceDiscovery {
     string origin = 1;
 }
@@ -98,4 +113,8 @@ message InitiateDeviceDiscovery {
 message DeviceDiscoveryAnnouncement {
     DeviceDefinition device = 1;
     repeated SensorValue sensor_values = 2;
+}
+
+service DeviceService {
+    rpc ExecuteCommand(DeviceCommandRequest) returns (DeviceCommandResponse) {}
 }

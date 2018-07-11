@@ -2,12 +2,12 @@ import {Request, Headers, ServerChannel, ServerTransport} from './transport';
 import {GenericRPCServer} from './server';
 import {Handle, Server} from './annotations';
 import * as protobuf from 'protobufjs';
-import {google} from '../proto';
+import * as proto from '../../proto';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
 import {take} from 'rxjs/operators';
 
-const proto = `
+const protoStr = `
 syntax = "proto3";
 
 message Request {
@@ -22,7 +22,7 @@ service EchoService {
     rpc Echo(Request) returns (Response) {}
 }
 `;
-const root = protobuf.parse(proto);
+const root = protobuf.parse(protoStr);
 
 @Server('EchoService')
 class EchoService {
@@ -34,7 +34,7 @@ class EchoService {
     calls: Subject<any> = new Subject();
 
     @Handle('Echo')
-    async echo(request: any): Promise<any> {
+    async echo(ctx: Context, request: any): Promise<any> {
         setTimeout(() => this.calls.next(request), 1);
 
         if (this.throw !== undefined) {
@@ -46,7 +46,7 @@ class EchoService {
 }
 
 export class TestRequest implements Request {
-    _resolved: google.protobuf.IAny|null = null;
+    _resolved: proto.google.protobuf.IAny|null = null;
     _failed: string|null = null;
     
     get resolved() { return this._resolved !== null; }
@@ -56,13 +56,13 @@ export class TestRequest implements Request {
     method: string;
     
     /* The method parameter */
-    requestMessage: Readonly<google.protobuf.IAny>;
+    requestMessage: Readonly<proto.google.protobuf.IAny>;
     
     /** Request headers */
     headers: Readonly<Headers>;
     
     /* Sends the response to the client */
-    async resolve(response: google.protobuf.IAny, headers?: Headers): Promise<void> {
+    async resolve(response: proto.google.protobuf.IAny, headers?: Headers): Promise<void> {
         this._resolved = response;
     }
     
@@ -71,7 +71,7 @@ export class TestRequest implements Request {
         this._failed = errorMessage;
     }
 
-    hasBeenResolved(response: google.protobuf.IAny): boolean {
+    hasBeenResolved(response: proto.google.protobuf.IAny): boolean {
         if (this._resolved === null) {
             return false;
         }
@@ -208,7 +208,7 @@ describe('GenericServer', () => {
                 const request = new TestRequest();
                 request.method = 'Echo';
                 
-                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: null});
+                request.requestMessage = proto.google.protobuf.Any.create({type_url: '.Request', value: null});
 
                 channel.requests.next(request);
                 expect(request.hasBeenFailed('Missing request body')).toBeTruthy();
@@ -218,7 +218,7 @@ describe('GenericServer', () => {
                 const request = new TestRequest();
                 request.method = 'Echo';
                 
-                request.requestMessage = google.protobuf.Any.create({type_url: '.Response'});
+                request.requestMessage = proto.google.protobuf.Any.create({type_url: '.Response'});
 
                 channel.requests.next(request);
                 expect(request.hasBeenFailed('Internal server error')).toBeTruthy();
@@ -228,9 +228,9 @@ describe('GenericServer', () => {
                 const request = new TestRequest();
                 request.method = 'Echo';
                 
-                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
+                request.requestMessage = proto.google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
                 const response = root.root.lookupType('Response').create({echo: 'foo'});
-                const responseAny = google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
+                const responseAny = proto.google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
                 
                 service.response = response;
 
@@ -249,9 +249,9 @@ describe('GenericServer', () => {
                 const request = new TestRequest();
                 request.method = 'Echo';
                 
-                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
+                request.requestMessage = proto.google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
                 const response = root.root.lookupType('Response').create({echo: 'foo'});
-                const responseAny = google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
+                const responseAny = proto.google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
 
                 service.throw = new Error(`Something went wrong`);
 
@@ -270,9 +270,9 @@ describe('GenericServer', () => {
                 const request = new TestRequest();
                 request.method = 'Echo';
                 
-                request.requestMessage = google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
+                request.requestMessage = proto.google.protobuf.Any.create({type_url: '.Request', value: root.root.lookupType('Request').encode({echo: "foo"}).finish()});
                 const response = root.root.lookupType('Response').create({echo: 'foo'});
-                const responseAny = google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
+                const responseAny = proto.google.protobuf.Any.create({type_url: response.$type.fullName, value: response.$type.encode(response).finish()});
 
                 //service.throw = new Error(`Something went wrong`);
 

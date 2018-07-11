@@ -1,6 +1,6 @@
 import {Type, OnDestroy} from '@jsmon/core';
-import {ProcedureCallResponse, ProcedureCallRequest, google} from '../proto';
-import {Logger, NoopLogAdapter} from '../log';
+import {ProcedureCallResponse, ProcedureCallRequest, google} from '../../proto';
+import {Logger, NoopLogAdapter} from '../../log';
 import {Handle, getServerHandlers, Server, getServerMetadata} from './annotations';
 import {ServerChannel, ServerTransport, Headers, Request} from './transport';
 import {Subscription} from 'rxjs/Subscription';
@@ -16,9 +16,15 @@ export class Context {
         this._headers[name] = value;
     }
     
-    get headers() {
+    getResponseHeaders(): Headers {
         return this._headers;
     }
+    
+    getRequestHeaders(): Headers {
+        return this._reqHeaders;
+    }
+    
+    constructor(private _reqHeaders: Headers = {}) {}
 }
 
 export interface HandlerFunction<T, U> {
@@ -168,7 +174,7 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
         }
         
         const requestMessage = method.resolvedRequestType!.decode(request.requestMessage.value!);
-        const ctx = new Context();
+        const ctx = new Context(request.headers);
         let responseMessage: protobuf.Message<any>;
 
         try {
@@ -196,7 +202,7 @@ export class GenericRPCServer<T> extends RPCServer<T> implements OnDestroy {
             value: method.resolvedResponseType!.encode(responseMessage).finish()
         });
 
-        return await request.resolve(result, ctx.headers);
+        return await request.resolve(result, ctx.getResponseHeaders());
     }
 
     private _shutdown() {
