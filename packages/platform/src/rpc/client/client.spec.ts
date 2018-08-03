@@ -2,8 +2,8 @@ import {RPCClient, Client} from './client';
 import {ClientTransport, TransportResponse} from './transport';
 import {Headers} from '../server/transport';
 import {google} from '../../proto'
+import {Observable} from 'rxjs/Observable';
 import * as protobuf from 'protobufjs';
-import * as g from '../../proto';
 
 class DummyClientTransport implements ClientTransport {
     send(method: string, payload: google.protobuf.IAny, headers?: Headers): Promise<TransportResponse> {
@@ -39,7 +39,7 @@ interface EchoResponse {
 }
 
 interface EchoService {
-    Echo(r: EchoRequest): Promise<EchoResponse>;
+    Echo(r: EchoRequest): Observable<EchoResponse>;
 }
 
 
@@ -79,7 +79,7 @@ describe('RPCClient', () => {
                 });
             });
             
-        let res = await client.Echo({msg: 'foobar'});
+        let res = await client.Echo({msg: 'foobar'}).toPromise();
 
         expect(res).toBeDefined();
         expect(res).not.toBeNull();

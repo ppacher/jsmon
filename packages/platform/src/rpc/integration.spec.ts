@@ -7,6 +7,7 @@ import {MqttService} from '../net/mqtt';
 import {Logger, useLoggingAdapter, ConsoleAdapter} from '../log';
 import {MqttRpcClientTransport, MqttRpcServerTransport, MQTT_RPC_SERVER_NAME, MQTT_RPC_SERVICE_NAME} from './transports/mqtt';
 import {take} from 'rxjs/operators';
+import {Observable} from 'rxjs/Observable';
 
 const echoServerProto = `
 syntax = "proto3";
@@ -33,7 +34,7 @@ interface EchoResponse {
 }
 
 interface EchoService {
-    Echo(r: EchoRequest): Promise<EchoResponse>;
+    Echo(r: EchoRequest): Observable<EchoResponse>;
 }
 
 
@@ -85,7 +86,7 @@ describe('RPC Integration', () => {
     });
 
     it('should work', async () => {
-        let res = await client.Echo({msg: 'foobar'});
+        let res = await client.Echo({msg: 'foobar'}).toPromise();
         
         expect(res.body.msg).toBe('foobar');
     })
@@ -123,7 +124,7 @@ describe('MQTT Integration', () => {
     });
     
     it('should work', async () => {
-        const res = await client.Echo({msg: 'foobar'});
+        const res = await client.Echo({msg: 'foobar'}).toPromise();
         expect(res.body.msg).toBe('foobar');
     });
 
