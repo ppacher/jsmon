@@ -17,7 +17,11 @@ export class Parser {
         let commandPath: string[] = [];
         let currentArgs: string[] = [];
 
-        let result: CommandContext[] = [];
+        let result: CommandContext[] = [{
+            options: {},
+            args: [],
+            tree: currentTree,
+        }];
         
         for (let i = 0; i < args.length; i++) {
             const flag = args[i];
@@ -31,21 +35,37 @@ export class Parser {
                 }
                 
                 if (!!nextTree) {
+                    currentArgs = [];
+                    currentTree = nextTree;
+                    commandPath.push(nextTree.name);
+                    
                     result.push({
                         options: {},
                         args: currentArgs,
                         tree: currentTree,
                     });
-                    
-
-                    currentArgs = [];
-                    currentTree = nextTree;
-                    commandPath.push(nextTree.name);
                 }  else {
                     currentArgs.push(flag);
                 }
             } else {
-                let [cmdIdx, def, name, value] = Parser._parseFlag(flag, result);
+                let [cmdIdx, def, name, value, isMissing] = Parser._parseFlag(flag, result);
+                
+                if (isMissing) {
+                    if (i === args.length -1) {
+                        throw new Error(`Missing argument for flag --${def.name}`);
+                    }
+                    i++;
+                    let next = args[i];
+                    
+                    if (next.startsWith('-')) {
+                        throw new Error(`Missing argument for flag --${def.name}`);
+                    }
+                    
+                    [value, isMissing] = Parser._convertValue(next, def);
+                    if (isMissing) {
+                        throw new Error(`Missing argument for flag --${def.name}`);
+                    }
+                }
                 
                 let values = result[cmdIdx].options[name];
 
@@ -69,10 +89,10 @@ export class Parser {
         return result;
     } 
 
-    private static _parseFlag(flag: string, commands: CommandContext[]): [number, OptionSettings, string, any] {
+    private static _parseFlag(flag: string, commands: CommandContext[]): [number, OptionSettings, string, any, boolean] {
         let flagParts: string[] = [];
         let flagName = '';
-        let flagValue: string = '';
+        let flagValue: string|null = null;
         
         let isLongOption = flag.startsWith('--');
 
@@ -130,25 +150,38 @@ export class Parser {
         if (actualFlagName === undefined) {
             throw new Error(`Unknown flag ${isLongOption ? '--' : '-'}${flagName} for command "${commands.map(c => c.tree.name).join('->')}"`);
         }
-        const value = Parser._convertValue(flagValue, optionDef!);
+        const [value, isMissing] = Parser._convertValue(flagValue, optionDef!);
         
-        return [i, optionDef!, actualFlagName, value];
+        return [i, optionDef!, actualFlagName, value, isMissing];
     }
     
-    private static _convertValue(flagValue: string, opt: OptionSettings): any {
+    private static _convertValue(flagValue: string|null, opt: OptionSettings): [any, boolean] {
+        // Check if we are missing the flagValue
+        if (!!opt.argType && opt.argType !== 'boolean' && flagValue === null) {
+            return [null, true];
+        }
+
         if (opt.argType === 'string') {
-            return flagValue;
+            return [flagValue, false];
         }
         
         if (opt.argType === 'number') {
-            return parseInt(flagValue);
+            let num = parseInt(flagValue!);
+            if (isNaN(num)) {
+                throw new Error(`Expected a number for flag --${opt.name} but got ${flagValue}`);
+            }
+            return [parseInt(flagValue!), false];
+        }
+        
+        if (!['0', '1', 'true', 'false', 't', 'f', null].includes(flagValue)) {
+            throw new Error(`Invalid value for boolean flag --${opt.name}: "${flagValue}"`)
         }
         
         // Boolean
         if (flagValue === 'false' || flagValue === '0') {
-            return false;
+            return [false, false];
         }
-        
-        return true;
+
+        return [true, false];
     }
 }
