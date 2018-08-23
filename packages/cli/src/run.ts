@@ -153,16 +153,16 @@ function getHelpText(commands: CommandContext[]): string {
     if (isMain) {
         str += getCommandHelpHeader(command, true);
     } else if (!!command.tree.description) {
-        str += command.tree.description;
+        str += command.tree.description + '\n\n';
     }
-    
-    str += '\n';
 
     if (!!command.tree.prolog) {
-        str += command.tree.prolog + '\n';
+        str += '\n' + command.tree.prolog + '\n\n';
     }
     
-    str += `\n${getOptionsHelp(commands)}\n\n`;
+    str += `${getSubCmdHelp(command)}`;
+    
+    str += `${getOptionsHelp(commands)}\n\n`;
 
     if (!!command.tree.epilog) {
         str += command.tree.epilog + '\n';
@@ -185,9 +185,23 @@ function getUsageString(commands: CommandContext[]): string {
         }
     }
 
-    let str = `Usage: ${commandName} ${hasSubcommand ? '[COMMAND] ' : ''}${hasOptions ? '[...OPTIONS]' : ''}`;
+    let str = `Usage: ${commandName} ${hasSubcommand ? '[COMMANDS] ' : ''}${hasOptions ? '[...OPTIONS]' : ''}`;
     
     return str;
+}
+
+function getSubCmdHelp(command: CommandContext): string {
+    if (!commandHasSubcommands(command)) { return ''; }
+    
+    let str = 'Commands:\n';
+    
+    command.tree.resolvedSubCommands
+        .forEach(cmd => {
+            const desc = !!cmd.description ? ' - ' + cmd.description : '';
+            str += `   ${cmd.name}${desc}\n`
+        });
+
+    return str + '\n';
 }
 
 function getOptionsHelp(commands: CommandContext[]): string {
@@ -230,13 +244,13 @@ function getFlagHelp(opt: OptionSettings): string {
 }
 
 function getCommandHelpHeader(command: CommandContext, isMain: boolean): string {
-    const version = isMain && !!command.tree.version ? ` [${command.tree.version}] ` : '';
+    const version = isMain && !!command.tree.version ? ` [${command.tree.version}]` : '';
     return `\
 ${command.tree.name}${version}${!!command.tree.description ? ' - ' + command.tree.description : ''}
 `;    
 }
 
-function commandHasSubcommands(command: CommandContext): boolean {
+function commandHasSubcommands(command: CommandContext): command is CommandContext&{tree: {resolvedSubCommands: CommandContext[]}} {
     return !!command.tree.resolvedSubCommands && command.tree.resolvedSubCommands.length > 0;
 }
 
