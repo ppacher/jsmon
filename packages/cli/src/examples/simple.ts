@@ -35,7 +35,7 @@ export class ListRemoteCommand implements Runnable {
     }
 }
 
-@Command({name: 'list', subcommands: [ListRemoteCommand]})
+@Command({name: 'list', description: 'Display a list of modified files', subcommands: [ListRemoteCommand]})
 export class ListCommand implements Runnable {
     @Option({name: 'long', short: 'l', description: 'Use long output format'})
     public long: boolean = false;
@@ -58,7 +58,14 @@ export class ListCommand implements Runnable {
     }
 }
 
-@Command({name: 'simple', version: '0.1-alpha', subcommands: [ListCommand]})
+@Command({
+    name: 'simple',
+    version: '0.1-alpha',
+    description: 'Demostration app for @jsmon/cli',
+    subcommands: [ListCommand],
+    prolog: `A simple application demonstrating the use of @jsmon/cli.`,
+    epilog: 'It is also possible to display a predefined text below the command flags help text'
+})
 export class SimpleCommand implements Runnable {
 
     @Option({name: 'verbose', short: 'v', description: 'Display verbose output'})
