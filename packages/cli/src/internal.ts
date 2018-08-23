@@ -1,26 +1,41 @@
 import {Type, PROP_METADATA, ANNOTATIONS, resolveForwardRef} from '@jsmon/core';
-import {Option, OptionSettings, Command, CommandSettings, Parent, ForwardRef} from './decorators';
+import {Option, OptionSettings, Command, CommandSettings, Parent, Args, ParentFlag} from './decorators';
 import {Runnable} from './interfaces';
 
 export type PropertyOptions<T> = {
-    [K in keyof T]?: OptionSettings;
+    [K in keyof T]: OptionSettings;
+}
+
+export type ArgProperties<T> = {
+    [K in keyof T]: Args;
 }
 
 export type ParentProperties<T> = {
-    [K in keyof T]?: Parent;
+    [K in keyof T]: Parent;
+}
+
+export type ParentFlagProperties<T> = {
+    [K in keyof T]: ParentFlag;
+}
+export interface InjectionTarget<T> {
+    parent: ParentProperties<T>;
+    args: ArgProperties<T>;
+    parentFlags: ParentFlagProperties<T>;
 }
 
 export interface CommandTree extends CommandSettings {
     options: PropertyOptions<any>;
     cls: Type<Runnable>;
     resolvedSubCommands?: CommandTree[];
-    parentProperties: ParentProperties<any>;
+    parentProperties: {[key: string]: Parent};
+    argProperties: {[key: string]: Args};
+    parentFlags: {[key: string]: ParentFlag};
 }
 
 export function resolveCommandTree(cls: Type<Runnable>, knownLongOptions: string[] = [], knownShortOptions: string[] = []): CommandTree {
     const command = getRunnableAnnotations(cls);
     const options = getRunnableOptions(cls);
-    const parentProperties = getRunnableParentProperties(cls);
+    const propTargets = getRunnableInjectionTargets(cls);
     
     Object.keys(options).forEach(key => {
         let longName = (options as any)[key]!.name;
@@ -43,7 +58,9 @@ export function resolveCommandTree(cls: Type<Runnable>, knownLongOptions: string
         options: options,
         cls: cls,
         resolvedSubCommands: [],
-        parentProperties: parentProperties,
+        parentProperties: propTargets.parent,
+        argProperties: propTargets.args,
+        parentFlags: propTargets.parentFlags,
     };
     
     if (!!command.subcommands) {
@@ -75,7 +92,7 @@ export function getRunnableAnnotations(d: Type<Runnable>): CommandSettings {
 export function getRunnableOptions<T>(d: Type<T>): PropertyOptions<T> {
     const annotations = Object.getOwnPropertyDescriptor(d, PROP_METADATA);
     if (annotations === undefined) {
-        return {};
+        return {} as any;
     }
     
     const options: any = {}; 
@@ -98,27 +115,54 @@ export function getRunnableOptions<T>(d: Type<T>): PropertyOptions<T> {
     return options;
 }
 
-export function getRunnableParentProperties<T extends Runnable>(d: Type<T>): ParentProperties<T> {
+export function getRunnableInjectionTargets<T extends Runnable>(d: Type<T>): InjectionTarget<T> {
     const annotations = Object.getOwnPropertyDescriptor(d, PROP_METADATA);
     if (annotations === undefined) {
-        return {};
+        return {
+            parent: {} as any,
+            parentFlags: {} as any,
+            args: {} as any,
+        };
     }
     
-    const properties: any = {}; 
+    const properties: InjectionTarget<T> = {
+        args: {} as any,
+        parent: {} as any,
+        parentFlags: {} as any
+    }; 
     
     Object.keys(annotations.value)
         .forEach(key => {
-            const opt: Parent[] = annotations.value[key].filter((o: any) => o instanceof Parent);
+            const opt: any = annotations.value[key].filter((o: any) => {
+                return o instanceof Parent
+                        || o instanceof Args
+                        || o instanceof ParentFlag;
+            });
             
             if (opt.length === 0) {
                 return;
             }
-
+            
+            const annotation = opt[0];
+            let typeName = '';
+            let prop = '';
+            
+            if (annotation instanceof Parent) {
+                typeName = 'Parent';
+                prop = 'parent';
+            } else if (annotation instanceof Args) {
+                typeName = 'Args;'
+                prop = 'args';
+            } else if (annotation instanceof ParentFlag) {
+                typeName = 'ParentFlag';
+                prop = 'parentFlags';
+            }
+            
             if (opt.length > 1) {
-                throw new Error(`@Option decorator is used multiple times on ${d.name}.${key}`);
+                throw new Error(`@${typeName} decorator is used multiple times on ${d.name}.${key}`);
             }
 
-            properties[key] = opt[0];
+            (properties as any)[prop][key] = opt[0];
         });
     
     return properties;

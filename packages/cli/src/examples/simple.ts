@@ -1,5 +1,5 @@
 import {Injector, Inject, forwardRef} from '@jsmon/core';
-import {Command, Option, Parent} from '../decorators';
+import {Command, Option, Parent, Args, ParentFlag} from '../decorators';
 import {Runnable} from '../interfaces';
 import {run} from '../run';
 
@@ -18,11 +18,21 @@ export class ListRemoteCommand implements Runnable {
     @Option({name: 'count', short: 'c', argType: 'number'})
     public count: number = 0;
     
+    @Args()
+    public args: string[] = [];
+
+    @ParentFlag('verbose')
+    public verbose: boolean = false;
+    
     async run() {
         if (this.simple!.verbose) {
             console.log(`Verbose output enabled`);
         } else {
             console.log('Verbose output disabled');
+        }
+        
+        if (this.simple!.verbose !== this.verbose) {
+            throw new Error(`This should be the same value ${this.simple!.verbose} !== ${this.verbose}`);
         }
         
         if (this.list!.long) {
@@ -32,6 +42,8 @@ export class ListRemoteCommand implements Runnable {
         }
         
         console.log(`Count is ${this.count}`);
+        
+        console.log(`Args are: "${JSON.stringify(this.args)}"`)
     }
 }
 

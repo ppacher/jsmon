@@ -73,7 +73,7 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
         return Promise.resolve();
     }
     
-    const commands = createCommands(contexts, parentInjector);
+    const commands = createCommands(0, contexts, parentInjector);
     const final = commands[commands.length - 1];
 
     return final.instance.run();
@@ -84,9 +84,9 @@ interface CommandInstances {
     injector: Injector;
 }
 
-function createCommands(ctx: CommandContext[], parentInjector: Injector = new Injector([])): CommandInstances[] {
+function createCommands(index: number, ctx: CommandContext[], parentInjector: Injector = new Injector([])): CommandInstances[] {
     let result: CommandInstances[] = [];
-    const command = ctx[0];
+    const command = ctx[index];
 
     // We provide 2 aliases for the command so it can be injected as @Parent(), @Parent('command-name') or using @Inject()
     // within the ctor (see @jsmon/core/di)
@@ -124,17 +124,41 @@ function createCommands(ctx: CommandContext[], parentInjector: Injector = new In
 
             (cmdInstance as any)[propertyKey] = instance;
         });
+        
+    Object.keys(command.tree.argProperties)
+        .forEach(propertyKey => {
+            (cmdInstance as any)[propertyKey] = command.args;
+        });
+
+    Object.keys(command.tree.parentFlags)
+        .forEach(propertyKey => {
+            const {name, direct} = command.tree.parentFlags[propertyKey]!;
+            const limit = direct ? ctx.length -1 : -1;
+            
+            for(let i = index; i > limit; i--) {
+                const cmd = ctx[i]!;
+
+                const propKey = Object.keys(cmd.tree.options)
+                    .find(key => {
+                        return (cmd.tree.options[key].name === name);
+                    })
+                    
+                if (!!propKey && cmd.options[propKey] !== undefined) {
+                    (cmdInstance as any)[propertyKey] = cmd.options[propKey];
+                }
+            }
+        });
     
     result.push({
         instance: cmdInstance,
         injector: injector,
     });
 
-    if (ctx.length === 1) {
+    if (ctx.length === index + 1) {
         return result;
     }
 
-    const subCommands = createCommands(ctx.splice(1), injector);
+    const subCommands = createCommands(index + 1, ctx, injector);
     
     result = result.concat(...subCommands);
     
