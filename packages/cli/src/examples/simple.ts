@@ -1,5 +1,5 @@
 import {Injector, Inject, forwardRef} from '@jsmon/core';
-import {Command, Option, ParentCommand} from '../decorators';
+import {Command, Option, Parent} from '../decorators';
 import {Runnable} from '../interfaces';
 import {run} from '../run';
 
@@ -8,11 +8,11 @@ export class ListRemoteCommand implements Runnable {
 
     // Get a specific parent command injected, we need to use forwardRef from @jsmon/core
     // as SimpleCommand is not yet defined
-    @ParentCommand(forwardRef(() => SimpleCommand))
+    @Parent(forwardRef(() => SimpleCommand))
     public simple: SimpleCommand|undefined;
     
-    // This gets the direct parent command injected
-    @ParentCommand()
+    // This gets a parent command injected by it's name
+    @Parent('list')
     public list: ListCommand|undefined;
     
     @Option({name: 'count', short: 'c', argType: 'number'})
@@ -40,7 +40,7 @@ export class ListCommand implements Runnable {
     @Option({name: 'long', short: 'l', description: 'Use long output format'})
     public long: boolean = false;
     
-    @ParentCommand()
+    @Parent()
     public parent: SimpleCommand|undefined;
     
     async run() {

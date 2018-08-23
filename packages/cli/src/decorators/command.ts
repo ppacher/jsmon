@@ -1,4 +1,4 @@
-import {makeDecorator, makePropDecorator, Type, Provider, Inject} from '@jsmon/core';
+import {makeDecorator, forwardRef, makePropDecorator, Type, Provider, Inject} from '@jsmon/core';
 import {Runnable} from '../interfaces';
 
 export interface CommandSettings {
@@ -41,18 +41,43 @@ export interface Command {
 
 export const Command: CommandDecorator = makeDecorator('Command', (settings: CommandSettings) => ({settings}));
 
+// TODO(ppacher): move this type to @jsmon/core/di
+export interface ForwardRef<T> {
+    (): Type<T>;
+}
 
-export interface ParentCommand {
-    type: Type<Runnable>|null;
+export interface Parent {
+    type: Type<Runnable>|string|ForwardRef<Runnable>|null;
 }
 
 export interface ParentCommandDecorator {
-    (type?: Type<Runnable>): any;
-    new (type?: Type<Runnable>): ParentCommand;
+    (type?: Type<Runnable>|string|ForwardRef<Runnable>): any;
+    new (type?: Type<Runnable>): Parent;
 }
 
-export const ParentCommand: ParentCommandDecorator = makePropDecorator('ParentCommand', (type?: Type<Runnable>) => {
+export const Parent: ParentCommandDecorator = makePropDecorator('Parent', (type?: Type<Runnable>) => {
     return {
         type: type || null
     };
 });
+
+export interface Args {}
+
+export interface ArgsDecorator {
+    (): any;
+    new (): Args;
+}
+
+export const Args: ArgsDecorator = makePropDecorator('Args');
+
+export interface ParentFlag {
+    name: string;
+    direct?: boolean;
+}
+
+export interface ParentFlagDecorator {
+    (name: string, direct?: boolean): any;
+    new (name: string, direct?: boolean): ParentFlag;
+}
+
+export const ParentFlag: ParentFlagDecorator = makePropDecorator('Flags', (name, direct) => ({name, direct}))

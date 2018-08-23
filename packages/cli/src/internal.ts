@@ -1,5 +1,5 @@
 import {Type, PROP_METADATA, ANNOTATIONS, resolveForwardRef} from '@jsmon/core';
-import {Option, OptionSettings, Command, CommandSettings, ParentCommand} from './decorators';
+import {Option, OptionSettings, Command, CommandSettings, Parent, ForwardRef} from './decorators';
 import {Runnable} from './interfaces';
 
 export type PropertyOptions<T> = {
@@ -7,7 +7,7 @@ export type PropertyOptions<T> = {
 }
 
 export type ParentProperties<T> = {
-    [K in keyof T]?: Type<Runnable>|null;
+    [K in keyof T]?: Parent;
 }
 
 export interface CommandTree extends CommandSettings {
@@ -108,7 +108,7 @@ export function getRunnableParentProperties<T extends Runnable>(d: Type<T>): Par
     
     Object.keys(annotations.value)
         .forEach(key => {
-            const opt: ParentCommand[] = annotations.value[key].filter((o: any) => o instanceof ParentCommand);
+            const opt: Parent[] = annotations.value[key].filter((o: any) => o instanceof Parent);
             
             if (opt.length === 0) {
                 return;
@@ -118,7 +118,7 @@ export function getRunnableParentProperties<T extends Runnable>(d: Type<T>): Par
                 throw new Error(`@Option decorator is used multiple times on ${d.name}.${key}`);
             }
 
-            properties[key] = !!opt[0].type ? resolveForwardRef(opt[0].type) : null;
+            properties[key] = opt[0];
         });
     
     return properties;

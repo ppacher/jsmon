@@ -1,11 +1,21 @@
-import {Injector, Type} from '@jsmon/core';
+import {Injector, resolveForwardRef, Type} from '@jsmon/core';
 import {Runnable} from './interfaces';
 import {resolveCommandTree, CommandTree} from './internal';
 import {Parser, CommandContext} from './parser';
 import {basename} from 'path';
 import {OptionSettings} from 'decorators';
 
-export function run(commandClass: Type<Runnable>, args?: string[]): Promise<void> {
+/**
+ * Run parses the given args (or uses process.argv) and executes the specified command by searching through
+ * the {@type Runnable} class and all it's sub-commands. It may also serve help and version flags. Refer
+ * to the {@type Command} decorator definitions for more information.
+ * 
+ * @param {Runnable} commandClass  - The class of the main command
+ * @param {string[]} args - The command line flags to use. (default = process.argv) 
+ * @param {Injector} parentInjector - An optional parent (root) injector to use. If none a new will be
+ *                                    created
+ */
+export function run(commandClass: Type<Runnable>, args?: string[], parentInjector?: Injector): Promise<void> {
     if (args === undefined) {
         args = process.argv.slice(2);
     }
@@ -63,7 +73,7 @@ export function run(commandClass: Type<Runnable>, args?: string[]): Promise<void
         return Promise.resolve();
     }
     
-    const commands = createCommands(contexts);
+    const commands = createCommands(contexts, parentInjector);
     const final = commands[commands.length - 1];
 
     return final.instance.run();
@@ -78,12 +88,18 @@ function createCommands(ctx: CommandContext[], parentInjector: Injector = new In
     let result: CommandInstances[] = [];
     const command = ctx[0];
 
+    // We provide 2 aliases for the command so it can be injected as @Parent(), @Parent('command-name') or using @Inject()
+    // within the ctor (see @jsmon/core/di)
     const injector = parentInjector.createChild([
         ... (command.tree.providers || []),
         command.tree.cls,
         {
             provide: '__PARENT__',
             useExisting: command.tree.cls
+        },
+        {
+            provide: command.tree.name,
+            useExisting: command.tree.cls,
         }
     ]);
 
@@ -97,14 +113,15 @@ function createCommands(ctx: CommandContext[], parentInjector: Injector = new In
 
     Object.keys(command.tree.parentProperties)
         .forEach(propertyKey => {
-            let type: Type<Runnable>|null = command.tree.parentProperties[propertyKey]!;
+            let type: Type<Runnable>|string|null = resolveForwardRef(command.tree.parentProperties[propertyKey]!.type);
             let instance: Runnable;
             
             if (type === null) {
                 instance = parentInjector.get<Runnable>('__PARENT__') ;
             } else {
-                instance = injector.get(type);
+                instance = injector.get<Runnable>(type);
             }
+
             (cmdInstance as any)[propertyKey] = instance;
         });
     
