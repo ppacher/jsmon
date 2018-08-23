@@ -15,35 +15,29 @@ export class ListRemoteCommand implements Runnable {
     @Parent('list')
     public list: ListCommand|undefined;
     
-    @Option({name: 'count', short: 'c', argType: 'number'})
-    public count: number = 0;
-    
-    @Args()
-    public args: string[] = [];
-
+    // This gets the value for a parents' verbose flag injected (by option name)
     @ParentFlag('verbose')
     public verbose: boolean = false;
     
+    // This gets all additional arguments injected
+    @Args()
+    public args: string[] = [];
+
+    // Like below, a definition for a command line option/flag
+    @Option({name: 'count', short: 'c', argType: 'number', description: 'An abriatray count'})
+    public count: number = 0;
+    
+    @Option({name: 'num', short: 'n', argType: 'number', multiple: true, description: 'One ore more numbers'})
+    public num: number[] = [];
+    
+    
     async run() {
-        if (this.simple!.verbose) {
-            console.log(`Verbose output enabled`);
-        } else {
-            console.log('Verbose output disabled');
-        }
-        
-        if (this.simple!.verbose !== this.verbose) {
-            throw new Error(`This should be the same value ${this.simple!.verbose} !== ${this.verbose}`);
-        }
-        
-        if (this.list!.long) {
-            console.log(`Long output enabled`);
-        } else {
-            console.log('Long output disabled');
-        }
-        
-        console.log(`Count is ${this.count}`);
-        
-        console.log(`Args are: "${JSON.stringify(this.args)}"`)
+        console.log(`simple.verbose=${this.simple!.verbose}`);
+        console.log(`verbose=${this.verbose}`);
+        console.log(`list.long=${this.list!.long}`);
+        console.log(`count=${this.count}`);
+        console.log(`args="${JSON.stringify(this.args)}"`)
+        console.log(`num=${JSON.stringify(this.num)}`);
     }
 }
 

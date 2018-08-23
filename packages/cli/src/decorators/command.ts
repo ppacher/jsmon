@@ -1,6 +1,9 @@
 import {makeDecorator, forwardRef, makePropDecorator, Type, Provider, Inject} from '@jsmon/core';
 import {Runnable} from '../interfaces';
 
+/**
+ * Settings for the @Command() decorator
+ */
 export interface CommandSettings {
     /** The name of the command */
     name: string;
@@ -30,15 +33,21 @@ export interface CommandSettings {
     providers?: Provider[]; 
 }
 
+/** The type of the Command decorator */
 export interface CommandDecorator {
     (settings: CommandSettings): any;
     new (settings: CommandSettings): Command;
 }
 
+/** The annotation type of the @Command decorator  */
 export interface Command {
     settings: CommandSettings;
 }
 
+/**
+ * Use the @Command() decorator to mark Runnable classes as @jsmon/cli commands
+ * See {@type CommandSettings} for available decorator options 
+ */
 export const Command: CommandDecorator = makeDecorator('Command', (settings: CommandSettings) => ({settings}));
 
 // TODO(ppacher): move this type to @jsmon/core/di
