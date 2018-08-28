@@ -3,7 +3,7 @@ import {Runnable} from './interfaces';
 import {resolveCommandTree, CommandTree} from './internal';
 import {Parser, CommandContext} from './parser';
 import {basename} from 'path';
-import {OptionSettings} from 'decorators';
+import {OptionSettings} from './decorators';
 
 /**
  * Run parses the given args (or uses process.argv) and executes the specified command by searching through

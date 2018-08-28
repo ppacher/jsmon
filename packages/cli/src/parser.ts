@@ -1,6 +1,4 @@
-import {Type} from '@jsmon/core';
 import {CommandTree} from "./internal";
-import {Runnable} from "./interfaces";
 import {OptionSettings} from './decorators';
 
 export interface CommandContext {
