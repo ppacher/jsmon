@@ -64,7 +64,12 @@ export function resolveCommandTree(cls: Type<Runnable>, knownLongOptions: string
     };
     
     if (!!command.subcommands) {
-        tree.resolvedSubCommands = command.subcommands.map(subcls => resolveCommandTree(subcls, knownLongOptions, knownShortOptions));
+        
+        tree.resolvedSubCommands = command.subcommands.map(subcls => {
+            const currentShortOptions = [...knownShortOptions];
+            const currentLongOptions = [...knownLongOptions];
+            return resolveCommandTree(subcls, currentLongOptions, currentShortOptions);
+        });
     }
     
     return tree;
