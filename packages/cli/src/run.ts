@@ -68,7 +68,9 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
         return Promise.resolve();
     }
     
-    const commands = createCommands(0, contexts, parentInjector);
+    const isHelp = mainCommand.options['__help__'];
+    
+    const commands = createCommands(0, contexts, isHelp, parentInjector);
     const final = commands[commands.length - 1];
     
     if (mainCommand.options['__help__']) {
@@ -85,7 +87,7 @@ interface CommandInstances {
     injector: Injector;
 }
 
-function createCommands(index: number, ctx: CommandContext[], parentInjector: Injector = new Injector([])): CommandInstances[] {
+function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, parentInjector: Injector = new Injector([])): CommandInstances[] {
     let result: CommandInstances[] = [];
     const command = ctx[index];
 
@@ -112,16 +114,18 @@ function createCommands(index: number, ctx: CommandContext[], parentInjector: In
             (cmdInstance as any)[propertyKey] = value;
         });
         
-    Object.keys(command.tree.options)
-        .forEach(key => {
-            if (!!command.tree.options[key].required) {
-                // Check if the option has really been specified
-                if (command.options[key] === undefined) {
-                    const name = command.tree.options[key].name;
-                    throw new Error(`--${name} is required`);
+    if (!isHelp) {
+        Object.keys(command.tree.options)
+            .forEach(key => {
+                if (!!command.tree.options[key].required) {
+                    // Check if the option has really been specified
+                    if (command.options[key] === undefined) {
+                        const name = command.tree.options[key].name;
+                        throw new Error(`--${name} is required`);
+                    }
                 }
-            }
-        });
+            });
+    }
 
     Object.keys(command.tree.parentProperties)
         .forEach(propertyKey => {
@@ -181,7 +185,7 @@ function createCommands(index: number, ctx: CommandContext[], parentInjector: In
         return result;
     }
 
-    const subCommands = createCommands(index + 1, ctx, injector);
+    const subCommands = createCommands(index + 1, ctx, isHelp, injector);
     
     result = result.concat(...subCommands);
     
@@ -279,9 +283,17 @@ function getFlagHelp(opt: OptionSettings, propKey: string, command: CommandInsta
     if (!!opt.argType && opt.argType !== 'boolean') {
         str += ' VALUE'
     }
+    
+    if (!!opt.description || !!opt.required) {
+        str += `\t\t`;
+    }
+    
+    if (!!opt.required) {
+        str += `[required] `;
+    }
 
     if (!!opt.description) {
-        str += `\t\t${opt.description}`;
+        str += `${opt.description}`;
     }
 
     const value = (command.instance as any)[propKey];
