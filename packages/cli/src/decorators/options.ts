@@ -15,6 +15,9 @@ export interface OptionSettings {
     
     /** Wether or not the option can be specified multiple times */
     multiple?: boolean;
+    
+    /** Wether or not the option must be specified on the command line */
+    required?: boolean;
 }
 
 export interface OptionDecorator {

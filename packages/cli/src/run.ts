@@ -111,6 +111,17 @@ function createCommands(index: number, ctx: CommandContext[], parentInjector: In
             const value = command.options[propertyKey];
             (cmdInstance as any)[propertyKey] = value;
         });
+        
+    Object.keys(command.tree.options)
+        .forEach(key => {
+            if (!!command.tree.options[key].required) {
+                // Check if the option has really been specified
+                if (command.options[key] === undefined) {
+                    const name = command.tree.options[key].name;
+                    throw new Error(`--${name} is required`);
+                }
+            }
+        });
 
     Object.keys(command.tree.parentProperties)
         .forEach(propertyKey => {
