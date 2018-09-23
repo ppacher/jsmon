@@ -12,9 +12,6 @@ export interface OptionSettings {
     
     /** Wether or not the command expects arguments. Defaults to boolean */
     argType?: null|'string'|'number'|'boolean';
-
-    /** An optional default value */
-    default?: string|string[]|number|number[];
     
     /** Wether or not the option can be specified multiple times */
     multiple?: boolean;

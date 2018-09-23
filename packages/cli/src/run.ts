@@ -63,11 +63,6 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
     const mainCommand = contexts[0];
     const finalCommand = contexts[contexts.length - 1];
     
-    if (mainCommand.options['__help__']) {
-        console.log(getHelpText(contexts));
-        return Promise.resolve();
-    }
-    
     if (mainCommand.options['__version__']) {
         console.log(`${mainCommand.tree.version}`);
         return Promise.resolve();
@@ -75,6 +70,12 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
     
     const commands = createCommands(0, contexts, parentInjector);
     const final = commands[commands.length - 1];
+    
+    if (mainCommand.options['__help__']) {
+        console.log(getHelpText(contexts, commands));
+        return Promise.resolve();
+    }
+    
 
     return final.instance.run();
 }
@@ -165,14 +166,14 @@ function createCommands(index: number, ctx: CommandContext[], parentInjector: In
     return result;
 }
 
-function getHelpText(commands: CommandContext[]): string {
-    const mainCommand = commands[0];
-    const command = commands[commands.length - 1];
+function getHelpText(contexts: CommandContext[], commands: CommandInstances[]): string {
+    const mainCommand = contexts[0];
+    const command = contexts[contexts.length - 1];
 
     const isMain = mainCommand === command;
     let str = '';
     
-    str += `${getUsageString(commands)}\n\n`;
+    str += `${getUsageString(contexts)}\n\n`;
     
     if (isMain) {
         str += getCommandHelpHeader(command, true);
@@ -186,7 +187,7 @@ function getHelpText(commands: CommandContext[]): string {
     
     str += `${getSubCmdHelp(command)}`;
     
-    str += `${getOptionsHelp(commands)}\n\n`;
+    str += `${getOptionsHelp(contexts, commands)}\n\n`;
 
     if (!!command.tree.epilog) {
         str += command.tree.epilog + '\n';
@@ -228,24 +229,25 @@ function getSubCmdHelp(command: CommandContext): string {
     return str + '\n';
 }
 
-function getOptionsHelp(commands: CommandContext[]): string {
-    const hasOptions = commandHasOptions(commands);
+function getOptionsHelp(contexts: CommandContext[], commands: CommandInstances[]): string {
+    const hasOptions = commandHasOptions(contexts);
     if (!hasOptions) {
         return '';
     }
     
-    const command = commands[commands.length - 1];
+    const ctx = contexts[contexts.length - 1];
+    const cmd = commands[commands.length - 1];
     
     return 'Options:\n' +
-        Object.keys(command.tree.options)
+        Object.keys(ctx.tree.options)
             .map(key => {
-                const opt = command.tree.options[key]!;
-                return getFlagHelp(opt);
+                const opt = ctx.tree.options[key]!;
+                return getFlagHelp(opt, key, cmd);
             })
             .join('\n');
 }
 
-function getFlagHelp(opt: OptionSettings): string {
+function getFlagHelp(opt: OptionSettings, propKey: string, command: CommandInstances): string {
     let str = `--${opt.name}`;
     if (!!opt.short) {
         str += `/-${opt.short}`;
@@ -259,9 +261,11 @@ function getFlagHelp(opt: OptionSettings): string {
     if (!!opt.description) {
         str += `\t\t${opt.description}`;
     }
+
+    const value = (command.instance as any)[propKey];
     
-    if (!!opt.default) {
-        str += ` (default: ${opt.default})`;
+    if (value !== undefined && value !== null && (!Array.isArray(value) || value.length > 0)) {
+        str += ` (default: ${value})`;
     }
     
     return `   ${str}`;

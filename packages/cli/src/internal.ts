@@ -42,12 +42,12 @@ export function resolveCommandTree(cls: Type<Runnable>, knownLongOptions: string
         let shortName = (options as any)[key]!.short;
         
         if (knownLongOptions.includes(longName)) {
-            throw new Error(`Parameter with name --${longName} is already defined`)
+            throw new Error(`${cls.name}: Parameter with name --${longName} is already defined`)
         }
         knownLongOptions.push(longName);
         
         if (!!shortName && knownShortOptions.includes(shortName)) {
-            throw new Error(`Parameter with name -${shortName} is already defined`)
+            throw new Error(`${cls.name}: Parameter with name -${shortName} is already defined`)
         } else if (!!shortName) {
             knownShortOptions.push(shortName);
         }
