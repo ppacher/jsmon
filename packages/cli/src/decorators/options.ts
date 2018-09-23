@@ -16,6 +16,9 @@ export interface OptionSettings {
     /** Wether or not the option can be specified multiple times */
     multiple?: boolean;
     
+    /** The placeholder text to use for the help output. Only used if argType is set */
+    valuePlaceholder?: string;
+    
     /** Wether or not the option must be specified on the command line */
     required?: boolean;
 }

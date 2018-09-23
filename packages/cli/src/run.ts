@@ -281,7 +281,11 @@ function getFlagHelp(opt: OptionSettings, propKey: string, command: CommandInsta
     
     // TODO(ppacher): support configuring the placeholder for the VALUE
     if (!!opt.argType && opt.argType !== 'boolean') {
-        str += ' VALUE'
+        if (!!opt.valuePlaceholder) {
+            str += ` ${opt.valuePlaceholder}`;
+        } else {
+            str += ' VALUE'
+        }
     }
     
     if (!!opt.description || !!opt.required) {

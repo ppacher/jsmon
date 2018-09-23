@@ -24,7 +24,7 @@ export class ListRemoteCommand implements Runnable {
     public args: string[] = [];
 
     // Like below, a definition for a command line option/flag
-    @Option({name: 'count', short: 'c', argType: 'number', description: 'An abriatray count', required: true})
+    @Option({name: 'count', valuePlaceholder: 'NUM', short: 'c', argType: 'number', description: 'An abriatray count', required: true})
     public count: number = 0;
     
     @Option({name: 'num', short: 'n', argType: 'number', multiple: true, description: 'One ore more numbers'})
