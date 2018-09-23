@@ -142,10 +142,21 @@ function createCommands(index: number, ctx: CommandContext[], parentInjector: In
                 const propKey = Object.keys(cmd.tree.options)
                     .find(key => {
                         return (cmd.tree.options[key].name === name);
-                    })
+                    });
                     
-                if (!!propKey && cmd.options[propKey] !== undefined) {
-                    (cmdInstance as any)[propertyKey] = cmd.options[propKey];
+                if (!!propKey) {
+                    if (cmd.options[propKey] !== undefined) {
+                        (cmdInstance as any)[propertyKey] = cmd.options[propKey];
+                        break;
+                        
+                    } else {
+                    
+                        const parentInstance = injector.get(cmd.tree.cls, null);
+                        if (parentInstance !== null && (parentInstance as any)[propKey] !== undefined) {
+                            (cmdInstance as any)[propertyKey] = (parentInstance as any)[propKey];
+                            break;
+                        }
+                    }
                 }
             }
         });

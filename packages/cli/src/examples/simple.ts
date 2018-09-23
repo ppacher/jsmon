@@ -17,7 +17,7 @@ export class ListRemoteCommand implements Runnable {
     
     // This gets the value for a parents' verbose flag injected (by option name)
     @ParentFlag('verbose')
-    public verbose: boolean = false;
+    public verbose: boolean|undefined;
     
     // This gets all additional arguments injected
     @Args()
