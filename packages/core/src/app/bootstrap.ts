@@ -1,7 +1,7 @@
-import {Provider, Injector, Type, normalizeProvider} from '../di';
-import {App, AppDescriptor} from './app';
-import {ANNOTATIONS} from '../utils/decorator';
-import {Plugin, collectProviders, PluginDescriptor} from '../plugin';
+import { Injector, Type } from '../di';
+import { collectProviders } from '../plugin';
+import { ANNOTATIONS } from '../utils/decorator';
+import { App, AppDescriptor } from './app';
 
 export function bootstrapApp<T>(app: Type<T>): T {
     const settings = getAppDescriptor(app);
@@ -40,4 +40,13 @@ function getAppDescriptor(module: Type<any>): AppDescriptor|undefined {
     const settings = meta.find((m: any) => m instanceof App) as App;
     
     return settings ? settings.settings : undefined;
+}
+
+/**
+ * Checks wether a given class is decorated with the App decorator
+ * 
+ * @param module The class to check
+ */
+function isApplication(module: Type<any>): boolean {
+    return getAppDescriptor(module) !== undefined;
 }

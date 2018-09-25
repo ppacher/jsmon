@@ -1,7 +1,6 @@
 import {Parser} from '../parser';
 import {CommandTree} from '../internal';
 import {Runnable} from '../interfaces';
-import { Args } from '../decorators';
 
 class TestCommand implements Runnable {
     created = false;
@@ -38,7 +37,7 @@ describe('Parser', () => {
                 name: 'bool',
                 short: 'b',
                 argType: null, // Default: boolean
-                multiple: true;
+                multiple: true,
             }
         },
         cls: TestCommand,

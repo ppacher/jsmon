@@ -1,4 +1,4 @@
-import {makeDecorator, forwardRef, makePropDecorator, Type, Provider, Inject} from '@jsmon/core';
+import {makeDecorator, ForwardRef, makePropDecorator, Type, Provider} from '@jsmon/core';
 import {Runnable} from '../interfaces';
 
 /**
@@ -50,20 +50,22 @@ export interface Command {
  */
 export const Command: CommandDecorator = makeDecorator('Command', (settings: CommandSettings) => ({settings}));
 
-// TODO(ppacher): move this type to @jsmon/core/di
-export interface ForwardRef<T> {
-    (): Type<T>;
-}
-
+/** The annoation type of the @Parent decorator */
 export interface Parent {
     type: Type<Runnable>|string|ForwardRef<Runnable>|null;
 }
 
+/**
+ * The Parent decorator injects a parent command into the decorated property
+ * If `type` is null, the direct parent will be injected. Otherwise, the specified parent
+ * (either by type or command name) is injected
+ */
 export interface ParentCommandDecorator {
     (type?: Type<Runnable>|string|ForwardRef<Runnable>): any;
     new (type?: Type<Runnable>): Parent;
 }
 
+/** The @Parent decorator. See {@link ParentCommandDecorator} for more information */
 export const Parent: ParentCommandDecorator = makePropDecorator('Parent', (type?: Type<Runnable>) => {
     return {
         type: type || null
