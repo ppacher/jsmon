@@ -1,29 +1,12 @@
 # JsMon
 
-Do-It-Yourself Home Automation
+JsMon started as a private home automation platform but has become a framework for rapid application development
+supporting dependency injection (`@jsmon/core`, based on and similar to Angular), a decorator based commandline
+client framework (`@jsmon/cli`) and a package to support home automation systems (`@jsmon/platform`). For the home-automation
+system, there is already a set of plugins and platform (FireTv, Weather-information via DarkSky.net, MPD, support for the TinkerForge
+platfrom and more).
 
-> **Note:**   
-> `JsMon` is currently under active development and can in no way be considered stable. It's not even published to NPM, please stay tuned ;)  
-> You can still clone the repository and try it yourself. Please follow the instructions below
-
-`JsMon` is a NodeJS framework (written in TypeScript) for building DIY home automation systems. It works by defining/adding `Device`s that provide the base foundation of your home automation system. Devices can have Sensors and provide Commands (Actors) to interact with whatever kind of thing you like. 
-
-It currently features
-
- - Dependency Injection (based and similar on Angular)
- - A dynamic module/plugin system (runtime loading via config)
- - Basic devices for
-    - MPD (Music-Play-Daemon) enabled devices
-    - Amazon FireTV (Gen 3; only basic commands and ADB required)
-    - DarkSkyNet (Weather information)
-    - Host Information (CPU load, Mem stats, ...)
- - A set of easy to use (still basic) plugins for MQTT, HTTP and GraphQL
- - A RESTful HTTP API (using the httpserver plugin)
- - A MQTT-to-HTTP proxy with support for multiple "device hosts"
- 
----
-
-More to come
+See the (still in progress) documentation for more information.
 
 ---
 
