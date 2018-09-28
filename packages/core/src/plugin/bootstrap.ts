@@ -3,46 +3,76 @@ import {ANNOTATIONS} from '../utils/decorator';
 import {normalizeProvider, Provider, Type, Injector, Visibility} from '../di';
 import {stringify} from '../utils/utils';
 
-export function bootstrapPlugin(plugin: Type<any>, injector: Injector, visibility: Visibility = null): Injector|null {
-    // We can bail out if the injector has already loaded the plugin
-    if (injector.has(plugin, visibility)) {
-        return null;
-    }
-    
-    let providers = new Set<any>();
-    let plugins = new Set<Type<any>>();
-    
-    collectProviders(plugin, injector, visibility, providers, plugins);
-    
-    let child = injector.createChild(Array.from(providers.values()));
-    
-    // create all plugins
-    Array.from(plugins.values()).reverse().forEach(plugin => {
-        child.get(plugin);
-    });
-    
-    return child;
+export class ResolvedPlugin {
+    constructor(public readonly providers: ReadonlyArray<Provider>,
+                public readonly plugins: ReadonlyArray<Type<any>>) {}
 }
 
-export function collectProviders(plugin: Type<any>, injector: Injector, visibility: Visibility, providers: Set<any>, plugins: Set<any>): void {
-    let desc = getPluginDescriptor(plugin);
+export class PluginInstance<T> {
+    constructor(public readonly instance: T,
+                public readonly injector: Injector,
+                public readonly imports: any[]) {}
+}
+
+export class PluginBootstrap {
+    private readonly _providers: Set<Provider> = new Set();
+    private readonly _plugins: Set<Type<any>> = new Set();
+
+    constructor(private _rootInjector: Injector) {}
     
-    if (!plugins.has(plugin) && !injector.has(plugin)) {
-        plugins.add(plugin);
-        providers.add(plugin);
+    resolve(plugins: Type<any>|Type<any>[]): ResolvedPlugin {
+        if (!Array.isArray(plugins)) {
+            plugins = [plugins];
+        }
+        
+        plugins.forEach(plugin => {
+            PluginBootstrap._collectProviders(plugin, this._rootInjector, null, this._providers, this._plugins);
+        });
+        
+        return new ResolvedPlugin(
+            Array.from(this._providers),
+            Array.from(this._plugins)
+        );
+    }
+    
+    static bootstrap<T>(plugin: Type<T>, injector: Injector, visibility: Visibility = null): PluginInstance<T> {
+        const bootstrap = new PluginBootstrap(injector);
+        const resolvedPlugin = bootstrap.resolve(plugin);
+        
+        // create a child injector using all resolved providers
+        const childInjector = injector.createChild(resolvedPlugin.providers as Provider[]);
+        
+        // create all plugins that have been imported
+        const imports = resolvedPlugin.plugins
+            .filter(p => p !== plugin)
+            .map(p => childInjector.get(p));
+            
+        // create the plugin instance itself
+        const pluginInstance = childInjector.get<T>(plugin);
+
+        return new PluginInstance(pluginInstance, childInjector, imports);
     }
 
-    desc.providers!.forEach(p => {
-        const n = normalizeProvider(p);
-
-        if (!injector.has(n.provide)) {
-            providers.add(p);
+    private static _collectProviders(plugin: Type<any>, injector: Injector, visibility: Visibility, providers: Set<Provider>, plugins: Set<Type<any>>): void {
+        let desc = getPluginDescriptor(plugin);
+        
+        if (!plugins.has(plugin) && !injector.has(plugin)) {
+            plugins.add(plugin);
+            providers.add(plugin);
         }
-    });
-    
-    desc.exports!.forEach(e => {
-        collectProviders(e, injector, visibility, providers, plugins);
-    });
+
+        desc.providers!.forEach(p => {
+            const n = normalizeProvider(p);
+
+            if (!injector.has(n.provide)) {
+                providers.add(p);
+            }
+        });
+        
+        desc.exports!.forEach(e => {
+            PluginBootstrap._collectProviders(e, injector, visibility, providers, plugins);
+        });
+    }
 }
 
 export function getPluginDescriptor<T>(plugin: Type<T>): PluginDescriptor {

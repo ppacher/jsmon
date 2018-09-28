@@ -1,5 +1,5 @@
 import { Injector, Type, Provider } from '../di';
-import { collectProviders } from '../plugin';
+import { PluginBootstrap } from '../plugin';
 import { ANNOTATIONS } from '../utils/decorator';
 import { App, AppDescriptor } from './app';
 import { LoggingAdapter, Logger, useLoggingAdapter } from '../log';
@@ -9,6 +9,8 @@ export class Bootstrap {
     private _loggingAdapter?: LoggingAdapter;
     private _logger?: Logger;
     private _providers: Provider[] = [];
+    
+    private _appInjector?: Injector;
     
     /**
      * Set a root injector to be use for the app instance
@@ -75,6 +77,18 @@ export class Bootstrap {
         return this;
     }
     
+    /**
+     * Returns the app injector created. This method must only be used after
+     * `create()` has been called
+     */
+    getAppInjector(): Injector {
+        if (!this._appInjector) {
+            throw new Error(`App not yet created`);
+        }
+        
+        return this._appInjector;
+    }
+    
     create<T>(app: Type<T>): T {
         let rootInjector = this._rootInjector || new Injector([]);
         
@@ -92,26 +106,37 @@ export class Bootstrap {
                 },
                 ...this._providers
             ]);
+        } else if (this._providers.length > 0) {
+            rootInjector = rootInjector.createChild(this._providers);
         }
         
-        return bootstrapApp(app, rootInjector);
+        const [instance, injector] = bootstrapApp(app, rootInjector);
+        this._appInjector = injector; 
+        return instance;
     }
     
+    /**
+     * Bootstrap an application using the default settings
+     * This is actually a shortcut for new Bootstrap().create(app)
+     * 
+     * @param app The application class to bootstrap
+     */
     static create<T>(app: Type<T>): T {
         return new Bootstrap().create(app);
     }
 }
 
-export function bootstrapApp<T>(app: Type<T>, rootInjector: Injector = new Injector([])): T {
+export function bootstrapApp<T>(app: Type<T>, rootInjector: Injector = new Injector([])): [T, Injector] {
     const settings = getAppDescriptor(app);
     
     const providers: Set<any> = new Set();;
     const plugins: Set<any> = new Set();
     
     if (!!settings) {
-        (settings.plugins||[]).forEach(plugin => {
-            collectProviders(plugin, rootInjector, null, providers, plugins);
-        });
+        const resolvedPlugins = new PluginBootstrap(rootInjector).resolve(settings.plugins||[]);
+        
+        resolvedPlugins.providers.forEach(provider => providers.add(provider));
+        resolvedPlugins.plugins.forEach(plugin => plugins.add(plugin));
         
         (settings.providers||[]).forEach(provider => {
             providers.add(provider);
@@ -124,7 +149,7 @@ export function bootstrapApp<T>(app: Type<T>, rootInjector: Injector = new Injec
     
     Array.from(plugins.values()).forEach(plugin => appInjector.get(plugin));
 
-    return appInjector.get(app);
+    return [appInjector.get(app), appInjector];
 }
 
 function getAppDescriptor(module: Type<any>): AppDescriptor|undefined {
