@@ -29,8 +29,11 @@ export interface CommandSettings {
     /** An optional list of sub-commands */
     subcommands?: Type<Runnable>[];
     
-    /** An optional list of dependecy providers that will also be propagated to sub-commands */
+    /** An optional list of dependency injection providers that will also be propagated to sub-commands */
     providers?: Provider[]; 
+    
+    /** An optional list of plugins */
+    imports?: Type<any>[];
 }
 
 /** The type of the Command decorator */

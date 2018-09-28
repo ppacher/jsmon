@@ -1,6 +1,6 @@
-import {Injector, resolveForwardRef, Type} from '@jsmon/core';
+import {Injector, resolveForwardRef, Type, PluginBootstrap, Provider} from '@jsmon/core';
 import {Runnable} from './interfaces';
-import {resolveCommandTree, CommandTree} from './internal';
+import {resolveCommandTree} from './internal';
 import {Parser, CommandContext} from './parser';
 import {basename} from 'path';
 import {OptionSettings} from './decorators';
@@ -10,9 +10,9 @@ import {OptionSettings} from './decorators';
  * the {@type Runnable} class and all it's sub-commands. It may also serve help and version flags. Refer
  * to the {@type Command} decorator definitions for more information.
  * 
- * @param {Runnable} commandClass  - The class of the main command
- * @param {string[]} args - The command line flags to use. (default = process.argv) 
- * @param {Injector} parentInjector - An optional parent (root) injector to use. If none a new will be
+ * @param commandClass  - The class of the main command
+ * @param args - The command line flags to use. (default = process.argv) 
+ * @param parentInjector - An optional parent (root) injector to use. If none a new will be
  *                                    created
  */
 export function run(commandClass: Type<Runnable>, args?: string[], parentInjector?: Injector): Promise<void> {
@@ -61,7 +61,6 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
 
     const contexts = Parser.parse(args, commandTree);
     const mainCommand = contexts[0];
-    const finalCommand = contexts[contexts.length - 1];
     
     if (mainCommand.options['__version__']) {
         console.log(`${mainCommand.tree.version}`);
@@ -85,6 +84,7 @@ export function run(commandClass: Type<Runnable>, args?: string[], parentInjecto
 interface CommandInstances {
     instance: Runnable;
     injector: Injector;
+    plugins: any[];
 }
 
 function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, parentInjector: Injector = new Injector([])): CommandInstances[] {
@@ -93,7 +93,7 @@ function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, p
 
     // We provide 2 aliases for the command so it can be injected as @Parent(), @Parent('command-name') or using @Inject()
     // within the ctor (see @jsmon/core/di)
-    const injector = parentInjector.createChild([
+    const providers: Provider[] = [
         ... (command.tree.providers || []),
         command.tree.cls,
         {
@@ -104,9 +104,16 @@ function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, p
             provide: command.tree.name,
             useExisting: command.tree.cls,
         }
-    ]);
+    ]
+    
+    const resolvedPlugins = new PluginBootstrap(parentInjector).resolve(command.tree.imports || []);
 
-    const cmdInstance: Runnable = injector.get(command.tree.cls);
+    resolvedPlugins.providers.forEach(provider => providers.push(provider));
+
+    const injector = parentInjector.createChild(providers);
+
+    const plugins = resolvedPlugins.plugins.map(plugin => injector.get(plugin));
+    const cmdInstance = injector.get<Runnable>(command.tree.cls);
     
     Object.keys(command.options)
         .forEach(propertyKey => {
@@ -179,6 +186,7 @@ function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, p
     result.push({
         instance: cmdInstance,
         injector: injector,
+        plugins: plugins,
     });
 
     if (ctx.length === index + 1) {
