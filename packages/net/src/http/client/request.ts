@@ -79,6 +79,12 @@ export class HttpHeaders {
 
         return clone;
     }
+    
+    toObject(): {[key: string]: number | string | string[] | undefined} {
+        return {
+            ...this._headers
+        };
+    }
 }
 
 
@@ -156,6 +162,13 @@ export class QueryParams {
     forEach(cb: (name: string, values: any[]) => void): void {
         Object.keys(this._params).forEach(key => cb(key, this._params[key]));
     }
+
+    /**
+     * toObject returns a raw object representation of the query parameteres
+     */
+    toObject(): {[key: string]: any[]} {
+        return {...this._params};
+    }
 }
 
 /**
@@ -178,7 +191,7 @@ export interface HttpRequest {
     body?: any;
     
     /** An header object for the request */
-    headers?: HttpHeaders
+    headers?: HttpHeaders;
 
     responseType?: 'text'|'json';
 }

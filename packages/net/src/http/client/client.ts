@@ -1,8 +1,9 @@
 import {Optional, Inject, Injectable} from '@jsmon/core';
 import {Observable} from 'rxjs';
-import {HttpHeaders, HttpRequest, HttpJsonRequest, HttpTextRequest, HttpMethod, HttpVersion, QueryParams} from './request';
+import {HttpHeaders, HttpRequest, HttpJsonRequest, HttpTextRequest, HttpMethod, QueryParams} from './request';
 import {HttpResponse} from './response';
 import {HttpTransport, TransportOptions, NodeJSHttpTransport} from './transport';
+import {NodeJSQuerystringCodec, QueryParamCodec} from './codec';
 
 /**
  * RequestOptions holds additional options for HTTP requests
@@ -41,9 +42,14 @@ export interface PlainRequestOptions extends RequestOptions {
 
 @Injectable()
 export class HttpClient {
-    constructor(@Optional() @Inject(HttpTransport) private _transport: HttpTransport) {
+    constructor(@Optional() @Inject(HttpTransport) private _transport?: HttpTransport,
+                @Optional() @Inject(QueryParamCodec) private _queryCodec?: QueryParamCodec) {
+        if (!this._queryCodec) {
+            this._queryCodec = new NodeJSQuerystringCodec();
+        }
+        
         if (!this._transport) {
-            this._transport = new NodeJSHttpTransport();
+            this._transport = new NodeJSHttpTransport(this._queryCodec);
         }
     }
     
@@ -51,8 +57,45 @@ export class HttpClient {
     request<T>(request: HttpJsonRequest): Observable<T>;
     request(request: HttpTextRequest): Observable<string>;
     
-    request<T>(request: HttpRequest|HttpJsonRequest|HttpTextRequest): Observable<T> {
-        return null;
+    request(request: HttpRequest|HttpJsonRequest|HttpTextRequest): Observable<any> {
+        return new Observable<any>(observer => {
+            // Check content type
+            let contentType: string|null = null;
+            if (!!request.headers && request.headers.get('content-type').length > 0) {
+                contentType = request.headers.get('content-type')[0];
+            }
+            
+            if (contentType === null && request.body !== undefined) {
+                switch (typeof request.body) {
+                case 'string':
+                    contentType = 'plain/text';
+                    break;
+                default:
+                    contentType = 'application/json';
+                }
+            }
+            
+            if (request.body !== undefined) {
+                if (!!contentType) {
+                    if (contentType.includes('application/json')) {
+                        request.body = JSON.stringify(request.body);
+                    } else
+                    if (contentType.includes('plain/text') && typeof request.body !== 'string') {
+                        observer.error(`Invalid type for request.body. Expected 'string' but got '${typeof request.body}'`);
+                        return;
+                    }
+                }
+            } 
+            
+            let sub = this._transport!.send(request as HttpTextRequest)
+                .subscribe(response => {
+                    observer.next(response);
+                }, err => observer.error(err));
+
+            return () => {
+                sub.unsubscribe();
+            }
+        });
     }
     
     //
