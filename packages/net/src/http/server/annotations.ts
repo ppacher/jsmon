@@ -1,23 +1,22 @@
-import {makePropDecorator} from '@jsmon/core/utils';
+import {makePropDecorator, Type} from '@jsmon/core';
+import * as restify from 'restify';
 
 /** A set of allowed HTTP verbs */
 export type HttpVerb = 'get' | 'post' | 'put' | 'delete' | 'head' | 'trace' | 'patch';
 
 export interface RequestSettings {
     /** The method for the route */
-    method?: HttpVerb;
+    method: HttpVerb;
     
     /** the actual route */
     route: string;
-    
-    /** The accepted content type */
-    contentType?: string;
 }
 
 export interface HttpVerbDecorator {
-    (routeOrSettings: string|RequestSettings): any;
-    new (routeOrSettings: string|RequestSettings): Get;
+    (route: string): any;
+    new (route: string): Get;
 }
+
 
 export interface Get extends RequestSettings { method: 'get'; }
 export interface Post extends RequestSettings { method: 'post'; }
@@ -35,15 +34,31 @@ export const Put: HttpVerbDecorator = makePropDecorator('Put', makeHttpDecorator
 export const Delete: HttpVerbDecorator = makePropDecorator('Delete', makeHttpDecoratorHandler('delete'));
 export const Patch: HttpVerbDecorator = makePropDecorator('Patch', makeHttpDecoratorHandler('patch'));
 
-function makeHttpDecoratorHandler(method: HttpVerb): (routeOrSettings: string|RequestSettings) => RequestSettings {
-    return (routeOrSettings: string|RequestSettings) => {
-        if (typeof routeOrSettings === 'string') {
-            routeOrSettings = {
-                route: routeOrSettings,
-            }
-        }
-        
-        routeOrSettings.method = method;
-        return routeOrSettings;
+function makeHttpDecoratorHandler(method: HttpVerb): (route: string) => RequestSettings {
+    return (route: string) => {
+        return {
+            method: method,
+            route: route,
+        };
     }
 }
+
+//
+// Middleware decorators
+//
+
+export interface Middleware<T = any> {
+    handle(options: T, req: restify.Request, res: restify.Response, next: restify.Next): void;
+}
+
+export interface UseDecorator<T = any> {
+    (middleware: Type<Middleware<T>>|Middleware<T>, options?: any): any;
+    new (middleware: Type<Middleware<T>>|Middleware<T>, options?: any): Use<T>;
+}
+
+export interface Use<T = any> {
+    middleware: Type<Middleware<T>>|Middleware<T>;
+    options: T;
+}
+
+export const Use: UseDecorator<any> = makePropDecorator('Use', (middleware, options) => ({middleware, options}));

@@ -1,9 +1,9 @@
 import {Plugin} from '@jsmon/core';
-import {HTTPServer} from './server';
+import {HttpServer} from './server';
 
 @Plugin({
     providers: [
-        HTTPServer
+        HttpServer
     ]
 })
 export class HTTPServerPlugin {}

@@ -1,16 +1,9 @@
-import {Injectable, PROP_METADATA, Type} from '@jsmon/core';
-import {HttpVerb, RequestSettings, Get, Post, Put, Patch, Delete} from './annotations';
+import {Injectable, PROP_METADATA, Type, Inject, Optional, Logger, NoopLogAdapter, Injector, isType} from '@jsmon/core';
+import {RequestSettings, Get, Post, Put, Patch, Delete, Use, Middleware} from './annotations';
 import * as restify from 'restify';
 
+export const SERVER_OPTIONS = 'SERVER_OPTIONS';
 
-/** The definition of a request handler function  */
-export interface HTTPHandler {
-    (req: restify.Request, res: restify.Response): void;
-}
-
-export interface RemoveRouteFn {
-    (): void;
-};
 
 /**
  * HTTPServer provides a simple HTTP server interface
@@ -19,64 +12,100 @@ export interface RemoveRouteFn {
  * 
  */
 @Injectable()
-export class HTTPServer {
-    private _server: restify.Server;
-    
-    get server(): restify.Server {
-        return this._server;
+export class HttpServer {
+
+    /**
+     * Access to the actual restify server object
+     */
+    public readonly server: restify.Server;
+
+    constructor(@Inject(SERVER_OPTIONS) @Optional() options?: restify.ServerOptions,
+                @Optional() private _log: Logger = new Logger(new NoopLogAdapter),
+                @Optional() private _injector?: Injector) {
+
+        this._log = this._log.createChild('http-server');
+
+        this.server = restify.createServer(options);
+
+        this.server.pre((req: restify.Request, res: restify.Response, next: restify.Next) => {
+            this._log.info(`${req.method} ${req.url}`);
+            next();
+        });
     }
     
-    constructor() {
-        this._server = restify.createServer();
-        
-        this._server.use(restify.plugins.bodyParser({mapParams: false}));
-        this._server.use(restify.plugins.queryParser());
+    listen(...args: any[]): any {
+        return this.server.listen(...args);
     }
 
-    mount(handler: any): void {
-        const proto = Object.getPrototypeOf(handler);
-        const settings = getAnnotations(proto);
-    }
-    
-    /** Listen starts listening on incoming requests */
-    listen(where: number|string): void {
-        if (this._server.listening) {
-            throw new Error(`HTTPServer already listening`);
-        }
-        
-        this._server.listen(where);
-    }
-    
-    /** Registers a new listener for the given HTTP verb and URL */
-    register(verb: HttpVerb, route: RegExp|string|restify.RouteOptions, handler: HTTPHandler): RemoveRouteFn {
-        let m: Function = (this._server as any)[verb] as Function;
-
-        if (m === undefined) {
-            throw new Error(`Unsupported HTTP verb: ${verb}`);
-        }
-        
-        let h = (req: restify.Request, res: restify.Response, next: any) => {
-            try {
-                handler(req, res);
-            } catch (err) {
-                res.send(err);
+    mount(obj: any|Type<any>): restify.Route[] {
+        if (isType(obj)) {
+            if (!this._injector) {
+                throw new Error(`Cannot use type in call to mount() without an injector`);
             }
             
-            next(false);
+            obj = this._injector.get(obj);
         }
         
-        let result: restify.Route = m.apply(this._server, [route, handler]);
-
-        return () => {
-            // BUG(ppacher): according to typings it should be a string, according to docs we pass in the "blob" result of a mount call
-            // We CAN pass in the whole route
-            // TODO(ppacher): check if it removes all verb handlers, if so -> BUG
-            this._server.rm(result as any);
+        const proto = Object.getPrototypeOf(obj);
+        const handlers = getAnnotations(proto.constructor);
+        const routes: restify.Route[] = [];
+        
+        handlers.forEach(route => routes.push(this._createRoute(route, obj)));
+        
+        return routes;
+    }
+    
+    private _createRoute(spec: BoundRequestSettings, handler: any): restify.Route {
+        let handlerKey: keyof restify.Server;
+        switch(spec.method) {
+        case 'delete':
+            handlerKey = 'del';
+            break;
+        default:
+            handlerKey = spec.method as keyof restify.Server;
         }
+        
+        let fn = this.server[handlerKey] as Function;
+
+        const handlerClassName = Object.getPrototypeOf(handler).constructor.name;
+
+        
+        // setup the handler chain
+        const handlers: restify.RequestHandler[] = [];
+        
+        spec.middleware.forEach((use: Use) => {
+            let m: Middleware;
+
+            if (isType(use.middleware)) {
+                if (!this._injector) {
+                    throw new Error(`Cannot use middleware type ${use.middleware.name} without an injector`);
+                }
+                
+                m = this._injector.get<Middleware>(use.middleware);
+            } else {
+                m = use.middleware;
+            }
+
+            handlers.push((req: restify.Request, res: restify.Response, next: restify.Next) => {
+                return m.handle(use.options, req, res, next);
+            });
+        });
+
+        handlers.push(
+            handler[spec.propertyKey].bind(handler)
+        );
+
+        this._log.info(`Mounting ${handlerClassName}.${spec.propertyKey} on "${spec.method} ${spec.route}"`);
+        
+        return fn!.apply(this.server, [
+            spec.route,
+            ...handlers
+        ]);
     }
 }
 
 interface BoundRequestSettings extends  RequestSettings {
+    middleware: Use[];
     propertyKey: string;
 }
 
@@ -89,19 +118,22 @@ function getAnnotations(cls: Type<any>): BoundRequestSettings[] {
     
     Object.keys(annotations.value)
         .forEach(key => {
-            const opt: any[] = annotations.value[key].filter((a: any) => {
+            const verbs: any[] = annotations.value[key].filter((a: any) => {
                 return a instanceof Get ||
                        a instanceof Post ||
                        a instanceof Put ||
                        a instanceof Patch ||
                        a instanceof Delete;
             });
-
-            if (opt.length === 0) { return; }
             
-            opt.forEach(setting => settings.push({
+            const middlewares: Use[] = annotations.value[key].filter((a: any) => a instanceof Use);
+
+            if (verbs.length === 0) { return; }
+            
+            verbs.forEach(setting => settings.push({
                 ...setting,
                 propertyKey: key,
+                middleware: middlewares,
             }));
         });
 
