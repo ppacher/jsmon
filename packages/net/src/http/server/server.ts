@@ -1,4 +1,4 @@
-import {Injectable, PROP_METADATA, Type, Inject, Optional, Logger, NoopLogAdapter, Injector, isType} from '@jsmon/core';
+import {Injectable, PROP_METADATA, Type, Inject, Optional, Logger, NoopLogAdapter, Injector, isType, ProviderToken, InjectionToken} from '@jsmon/core';
 import {RequestSettings, Get, Post, Put, Patch, Delete, Use, Middleware} from './annotations';
 import * as restify from 'restify';
 
@@ -8,8 +8,7 @@ export const SERVER_OPTIONS = 'SERVER_OPTIONS';
 /**
  * HTTPServer provides a simple HTTP server interface
  * 
- * It basically wraps the `restify` package.
- * 
+ * Wraps the {@link restify.Server} class and uses {@link restify#createServer}
  */
 @Injectable()
 export class HttpServer {
@@ -33,11 +32,44 @@ export class HttpServer {
         });
     }
     
+    /**
+     * Start listening
+     * Wraps {@link restify.Server#listen}
+     */
     listen(...args: any[]): any {
         return this.server.listen(...args);
     }
 
-    mount(obj: any|Type<any>): restify.Route[] {
+    /**
+     * Mounts an object or class on a given prefix
+     * 
+     * @param prefix - The path prefix to use
+     * @param obj - The object or class that should be mounted on the prefix
+     */
+    mount(prefix: string, obj: any|ProviderToken<any>): restify.Route[];
+    
+    /**
+     * Mounts an object or class on the HttpServer root path
+     * 
+     * @param obj - The object or class to mount
+     */
+    mount(obj: any|ProviderToken<any>): restify.Route[];
+    
+    mount(...args: any[]): restify.Route[] {
+        let obj: any|ProviderToken<any>;
+        let prefix: string;
+        
+        if (args.length === 2) {
+            prefix = args[0];
+            obj = args[1];
+        } else
+        if (args.length === 1) {
+            prefix = '';
+            obj = args[0];
+        } else {
+            throw new Error(`Invalid number of arguments`);
+        }
+    
         if (isType(obj)) {
             if (!this._injector) {
                 throw new Error(`Cannot use type in call to mount() without an injector`);
@@ -50,12 +82,12 @@ export class HttpServer {
         const handlers = getAnnotations(proto.constructor);
         const routes: restify.Route[] = [];
         
-        handlers.forEach(route => routes.push(this._createRoute(route, obj)));
+        handlers.forEach(route => routes.push(this._createRoute(prefix, route, obj)));
         
         return routes;
     }
     
-    private _createRoute(spec: BoundRequestSettings, handler: any): restify.Route {
+    private _createRoute(prefix: string, spec: BoundRequestSettings, handler: any): restify.Route {
         let handlerKey: keyof restify.Server;
         switch(spec.method) {
         case 'delete':
@@ -76,7 +108,7 @@ export class HttpServer {
         spec.middleware.forEach((use: Use) => {
             let m: Middleware;
 
-            if (isType(use.middleware)) {
+            if (isType(use.middleware) || use.middleware instanceof InjectionToken) {
                 if (!this._injector) {
                     throw new Error(`Cannot use middleware type ${use.middleware.name} without an injector`);
                 }
@@ -98,7 +130,7 @@ export class HttpServer {
         this._log.info(`Mounting ${handlerClassName}.${spec.propertyKey} on "${spec.method} ${spec.route}"`);
         
         return fn!.apply(this.server, [
-            spec.route,
+            prefix + spec.route,
             ...handlers
         ]);
     }

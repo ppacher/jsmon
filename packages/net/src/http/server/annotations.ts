@@ -1,4 +1,4 @@
-import {makePropDecorator, Type} from '@jsmon/core';
+import {makePropDecorator, ProviderToken} from '@jsmon/core';
 import * as restify from 'restify';
 
 /** A set of allowed HTTP verbs */
@@ -52,12 +52,12 @@ export interface Middleware<T = any> {
 }
 
 export interface UseDecorator<T = any> {
-    (middleware: Type<Middleware<T>>|Middleware<T>, options?: any): any;
-    new (middleware: Type<Middleware<T>>|Middleware<T>, options?: any): Use<T>;
+    (middleware: ProviderToken<Middleware<T>>|Middleware<T>, options?: any): any;
+    new (middleware: ProviderToken<Middleware<T>>|Middleware<T>, options?: any): Use<T>;
 }
 
 export interface Use<T = any> {
-    middleware: Type<Middleware<T>>|Middleware<T>;
+    middleware: ProviderToken<Middleware<T>>|Middleware<T>;
     options: T;
 }
 
