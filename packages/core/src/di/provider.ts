@@ -1,7 +1,17 @@
 import {Type} from './type';
 
+export class InjectionToken<T> {
+    constructor(public readonly name: string) {}
+    
+    toString() {
+        return `InjectionToken<${this.name}>`;
+    }
+}
+
+export type ProviderToken<T> = Type<T> | InjectionToken<T>;
+
 export interface ValueProvider<T> {
-    provide: any;
+    provide: ProviderToken<T>;
     
     useValue: T;
 
@@ -9,7 +19,7 @@ export interface ValueProvider<T> {
 };
 
 export interface ClassProvider<T> {
-    provide: any;
+    provide: ProviderToken<T>;
     
     useClass: Type<T>;
     
@@ -17,7 +27,7 @@ export interface ClassProvider<T> {
 }
 
 export interface FactoryProvider<T> {
-    provide: any;
+    provide: ProviderToken<T>;
 
     useFactory: (...args: any[]) => T
     
@@ -27,7 +37,7 @@ export interface FactoryProvider<T> {
 }
 
 export interface ExistingProvider<T> {
-    provide: any;
+    provide: ProviderToken<T>;
 
     useExisting: any;
     

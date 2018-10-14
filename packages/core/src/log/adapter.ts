@@ -1,9 +1,9 @@
-import {Provider, isType, Type} from '../di';
+import {Provider, isType, Type, InjectionToken} from '../di';
 
 /**
  * Injection Token for the Logging Adapter
  */
-export const LoggingAdapter = 'LogginAdapter';
+export const LoggingAdapter = new InjectionToken<LoggingAdapter>('LogginAdapter');
 
 /**
  * Valid log levels

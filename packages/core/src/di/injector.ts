@@ -1,6 +1,6 @@
 import {ResolvedDependency, ResolvedProvider, resolveProvider} from './resolved_provider';
 import {ProviderKey} from './key';
-import {Provider} from './provider';
+import {Provider, ProviderToken} from './provider';
 import {Type} from './type';
 
 const _UNDEFINED = new Object();
@@ -46,7 +46,7 @@ export class Injector {
         this._provide(providers);
     }
     
-    public get<T>(token: Type<T>|any, notFound: any = _THROW_NOT_FOUND): T {
+    public get<T>(token: ProviderToken<T>, notFound: any = _THROW_NOT_FOUND): T {
         let key = ProviderKey.get(token);
 
         return this._getByKeyBubble(key, notFound);
@@ -152,7 +152,7 @@ export class Injector {
         }
 
         if (!!inj) {
-            return inj!.get(key, notFound);
+            return inj!.get(key as any, notFound);
         }
         
         if (notFound === _THROW_NOT_FOUND) {
