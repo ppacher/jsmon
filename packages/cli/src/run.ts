@@ -1,9 +1,11 @@
-import {Injector, resolveForwardRef, Type, PluginBootstrap, Provider} from '@jsmon/core';
+import {Injector, resolveForwardRef, Type, PluginBootstrap, Provider, InjectionToken} from '@jsmon/core';
 import {Runnable} from './interfaces';
 import {resolveCommandTree} from './internal';
 import {Parser, CommandContext} from './parser';
 import {basename} from 'path';
 import {OptionSettings} from './decorators';
+
+const PARENT = new InjectionToken<Runnable>('__PARENT__');
 
 /**
  * Run parses the given args (or uses process.argv) and executes the specified command by searching through
@@ -97,7 +99,7 @@ function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, p
         ... (command.tree.providers || []),
         command.tree.cls,
         {
-            provide: '__PARENT__',
+            provide: PARENT,
             useExisting: command.tree.cls
         },
         {
@@ -140,7 +142,7 @@ function createCommands(index: number, ctx: CommandContext[], isHelp: boolean, p
             let instance: Runnable;
             
             if (type === null) {
-                instance = parentInjector.get<Runnable>('__PARENT__') ;
+                instance = parentInjector.get<Runnable>(PARENT) ;
             } else {
                 instance = injector.get<Runnable>(type);
             }
