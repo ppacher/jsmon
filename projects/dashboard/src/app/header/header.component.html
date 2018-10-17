@@ -1,8 +1,0 @@
-<a routerLink="/dashboard" routerLinkActive="active" mat-button>Dashboard</a>
-<a routerLink="/devices" routerLinkActive="active" mat-button>Devices</a>
-
-<button class="theme-button" matTooltip="Change color theme" matTooltipPosition="after" mat-flat-button [matMenuTriggerFor]="menu">Theme</button>
-
-<mat-menu #menu>
-    <button mat-menu-item *ngFor="let theme of _themes" (click)="_switchTheme(theme)">{{theme.name}}</button>
-</mat-menu>

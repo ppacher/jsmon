@@ -46,6 +46,7 @@ export class Injector {
         this._provide(providers);
     }
     
+    public get<T>(token: any, notFound?: any): T;
     public get<T>(token: ProviderToken<T>, notFound: any = _THROW_NOT_FOUND): T {
         let key = ProviderKey.get(token);
 

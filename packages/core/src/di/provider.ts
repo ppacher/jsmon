@@ -11,7 +11,7 @@ export class InjectionToken<T> {
 export type ProviderToken<T> = Type<T> | InjectionToken<T>;
 
 export interface ValueProvider<T> {
-    provide: ProviderToken<T>;
+    provide: any;
     
     useValue: T;
 
@@ -19,7 +19,7 @@ export interface ValueProvider<T> {
 };
 
 export interface ClassProvider<T> {
-    provide: ProviderToken<T>;
+    provide: any;
     
     useClass: Type<T>;
     
@@ -27,7 +27,7 @@ export interface ClassProvider<T> {
 }
 
 export interface FactoryProvider<T> {
-    provide: ProviderToken<T>;
+    provide: any;
 
     useFactory: (...args: any[]) => T
     
@@ -37,7 +37,7 @@ export interface FactoryProvider<T> {
 }
 
 export interface ExistingProvider<T> {
-    provide: ProviderToken<T>;
+    provide: any;
 
     useExisting: any;
     
