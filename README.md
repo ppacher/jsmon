@@ -1,14 +1,6 @@
-# JsMon
+# jsmon
 
-JsMon started as a private home automation platform but has become a framework for rapid application development
-supporting dependency injection (`@jsmon/core`, based on and similar to Angular), a decorator based commandline
-client framework (`@jsmon/cli`) and a package to support home automation systems (`@jsmon/platform`). For the home-automation
-system, there is already a set usable of plugins and platforms (FireTv, Weather-information via DarkSky.net, MPD, support for the TinkerForge
-platfrom and more).
-
-See the (still in progress) documentation for more information.
-
----
+Description to be added ;)
 
 # License
 
