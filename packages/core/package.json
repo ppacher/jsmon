@@ -1,7 +1,7 @@
 {
   "name": "@jsmon/core",
   "version": "0.0.1",
-  "description": "Rapid home-automation development framework",
+  "description": "Rapid development framework",
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json dist/",
