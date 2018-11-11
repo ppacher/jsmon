@@ -44,7 +44,15 @@ function Restrict(permission: RestrictParamConfig): any {
 class Foo {
 
     @Restrict({name: 'name', value: 'admin'})
-    @Get('/hello/:name')
+    @Get('/hello/:name', {
+        parameters: {
+            name: {
+                type: 'string',
+                description: 'The name to return',
+                regex: /.+/
+            }
+        }
+    })
     hello(req: Request, res: Response, next: Next) {
         res.send('Hello ' + req.params.name);
         next();

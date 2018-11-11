@@ -1,5 +1,6 @@
-import {makePropDecorator, ProviderToken} from '@jsmon/core';
+import {makePropDecorator, ProviderToken, Type} from '@jsmon/core';
 import * as restify from 'restify';
+import { RouteDefinition } from './parameters';
 
 /** A set of allowed HTTP verbs */
 export type HttpVerb = 'get' | 'post' | 'put' | 'delete' | 'head' | 'trace' | 'patch';
@@ -10,11 +11,14 @@ export interface RequestSettings {
     
     /** the actual route */
     route: string;
+    
+    /** A definition for the route */
+    definition?: RouteDefinition; 
 }
 
 export interface HttpVerbDecorator {
-    (route: string): any;
-    new (route: string): Get;
+    (route: string, def?: RouteDefinition): any;
+    new (route: string, def?: RouteDefinition): Get;
 }
 
 
@@ -34,11 +38,12 @@ export const Put: HttpVerbDecorator = makePropDecorator('Put', makeHttpDecorator
 export const Delete: HttpVerbDecorator = makePropDecorator('Delete', makeHttpDecoratorHandler('delete'));
 export const Patch: HttpVerbDecorator = makePropDecorator('Patch', makeHttpDecoratorHandler('patch'));
 
-function makeHttpDecoratorHandler(method: HttpVerb): (route: string) => RequestSettings {
-    return (route: string) => {
+function makeHttpDecoratorHandler(method: HttpVerb): (route: string, def?: RouteDefinition) => RequestSettings {
+    return (route: string, def?: RouteDefinition) => {
         return {
             method: method,
             route: route,
+            definition: def,
         };
     }
 }
