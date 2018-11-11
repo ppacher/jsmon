@@ -24,8 +24,10 @@ export class HttpServerTestBed {
         return this._client;
     }
 
-    dispose() {
-        this._server.server.close();
+    dispose(): Promise<void> {
+        return new Promise((resolve) => {
+            this._server.server.close(resolve);
+        });
     }
     
     hasRoute(path: string) {
