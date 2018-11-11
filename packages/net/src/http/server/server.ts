@@ -94,6 +94,13 @@ export class HttpServer {
     listen(...args: any[]): any {
         return this.server.listen(...args);
     }
+    
+    /**
+     * Returns the listening address of the server
+     */
+    address(): restify.AddressInterface {
+        return this.server.address();
+    }
 
     /**
      * Mounts an object or class on a given prefix
