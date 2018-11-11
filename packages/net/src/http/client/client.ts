@@ -1,205 +1,170 @@
-import {Optional, Inject, Injectable} from '@jsmon/core';
-import {Observable} from 'rxjs';
-import {HttpHeaders, HttpRequest, HttpJsonRequest, HttpTextRequest, HttpMethod, QueryParams} from './request';
-import {HttpResponse} from './response';
-import {HttpTransport, TransportOptions, NodeJSHttpTransport} from './transport';
-import {NodeJSQuerystringCodec, QueryParamCodec} from './codec';
+import { Logger } from '@jsmon/core';
+import { HttpVerb } from '../server';
+import request from 'request-promise-native';
+import { OptionsWithUrl } from 'request';
 
 /**
- * RequestOptions holds additional options for HTTP requests
+ * Options for the HTTP client
  */
-export interface RequestOptions {
-    /**
-     * The expected content type. If set, the HttpClient will automatically
-     * parse the response into the appropriate format
-     */
-    responseType?: 'json'|'text';
+export interface HttpClientOptions {
+    /** A name for the logger, default to "http-client" if not set */
+    loggerName?: string;
+
+    /** The base endpoint address for the HttpClient */
+    baseURL: string;
     
-    /**
-     * Additional HTTP headers for the request
-     */
-    headers?: HttpHeaders;
+    /** Whether or not certificates should be validated */
+    insecure?: boolean;
     
-    /**
-     * Options for handling the HTTP transport
-     */
-    transport?: TransportOptions;
+    /** Additional headers to send with each request */
+    headers?: {[key: string]: string|string[]};
+    
+    /** An optional request timeout in milliseconds */
+    timeout?: number;
 }
 
-/**
- * RequestOptions that expect a JSON result. For type-safety only
- */
-export interface JSONRequestOptions extends RequestOptions {
-    responseType: 'json';
+export interface QueryParams {
+    [key: string]: any;
 }
 
-/**
- * RequestOptions that expect a text result. For type-safety only
- */
-export interface PlainRequestOptions extends RequestOptions {
-    responseType: 'text';
-}
-
-@Injectable()
 export class HttpClient {
-    constructor(@Optional() @Inject(HttpTransport) private _transport?: HttpTransport,
-                @Optional() @Inject(QueryParamCodec) private _queryCodec?: QueryParamCodec) {
-        if (!this._queryCodec) {
-            this._queryCodec = new NodeJSQuerystringCodec();
-        }
+    constructor(private _options: HttpClientOptions,
+                private _log: Logger) {
+        this._log = this._log.createChild(this._options.loggerName || 'http-client');
         
-        if (!this._transport) {
-            this._transport = new NodeJSHttpTransport(this._queryCodec);
+        if (!this._options.baseURL.endsWith('/')) {
+            this._options.baseURL += '/';
         }
     }
     
-    request(request: HttpRequest): Observable<HttpResponse>;
-    request<T>(request: HttpJsonRequest): Observable<T>;
-    request(request: HttpTextRequest): Observable<string>;
+    /**
+     * Sends a GET request
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param queryParams - Additional query parameters
+     */
+    get<T>(endpoint: string, queryParams?: QueryParams): Promise<T> {
+        return this.request('get', endpoint, queryParams);
+    }
     
-    request(request: HttpRequest|HttpJsonRequest|HttpTextRequest): Observable<any> {
-        return new Observable<any>(observer => {
-            // Check content type
-            let contentType: string|null = null;
-            if (!!request.headers && request.headers.get('content-type').length > 0) {
-                contentType = request.headers.get('content-type')[0];
+    /**
+     * Sends a POST request with a given body
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param body - The request body
+     */
+    post<T>(endpoint: string, body?: any): Promise<T>;
+    
+    /**
+     * Sends a POST request with a given body and query parameters
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param queryParams - The query paramters
+     * @param body - The request body
+     */
+    post<T>(endpoint: string, queryParams?: QueryParams, body?: any): Promise<T>;
+    
+    /**
+     * @internal
+     * The actual implementation for post
+     */
+    post<T>(endpoint: string, queryParamsOrBody?: any, body?: any): Promise<T> {
+        console.log("======POST", endpoint, queryParamsOrBody, body);
+        return this.request('post', endpoint, queryParamsOrBody, body);
+    }
+    
+    /**
+     * Sends a PUT request with the given body
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param body  - The request body
+     */
+    put<T>(endpoint: string, body?: any): Promise<T>;
+    
+    /**
+     * Sends a PUT request with the given body and query strings
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param queryParams - The query paramters
+     * @param body  - The request body
+     */
+    put<T>(endpoint: string, queryParams?: QueryParams, body?: any): Promise<T>;
+    
+    /**
+     * @internal
+     * The acutal implementation for put
+     */
+    put<T>(endpoint: string, queryParamsOrBody?: any, body?: any): Promise<T> {
+        return this.request('put', endpoint, queryParamsOrBody, body);
+    }
+    
+    /**
+     * Sends a DELETE request with the given body (if any)
+     * 
+     * @param endpoint - The endpoint for the request
+     * @param body - The request body (if any)
+     */
+    delete<T>(endpoint: string, queryParams?: QueryParams, body?: any): Promise<T> {
+        return this.request('delete', endpoint, queryParams, body);
+    }
+    
+
+    request<T>(method: 'get', endpoint: string, queryParams?: QueryParams): Promise<T>;
+    request<T>(method: 'delete', endpoint: string, queryParams?: QueryParams, body?: any): Promise<T>;
+    request<T>(method: 'put', endpoint: string, queryParams?: QueryParams, body?: any): Promise<T>;
+    request<T>(method: 'put', endpoint: string, body?: any): Promise<T>;
+    request<T>(method: 'post', endpoint: string, queryParams?: QueryParams, body?: any): Promise<T>;
+    request<T>(method: 'post', endpoint: string, body?: any): Promise<T>;
+    
+
+    request(method: HttpVerb, endpoint: string, queryParamsOrBody?: QueryParams|any, body?: any): Promise<any> {
+        let queryParams: QueryParams | undefined = undefined;
+        let actualBody: any | undefined = undefined;
+
+
+        if (method === 'get') {
+            if (body !== undefined) {
+                throw new Error(`Body not allowed for 'GET' method`);
             }
             
-            if (contentType === null && request.body !== undefined) {
-                switch (typeof request.body) {
-                case 'string':
-                    contentType = 'plain/text';
-                    break;
-                default:
-                    contentType = 'application/json';
-                }
-            }
-            
-            if (request.body !== undefined) {
-                if (!!contentType) {
-                    if (contentType.includes('application/json')) {
-                        request.body = JSON.stringify(request.body);
-                    } else
-                    if (contentType.includes('plain/text') && typeof request.body !== 'string') {
-                        observer.error(`Invalid type for request.body. Expected 'string' but got '${typeof request.body}'`);
-                        return;
-                    }
-                }
-            } 
-            
-            let sub = this._transport!.send(request as HttpTextRequest)
-                .subscribe(response => {
-                    observer.next(response);
-                }, err => observer.error(err));
-
-            return () => {
-                sub.unsubscribe();
-            }
-        });
-    }
-    
-    //
-    // GET method calls
-    //
-
-    get(url: string, opts?: RequestOptions): Observable<HttpResponse>;
-    get(url: string, opts?: PlainRequestOptions): Observable<string>;
-    get<T>(url: string, opts?: JSONRequestOptions): Observable<T>;
-    get(url: string, queryParams?: QueryParams, opts?: RequestOptions): Observable<HttpResponse>;
-    get(url: string, queryParams?: QueryParams, opts?: PlainRequestOptions): Observable<string>;
-    get<T>(url: string, queryParams?: QueryParams, opts?: JSONRequestOptions): Observable<T>;
-    
-    get(url: string, queryOrOpts?: RequestOptions|QueryParams, opts?: RequestOptions): Observable<any> {
-        return this.request(this._buildRequest('get', url, queryOrOpts, opts));
-    }
-     
-    //
-    // DELETE method calls
-    //
-
-    delete(url: string, opts?: RequestOptions): Observable<HttpResponse>;
-    delete(url: string, opts?: PlainRequestOptions): Observable<string>;
-    delete<T>(url: string, opts?: JSONRequestOptions): Observable<T>;
-    delete(url: string, queryParams?: QueryParams, opts?: RequestOptions): Observable<HttpResponse>;
-    delete(url: string, queryParams?: QueryParams, opts?: PlainRequestOptions): Observable<string>;
-    delete<T>(url: string, queryParams?: QueryParams, opts?: JSONRequestOptions): Observable<T>;  
-    
-    delete(url: string, queryOrOpts?: RequestOptions|QueryParams, opts?: RequestOptions): Observable<any> {
-        return this.request(this._buildRequest('delete', url, queryOrOpts, opts));
-    }
-    
-    //
-    // POST method calls
-    //
-
-    post(url: string, body: any, opts?: RequestOptions): Observable<HttpResponse>;
-    post(url: string, body: any, opts?: PlainRequestOptions): Observable<string>;
-    post<T>(url: string, body: any, opts?: JSONRequestOptions): Observable<T>;
-    post(url: string, body: any, queryParams?: QueryParams, opts?: RequestOptions): Observable<HttpResponse>;
-    post(url: string, body: any, queryParams?: QueryParams, opts?: PlainRequestOptions): Observable<string>;
-    post<T>(url: string, body: any, queryParams?: QueryParams, opts?: JSONRequestOptions): Observable<T>;
-    
-    post(url: string, body: any, queryOrOpts?: QueryParams|RequestOptions, opts?: RequestOptions): Observable<any> {
-        return this.request(this._buildRequest('post', url, queryOrOpts, opts, body));
-    }
-
-    //
-    // PUT method calls
-    //
-
-    put(url: string, body: any, opts?: RequestOptions): Observable<HttpResponse>;
-    put(url: string, body: any, opts?: PlainRequestOptions): Observable<string>;
-    put<T>(url: string, body: any, opts?: JSONRequestOptions): Observable<T>;
-    put(url: string, body: any, queryParams?: QueryParams, opts?: RequestOptions): Observable<HttpResponse>;
-    put(url: string, body: any, queryParams?: QueryParams, opts?: PlainRequestOptions): Observable<string>;
-    put<T>(url: string, body: any, queryParams?: QueryParams, opts?: JSONRequestOptions): Observable<T>;
-    
-    put(url: string, body: any, queryOrOpts?: QueryParams|RequestOptions, opts?: RequestOptions): Observable<any> {
-        return this.request(this._buildRequest('put', url, queryOrOpts, opts, body));
-    }
-
-    //
-    // PATCH method calls
-    //
-
-    patch(url: string, body: any, opts?: RequestOptions): Observable<HttpResponse>;
-    patch(url: string, body: any, opts?: PlainRequestOptions): Observable<string>;
-    patch<T>(url: string, body: any, opts?: JSONRequestOptions): Observable<T>;
-    patch(url: string, body: any, queryParams?: QueryParams, opts?: RequestOptions): Observable<HttpResponse>;
-    patch(url: string, body: any, queryParams?: QueryParams, opts?: PlainRequestOptions): Observable<string>;
-    patch<T>(url: string, body: any, queryParams?: QueryParams, opts?: JSONRequestOptions): Observable<T>;
-    
-    patch(url: string, body: any, queryOrOpts?: QueryParams|RequestOptions, opts?: RequestOptions): Observable<any> {
-         return this.request(this._buildRequest('patch', url, queryOrOpts, opts, body));       
-    }
-    
-    private _buildRequest(method: HttpMethod, url: string, queryOrOpts?: QueryParams|RequestOptions, opts?: RequestOptions, body?: any): HttpRequest {
-        let queryParams: QueryParams|undefined = undefined;
-        let options: RequestOptions|undefined = undefined;
-        
-        if (queryOrOpts !== undefined) {
-            if (queryOrOpts instanceof QueryParams) {
-                queryParams = queryOrOpts;
+            queryParams = queryParamsOrBody;
+        } else
+        if (method === 'post' || method === 'put') {
+            if (body === undefined) {
+                actualBody = queryParamsOrBody;
             } else {
-                options = queryOrOpts;
+                queryParams = queryParamsOrBody;
+                actualBody = body;
             }
+        } else
+        if (method === 'delete') {
+            queryParams = queryParamsOrBody;
+            actualBody = body;
         }
         
-        if (!!opts) {
-            if (!!options) {
-                throw new Error(`Multiple request options specified`);
-            }
-            options = opts;
+        const options = this._getRequestOptions(method, endpoint, queryParams, actualBody)
+
+        return request(options)
+            .catch(err => {
+                this._log.error(`${method} ${options.url}: ${err}`);
+                
+                throw err;
+            });
+    }
+    
+    private _getRequestOptions(method: string, endpoint: string, queryParams?: QueryParams, body?: any): OptionsWithUrl  {
+        if (endpoint.startsWith('/')) {
+            endpoint = endpoint.slice(1);
         }
-        
         return {
-            version: 'http/1.1',
-            url: url,
+            url: `${this._options.baseURL}${endpoint}`,
+            qs: queryParams,
+            json: true,
             method: method,
-            responseType: !!options ? options.responseType : undefined,
-            queryParams: queryParams,
-            headers: !!options ? options.headers : undefined,
-            body: body
-        };
+            body: body,
+            headers: this._options.headers,
+            rejectUnauthorized: this._options.insecure,
+            timeout: this._options.timeout
+        }
     }
 }
