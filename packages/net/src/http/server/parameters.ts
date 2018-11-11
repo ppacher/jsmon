@@ -5,11 +5,13 @@ import { Type, ForwardRef, makePropDecorator, makeDecorator } from '@jsmon/core'
 //
 
 export interface DefinitionDecorator {
-    (): any;
-    new (): Definition;
+    (description?: string): any;
+    new (description?: string): Definition;
 }
-export interface Definition{}
-export const Definition: DefinitionDecorator = makeDecorator('Definition');
+export interface Definition{
+    description?: string;
+}
+export const Definition: DefinitionDecorator = makeDecorator('Definition', description => ({description}));
 
 //
 // Required decorator
@@ -41,7 +43,7 @@ export interface PropertyOptions {
 
 export interface ArrayPropertyOptions extends PropertyOptions {
     type?: 'array';
-    items: Type<any> | ForwardRef<any> | PrimitiveType;
+    items?: Type<any> | ForwardRef<any> | PrimitiveType;
 }
 
 export interface StringPropertyOptions extends PropertyOptions {
@@ -57,7 +59,7 @@ export interface NumberPropertyOptions extends PropertyOptions {
 
 export interface ObjectPropertyOptions extends PropertyOptions {
     type?: 'object';
-    classType: Type<any> | ForwardRef<any>;
+    classType?: Type<any> | ForwardRef<any>;
 }
 
 export interface BooleanPropertyOptions extends PropertyOptions {
@@ -127,8 +129,6 @@ export const Property: PropertyDecorator = makePropDecorator('Property', (type?:
     };
 });
 
-export interface RouteDefinition {}
-
 //
 // Resolved Properties
 //
@@ -176,3 +176,26 @@ export type ResolvedProperty = ResolvedStringProperty
                              | ResolvedNumberProperty
                              | ResolvedArrayProperty
                              | ResolvedObjectProperty;
+
+export interface RouteDefinition {
+    /** A description for the route */
+    description?: string;
+    
+    /** Route parameter definitions */
+    parameters?: {
+        [key: string]: PropertyType |
+                       ResolvedStringProperty | 
+                       ResolvedNumberProperty | 
+                       ResolvedBooleanProperty;
+    }
+    
+    /** The expected body type */
+    body?: PropertyType |
+           Type<any> |
+           ForwardRef<any> |
+           ResolvedStringProperty |
+           ResolvedNumberProperty |
+           ResolvedBooleanProperty |
+           ResolvedArrayProperty |
+           ResolvedObjectProperty;
+}

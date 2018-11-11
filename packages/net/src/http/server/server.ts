@@ -1,6 +1,8 @@
 import {Injectable, PROP_METADATA, Type, Inject, Optional, Logger, NoopLogAdapter, Injector, isType, ProviderToken, InjectionToken} from '@jsmon/core';
 import {RequestSettings, Get, Post, Put, Patch, Delete, Use, Middleware} from './annotations';
 import * as restify from 'restify';
+import { ResolvedProperty, ResolvedPropertyRef } from './parameters';
+import { DefinitionResolver } from './parameter-internals';
 
 export const SERVER_OPTIONS = 'SERVER_OPTIONS';
 
@@ -12,6 +14,7 @@ export const SERVER_OPTIONS = 'SERVER_OPTIONS';
  */
 @Injectable()
 export class HttpServer {
+    private _routes: Map<any, BoundRequestSettings> = new Map();
 
     /**
      * Access to the actual restify server object
@@ -26,9 +29,8 @@ export class HttpServer {
 
         this.server = restify.createServer(options);
 
-        this.server.pre((req: restify.Request, res: restify.Response, next: restify.Next) => {
-            this._log.info(`${req.method} ${req.url}`);
-            next();
+        this.server.on('after', (req: restify.Request, res: restify.Response) => {
+            this._log.info(`${res.statusCode} ${req.method} ${req.url}`);
         });
     }
     
@@ -79,7 +81,8 @@ export class HttpServer {
         }
         
         const proto = Object.getPrototypeOf(obj);
-        const handlers = getAnnotations(proto.constructor);
+        // TODO(ppacher): make definition resolve configurable
+        const handlers = getAnnotations(proto.constructor, DefinitionResolver.default);
         const routes: restify.Route[] = [];
         
         handlers.forEach(route => routes.push(this._createRoute(prefix, route, obj)));
@@ -123,11 +126,14 @@ export class HttpServer {
             });
         });
 
+        const mainHandler = handler[spec.propertyKey].bind(handler);
         handlers.push(
-            handler[spec.propertyKey].bind(handler)
+            mainHandler
         );
 
-        this._log.info(`Mounting ${handlerClassName}.${spec.propertyKey} on "${spec.method} ${spec.route}"`);
+        this._routes.set(mainHandler, spec);
+
+        this._log.info(`Mounting ${handlerClassName}.${spec.propertyKey} on "${spec.method} ${prefix}${spec.route}"`);
         
         return fn!.apply(this.server, [
             prefix + spec.route,
@@ -136,12 +142,16 @@ export class HttpServer {
     }
 }
 
-interface BoundRequestSettings extends  RequestSettings {
+export interface BoundRequestSettings extends  RequestSettings {
     middleware: Use[];
     propertyKey: string;
+    parameters: {
+        [key: string]: ResolvedProperty;
+    },
+    body?: ResolvedProperty | ResolvedPropertyRef;
 }
 
-function getAnnotations(cls: Type<any>): BoundRequestSettings[] {
+export function getAnnotations(cls: Type<any>, resolver: DefinitionResolver): BoundRequestSettings[] {
     const annotations = Reflect.getOwnPropertyDescriptor(cls, PROP_METADATA);
     const settings: BoundRequestSettings[] = [];
     if (annotations === undefined) {
@@ -150,7 +160,7 @@ function getAnnotations(cls: Type<any>): BoundRequestSettings[] {
     
     Object.keys(annotations.value)
         .forEach(key => {
-            const verbs: any[] = annotations.value[key].filter((a: any) => {
+            const verbs: RequestSettings[] = annotations.value[key].filter((a: any) => {
                 return a instanceof Get ||
                        a instanceof Post ||
                        a instanceof Put ||
@@ -162,11 +172,52 @@ function getAnnotations(cls: Type<any>): BoundRequestSettings[] {
 
             if (verbs.length === 0) { return; }
             
-            verbs.forEach(setting => settings.push({
-                ...setting,
-                propertyKey: key,
-                middleware: middlewares,
-            }));
+            verbs.forEach(setting => {
+                let parameters: {
+                    [key: string]: ResolvedProperty;
+                } = {};
+                let bodyDef: any;
+
+                if (setting.definition) {
+                    Object.keys(setting.definition.parameters || {})
+                        .forEach(parameterName => {
+                            const def = setting.definition!.parameters![parameterName];
+                            let resolved: any;
+
+                            if (typeof def === 'string') {
+                                resolved = {
+                                    type: def,
+                                }
+                            } else {
+                                resolved = def;
+                            }
+                            
+                            parameters[parameterName] = resolved;
+                        });
+                        
+                    if (setting.definition.body) {
+                        const body = setting.definition.body;
+                        if (typeof body === 'string') {
+                            bodyDef = {
+                                type: body
+                            }
+                        } else
+                        if (isType(body)) {
+                            bodyDef = resolver.resolve(body);
+                        } else {
+                            bodyDef = body;
+                        }
+                    }
+                }
+                
+                settings.push({
+                    ...setting,
+                    propertyKey: key,
+                    middleware: middlewares,
+                    parameters: parameters,
+                    body: bodyDef,
+                });
+            });
         });
 
     return settings;

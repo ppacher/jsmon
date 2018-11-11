@@ -45,11 +45,11 @@ class Foo {
 
     @Restrict({name: 'name', value: 'admin'})
     @Get('/hello/:name', {
+        description: 'Returns a hello message',
         parameters: {
             name: {
                 type: 'string',
-                description: 'The name to return',
-                regex: /.+/
+                description: 'The name to use for the hello message'
             }
         }
     })

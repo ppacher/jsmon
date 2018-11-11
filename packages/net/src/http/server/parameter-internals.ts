@@ -1,10 +1,26 @@
-import { Type, PROP_METADATA, ForwardRef, resolveForwardRef, isType } from "@jsmon/core";
-import { Property, Required, ResolvedObjectProperty, PropertyType, ResolvedProperty, ArrayPropertyOptions, ObjectPropertyOptions, ResolvedPropertyRef, PropertyOptions, StringPropertyOptions, NumberPropertyOptions, BooleanPropertyOptions, ResolvedStringProperty, ResolvedNumberProperty, ResolvedBooleanProperty, ResolvedArrayProperty } from "./parameters";
+import { Type, PROP_METADATA, ForwardRef, resolveForwardRef, isType, ANNOTATIONS } from "@jsmon/core";
+import { Property, Required, ResolvedObjectProperty, PropertyType, ResolvedProperty, ArrayPropertyOptions, ObjectPropertyOptions, ResolvedPropertyRef, PropertyOptions, StringPropertyOptions, NumberPropertyOptions, BooleanPropertyOptions, ResolvedStringProperty, ResolvedNumberProperty, ResolvedBooleanProperty, ResolvedArrayProperty, Definition } from "./parameters";
 
 export class DefinitionResolver {
     private static defaultResolver: DefinitionResolver;
     
+    static get default(): DefinitionResolver {
+        if (!this.defaultResolver) {
+            this.defaultResolver = new DefinitionResolver();
+        }
+        
+        return this.defaultResolver;
+    }
+    
     private readonly _definitionCache: Map<string, ResolvedProperty> = new Map();
+    
+    get(what: Type<any>|string): ResolvedProperty | undefined {
+        if (isType(what)) {
+            what = what.name;
+        }
+        
+        return this._definitionCache.get(what);
+    }
 
     resolve(what: Type<any> | ForwardRef<any>): ResolvedProperty {
         let target = resolveForwardRef(what);
@@ -126,6 +142,15 @@ export class DefinitionResolver {
         }
         
         const propertyAnnotations = Reflect.getOwnPropertyDescriptor(what, PROP_METADATA);
+        const definitionAnnotations = Reflect.getOwnPropertyDescriptor(what, ANNOTATIONS);
+
+        if (!definitionAnnotations || !definitionAnnotations.value) {
+            throw new Error(`No definition annotation for ${what.name}. Did you forget to use the @Definition() decorator?`);
+        }
+        const definition: Definition = definitionAnnotations.value.find(d => d instanceof Definition);
+        if (!definition) {
+            throw new Error(`No definition annotation for ${what.name}. Did you forget to use the @Definition() decorator?`);
+        }
     
         if (!propertyAnnotations || !propertyAnnotations.value) {
             throw new Error(`No property definitions for ${what.name}. Did you forget to use the @Property() decorator?`);
@@ -139,6 +164,11 @@ export class DefinitionResolver {
             properties: {},
             classType: what,
         };
+        
+        if (!!definition.description) {
+            result.description = definition.description;
+        }
+
         
         Object.keys(propertyAnnotations.value)
             .forEach(propertyKey => {
