@@ -15,6 +15,7 @@ export const SERVER_OPTIONS = 'SERVER_OPTIONS';
 @Injectable()
 export class HttpServer {
     private _routes: Map<any, BoundRequestSettings> = new Map();
+    private _disableValidation: boolean = false;
 
     /**
      * Access to the actual restify server object
@@ -23,6 +24,7 @@ export class HttpServer {
 
     constructor(@Inject(SERVER_OPTIONS) @Optional() options?: restify.ServerOptions,
                 @Optional() private _log: Logger = new Logger(new NoopLogAdapter),
+                @Optional() private _resolver: DefinitionResolver = DefinitionResolver.default,
                 @Optional() private _injector?: Injector) {
 
         this._log = this._log.createChild('http-server');
@@ -32,6 +34,57 @@ export class HttpServer {
         this.server.on('after', (req: restify.Request, res: restify.Response) => {
             this._log.info(`${res.statusCode} ${req.method} ${req.url}`);
         });
+    }
+    
+    /**
+     * Add a list of middleware to the server.
+     * @see resitfy.Server#use
+     * 
+     * @param handlers - A list of handler to use
+     */
+    use(...handlers: restify.RequestHandlerType[]): this {
+        this.server.use(...handlers);
+        return this;
+    }
+    
+    /**
+     * Enables the bodyParser plugin
+     * @see restify.plugins.bodyParser
+     * 
+     * @param options - Options for the body parser
+     */
+    withBodyParser(options: restify.plugins.BodyParserOptions): this {
+        this.use(restify.plugins.bodyParser(options));
+        return this;
+    }
+    
+    /**
+     * Enabled the queryParser plugin
+     * @see restify.plugins.queryParser
+     * 
+     * @param options - Options for the query parser
+     */
+    withQueryParser(options: restify.plugins.QueryParserOptions): this {
+        this.use(restify.plugins.queryParser(options));
+        return this;
+    }
+    
+    /**
+     * Configures the definition resolver to use
+     * 
+     * @param resolver - The definition resolver to use
+     */
+    setDefinitionResolver(resolver: DefinitionResolver): this {
+        this._resolver = resolver;
+        return this;
+    }
+    
+    /**
+     * Disables request parameter and body validation
+     */
+    disableValidation(): this {
+        this._disableValidation = true;
+        return this;
     }
     
     /**
@@ -81,13 +134,28 @@ export class HttpServer {
         }
         
         const proto = Object.getPrototypeOf(obj);
-        // TODO(ppacher): make definition resolve configurable
-        const handlers = getAnnotations(proto.constructor, DefinitionResolver.default);
+        const handlers = getAnnotations(proto.constructor, this._resolver);
         const routes: restify.Route[] = [];
         
         handlers.forEach(route => routes.push(this._createRoute(prefix, route, obj)));
         
         return routes;
+    }
+    
+    private _createValidator(handler: any): restify.RequestHandler {
+        return (req: restify.Request, res: restify.Response, next: restify.Next) => {
+            const def = this._routes.get(handler);
+            
+            if (!def) {
+                // If we don't have a route definition, skip the validation
+                return next();
+            }
+            
+            // TODO(ppacher): actually validate the request
+            console.log(`validating request against def`, def);
+
+            next();
+        }
     }
     
     private _createRoute(prefix: string, spec: BoundRequestSettings, handler: any): restify.Route {
@@ -106,7 +174,12 @@ export class HttpServer {
 
         
         // setup the handler chain
+        const mainHandler = handler[spec.propertyKey].bind(handler);
         const handlers: restify.RequestHandler[] = [];
+        
+        if (!this._disableValidation) {
+            handlers.push(this._createValidator(mainHandler));
+        }
         
         spec.middleware.forEach((use: Use) => {
             let m: Middleware;
@@ -126,7 +199,6 @@ export class HttpServer {
             });
         });
 
-        const mainHandler = handler[spec.propertyKey].bind(handler);
         handlers.push(
             mainHandler
         );
