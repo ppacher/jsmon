@@ -147,7 +147,7 @@ export class DefinitionResolver {
         if (!definitionAnnotations || !definitionAnnotations.value) {
             throw new Error(`No definition annotation for ${what.name}. Did you forget to use the @Definition() decorator?`);
         }
-        const definition: Definition = definitionAnnotations.value.find(d => d instanceof Definition);
+        const definition: Definition = definitionAnnotations.value.find((d: any) => d instanceof Definition);
         if (!definition) {
             throw new Error(`No definition annotation for ${what.name}. Did you forget to use the @Definition() decorator?`);
         }

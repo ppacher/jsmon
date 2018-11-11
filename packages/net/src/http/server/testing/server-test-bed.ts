@@ -1,6 +1,7 @@
 import { Provider, Type, Injector, NoopLogAdapter, Logger } from '@jsmon/core';
-import { HttpServer, Middleware } from '@jsmon/net/http/server';
-import { HttpClient } from '../services/http-client';
+import { HttpServer } from '../server';
+import { Middleware } from '../annotations';
+import { HttpClient } from '../../client';
 import { plugins } from 'restify';
 
 export interface TestBedConfig {
@@ -32,7 +33,7 @@ export class HttpServerTestBed {
     
     hasRoute(path: string) {
         return this._server.server.router.getRoutes()
-            .find(route => {
+            .find((route: any) => {
                 return (route.path as string).startsWith(path);
             }) != undefined;
     }
