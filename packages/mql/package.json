@@ -1,0 +1,45 @@
+{
+  "name": "@jsmon/mql",
+  "version": "0.0.1",
+  "description": "A simple model query language",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build-src",
+    "build-src": "tsc && cp package.json dist/",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "jsmon"
+  ],
+  "author": "Patrick Pacher <patrick.pacher@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^23.3.9",
+    "jest": "^22.4.3",
+    "reflect-metadata": "^0.1.12",
+    "ts-jest": "^22.4.2",
+    "typescript": "^2.9.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "roots": [
+      "<rootDir>/src/"
+    ],
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json",
+      "html"
+    ]
+  }
+}
