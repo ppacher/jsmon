@@ -69,7 +69,6 @@ export class HttpClient {
      * The actual implementation for post
      */
     post<T>(endpoint: string, queryParamsOrBody?: any, body?: any): Promise<T> {
-        console.log("======POST", endpoint, queryParamsOrBody, body);
         return this.request('post', endpoint, queryParamsOrBody, body);
     }
     

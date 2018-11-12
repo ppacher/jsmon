@@ -1,5 +1,5 @@
 import { ANNOTATIONS, ForwardRef, isType, PROP_METADATA, resolveForwardRef, Type } from "@jsmon/core";
-import { ArrayPropertyOptions, BooleanPropertyOptions, Definition, NumberPropertyOptions, ObjectPropertyOptions, Property, PropertyType, Required, ResolvedArrayProperty, ResolvedBooleanProperty, ResolvedNumberProperty, ResolvedObjectProperty, ResolvedProperty, ResolvedPropertyRef, ResolvedStringProperty, StringPropertyOptions } from "./parameters";
+import { ArrayPropertyOptions, BooleanPropertyOptions, Definition, NumberPropertyOptions, ObjectPropertyOptions, Property, PropertyType, Required, ResolvedArrayProperty, ResolvedBooleanProperty, ResolvedNumberProperty, ResolvedObjectProperty, ResolvedProperty, ResolvedPropertyRef, ResolvedStringProperty, StringPropertyOptions, isPropertyRef } from "./parameters";
 
 export class DefinitionResolver {
     private static defaultResolver: DefinitionResolver;
@@ -23,9 +23,13 @@ export class DefinitionResolver {
      * 
      * @param what - The class type or the name of the definition to search for
      */
-    get(what: Type<any>|string): ResolvedProperty | undefined {
+    get(what: Type<any>|string|ResolvedPropertyRef): ResolvedProperty | undefined {
         if (isType(what)) {
             what = what.name;
+        }
+        
+        if (isPropertyRef(what)) {
+            return this._definitionCache.get(what.ref);
         }
         
         return this._definitionCache.get(what);
@@ -37,7 +41,7 @@ export class DefinitionResolver {
      * 
      * @param what - The class type (or a forward ref) to resolve
      */
-    resolve(what: Type<any> | ForwardRef<any>): ResolvedProperty {
+    resolve(what: Type<any> | ForwardRef<any>|ResolvedPropertyRef): ResolvedProperty {
         let target = resolveForwardRef(what);
 
         if (this._definitionCache.has(target.name)) {

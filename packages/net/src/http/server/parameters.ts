@@ -239,6 +239,10 @@ export interface ResolvedPropertyRef {
     ref: string;
 }
 
+export function isPropertyRef(val: any): val is ResolvedPropertyRef {
+    return (!!val && typeof val.ref === 'string');
+}
+
 export interface ResolvedObjectProperty extends ResolvedBaseProperty, ObjectPropertyOptions {
     type: 'object';
     

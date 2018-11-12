@@ -90,6 +90,14 @@ export class HttpServer {
     }
     
     /**
+     * Enables request parameter and body validation
+     */
+    enableValidation(): this {
+        this._disableValidation = false;
+        return this;
+    }
+    
+    /**
      * Start listening
      * Wraps {@link restify.Server#listen}
      */
@@ -155,7 +163,7 @@ export class HttpServer {
         return (req: restify.Request, res: restify.Response, next: restify.Next) => {
             const def = this._routes.get(handler);
             
-            if (!def) {
+            if (!def || this._disableValidation) {
                 // If we don't have a route definition, skip the validation
                 return next();
             }
@@ -183,9 +191,7 @@ export class HttpServer {
         const mainHandler = handler[spec.propertyKey].bind(handler);
         const handlers: restify.RequestHandler[] = [];
         
-        if (!this._disableValidation) {
-            handlers.push(this._createValidator(mainHandler));
-        }
+        handlers.push(this._createValidator(mainHandler));
         
         spec.middleware.forEach((use: Use) => {
             let m: Middleware;
