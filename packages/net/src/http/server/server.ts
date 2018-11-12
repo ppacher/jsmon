@@ -1,8 +1,9 @@
-import {Injectable, PROP_METADATA, Type, Inject, Optional, Logger, NoopLogAdapter, Injector, isType, ProviderToken, InjectionToken} from '@jsmon/core';
-import {RequestSettings, Get, Post, Put, Patch, Delete, Use, Middleware} from './annotations';
+import { Inject, Injectable, InjectionToken, Injector, isType, Logger, NoopLogAdapter, Optional, ProviderToken } from '@jsmon/core';
 import * as restify from 'restify';
-import { ResolvedProperty, ResolvedPropertyRef } from './parameters';
+import { Middleware, Use } from './annotations';
 import { DefinitionResolver } from './parameter-internals';
+import { BoundRequestSettings, getAnnotations } from './server-internals';
+import { Validator } from './validator';
 
 export const SERVER_OPTIONS = 'SERVER_OPTIONS';
 
@@ -25,6 +26,7 @@ export class HttpServer {
     constructor(@Inject(SERVER_OPTIONS) @Optional() options?: restify.ServerOptions,
                 @Optional() private _log: Logger = new Logger(new NoopLogAdapter),
                 @Optional() private _resolver: DefinitionResolver = DefinitionResolver.default,
+                @Optional() private _validator: Validator = new Validator(),
                 @Optional() private _injector?: Injector) {
 
         this._log = this._log.createChild('http-server');
@@ -158,10 +160,7 @@ export class HttpServer {
                 return next();
             }
             
-            // TODO(ppacher): actually validate the request
-            console.log(`validating request against def`, def);
-
-            next();
+            this._validator.validateRequest(def, req, res, next);
         }
     }
     
@@ -219,85 +218,4 @@ export class HttpServer {
             ...handlers
         ]);
     }
-}
-
-export interface BoundRequestSettings extends  RequestSettings {
-    middleware: Use[];
-    propertyKey: string;
-    parameters: {
-        [key: string]: ResolvedProperty;
-    },
-    body?: ResolvedProperty | ResolvedPropertyRef;
-}
-
-export function getAnnotations(cls: Type<any>, resolver: DefinitionResolver): BoundRequestSettings[] {
-    const annotations = Reflect.getOwnPropertyDescriptor(cls, PROP_METADATA);
-    const settings: BoundRequestSettings[] = [];
-    if (annotations === undefined) {
-        return settings;
-    } 
-    
-    Object.keys(annotations.value)
-        .forEach(key => {
-            const verbs: RequestSettings[] = annotations.value[key].filter((a: any) => {
-                return a instanceof Get ||
-                       a instanceof Post ||
-                       a instanceof Put ||
-                       a instanceof Patch ||
-                       a instanceof Delete;
-            });
-            
-            const middlewares: Use[] = annotations.value[key].filter((a: any) => a instanceof Use);
-
-            if (verbs.length === 0) { return; }
-            
-            verbs.forEach(setting => {
-                let parameters: {
-                    [key: string]: ResolvedProperty;
-                } = {};
-                let bodyDef: any;
-
-                if (setting.definition) {
-                    Object.keys(setting.definition.parameters || {})
-                        .forEach(parameterName => {
-                            const def = setting.definition!.parameters![parameterName];
-                            let resolved: any;
-
-                            if (typeof def === 'string') {
-                                resolved = {
-                                    type: def,
-                                }
-                            } else {
-                                resolved = def;
-                            }
-                            
-                            parameters[parameterName] = resolved;
-                        });
-                        
-                    if (setting.definition.body) {
-                        const body = setting.definition.body;
-                        if (typeof body === 'string') {
-                            bodyDef = {
-                                type: body
-                            }
-                        } else
-                        if (isType(body)) {
-                            bodyDef = resolver.resolve(body);
-                        } else {
-                            bodyDef = body;
-                        }
-                    }
-                }
-                
-                settings.push({
-                    ...setting,
-                    propertyKey: key,
-                    middleware: middlewares,
-                    parameters: parameters,
-                    body: bodyDef,
-                });
-            });
-        });
-
-    return settings;
 }

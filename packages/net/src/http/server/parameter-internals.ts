@@ -1,9 +1,12 @@
-import { Type, PROP_METADATA, ForwardRef, resolveForwardRef, isType, ANNOTATIONS } from "@jsmon/core";
-import { Property, Required, ResolvedObjectProperty, PropertyType, ResolvedProperty, ArrayPropertyOptions, ObjectPropertyOptions, ResolvedPropertyRef, PropertyOptions, StringPropertyOptions, NumberPropertyOptions, BooleanPropertyOptions, ResolvedStringProperty, ResolvedNumberProperty, ResolvedBooleanProperty, ResolvedArrayProperty, Definition } from "./parameters";
+import { ANNOTATIONS, ForwardRef, isType, PROP_METADATA, resolveForwardRef, Type } from "@jsmon/core";
+import { ArrayPropertyOptions, BooleanPropertyOptions, Definition, NumberPropertyOptions, ObjectPropertyOptions, Property, PropertyType, Required, ResolvedArrayProperty, ResolvedBooleanProperty, ResolvedNumberProperty, ResolvedObjectProperty, ResolvedProperty, ResolvedPropertyRef, ResolvedStringProperty, StringPropertyOptions } from "./parameters";
 
 export class DefinitionResolver {
     private static defaultResolver: DefinitionResolver;
     
+    /**
+     * Returns the default (global) definition resolver
+     */
     static get default(): DefinitionResolver {
         if (!this.defaultResolver) {
             this.defaultResolver = new DefinitionResolver();
@@ -14,6 +17,12 @@ export class DefinitionResolver {
     
     private readonly _definitionCache: Map<string, ResolvedProperty> = new Map();
     
+    /**
+     * Returns a resolved definition from the cache. If no such definition is
+     * available, undefined is returend
+     * 
+     * @param what - The class type or the name of the definition to search for
+     */
     get(what: Type<any>|string): ResolvedProperty | undefined {
         if (isType(what)) {
             what = what.name;
@@ -22,6 +31,12 @@ export class DefinitionResolver {
         return this._definitionCache.get(what);
     }
 
+    /**
+     * Resolves a class type or forward ref and returns a resolved
+     * definition
+     * 
+     * @param what - The class type (or a forward ref) to resolve
+     */
     resolve(what: Type<any> | ForwardRef<any>): ResolvedProperty {
         let target = resolveForwardRef(what);
 
@@ -32,12 +47,22 @@ export class DefinitionResolver {
         return this._resolveType(resolveForwardRef(what), {});
     }
     
+    /**
+     * @internal
+     * 
+     * Dumps all available definitions
+     */
     dump(): void {
         this._definitionCache.forEach((type, name) => {
             console.log(name, '\n', type);
         });
     }
 
+    /**
+     * @internal
+     * 
+     * Dumps all available definitions from the global default resolver
+     */
     static dump() {
         if (!this.defaultResolver) {
             return;
@@ -46,6 +71,12 @@ export class DefinitionResolver {
         this.defaultResolver.dump();
     }
     
+    /**
+     * Resolves a class type or forward ref and returns a resolved
+     * definition using the global default resolver
+     * 
+     * @param what - The class type (or a forward ref) to resolve
+     */
     static resolve(what: Type<any> | ForwardRef<any>): ResolvedProperty {
         if (!this.defaultResolver) {
             this.defaultResolver = new DefinitionResolver();
@@ -168,8 +199,7 @@ export class DefinitionResolver {
         if (!!definition.description) {
             result.description = definition.description;
         }
-
-        
+ 
         Object.keys(propertyAnnotations.value)
             .forEach(propertyKey => {
                 const annotations: any[] = propertyAnnotations.value[propertyKey];

@@ -8,7 +8,7 @@ export interface TestBedConfig {
     prefix?: string;
     controller: Type<any>;
     providers?: Provider[];
-    clearMiddlewares: Type<Middleware>[];
+    clearMiddlewares?: Type<Middleware>[];
 }
 
 export class HttpServerTestBed {
