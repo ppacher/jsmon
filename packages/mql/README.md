@@ -213,6 +213,8 @@ One can now built a custom executor (like the [ModelQueryLanguage](#modelqueryla
 
 The `ExpressionParser` also accepts a config object as the second parameter to `parse()` which can configure custom keyword parser, operators and there precedence as well as additional configuration for the [Lexer](#lexer). See the [test cases](./src/expression-parser.spec.ts) for more examples.
 
+A more complete example for parsing simple SQL queries can be found [here](./src/expression-parser.spec.ts#L243)
+
 ### Lexer
 
 ### AST

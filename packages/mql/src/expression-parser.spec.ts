@@ -373,7 +373,7 @@ describe('Simple SQL-Parser', () => {
         }
     });
 
-    it('should parse simple a simple SQL statement', () => {
+    it('should parse a simple SQL statement', () => {
         const result = ExpressionParser.parse_single('SELECT foo, "bar" FROM test AS t WHERE t.foo > 10 JOIN another AS a ON a.id == t.id', cfg);
 
         const expected ={ 
