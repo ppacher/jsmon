@@ -61,7 +61,7 @@ describe('ModelQueryLanguage', () => {
                     }
                 },
                 resolve: function(object: any, expression: AST) {
-                    const value = this.resolveValue(object, (expression as CustomToken).value);
+                    const value = this.resolveValue(object, (expression as any).value);
                     return value.length;
                 }
             }

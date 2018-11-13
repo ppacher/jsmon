@@ -1,7 +1,7 @@
 {
   "name": "@jsmon/mql",
   "version": "0.0.1",
-  "description": "A simple model query language",
+  "description": "A framework for building expression languages",
   "main": "index.js",
   "scripts": {
     "start": "npm run build-src",
