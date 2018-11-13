@@ -12,15 +12,17 @@ export interface BooleanValue {
     value: boolean;
 }
 
-/**
- * Custom tokens that may be returned from {@link ParseFunction}
- */
+export interface Prog {
+    type: 'prog';
+    nodes: AST[];
+}
+
 export interface CustomToken {
     type: string;
-    value: any;
 }
 
 export type AST = Token
+                | Prog
                 | BinaryExpression
                 | CustomToken
                 | BooleanValue;
@@ -28,6 +30,7 @@ export type AST = Token
 export interface ParseFunction {
     (this: ExpressionParser): AST;
 }
+
 
 export enum PrecedenceLevel {
     Assign = 1,
@@ -93,11 +96,51 @@ export class ExpressionParser {
         this.input = new Lexer(input, this.config.lexer);
     }
     
-    parse(): AST {
+    /**
+     * Parses the next AST node and returns it
+     */
+    parse_single(): AST {
         return this.parse_expression();
     }
     
-    static parse(input: string, cfg?: ExpressionParserConfig): AST {
+    /**
+     * Parses the whole input string and returns a {@link Prog} AST node
+     */
+    parse(): Prog {
+        let nodes: AST[] = [];
+        while (!this.input.eof()) {
+            const node = this.parse_single();
+            nodes.push(node);
+            
+            // A leading ; for each statement / AST node is optional
+            try {
+                this.skip_punc(';')
+            } catch (err) {}
+        }
+        
+        return {
+            type: 'prog',
+            nodes: nodes,
+        };
+    }
+    
+    /**
+     * Parses the first AST node and returns it
+     * 
+     * @param input - The input string
+     * @param [cfg] - An optional configuration for the parser
+     */
+    static parse_single(input: string, cfg?: ExpressionParserConfig): AST {
+        return (new ExpressionParser(input, cfg)).parse_single();
+    }
+    
+    /**
+     * Parses the whole input string and returns a {@link Prog} AST node
+     * 
+     * @param input - The input string
+     * @param [cfg] - An optional configuration for the parser
+     */
+    static parse(input: string, cfg?: ExpressionParserConfig): Prog {
         return (new ExpressionParser(input, cfg)).parse();
     }
     

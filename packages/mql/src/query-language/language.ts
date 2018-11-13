@@ -39,7 +39,7 @@ export class ModelQueryLanguage<T> {
     }
     
     parse(input: string): AST {
-        return ExpressionParser.parse(input, this._getParserOptions());
+        return ExpressionParser.parse_single(input, this._getParserOptions());
     }
 
     find(input: string, collection: T[]): Partitial<T[]> {
