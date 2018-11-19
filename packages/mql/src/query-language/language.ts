@@ -1,6 +1,6 @@
-import {ExpressionParser, ExpressionParserConfig, AST, BinaryExpression, ParseFunction} from '../expression-parser';
+import {ExpressionParser, ExpressionParserConfig, AST, BinaryExpression, ParseFunction, BooleanValue} from '../expression-parser';
 import {ModelRegistry, ModelDefinition} from './model';
-import { NumToken, StringToken, IdentifierToken } from 'src/lexer';
+import { NumToken, StringToken, IdentifierToken } from '../lexer';
 
 export type Partitial<T> = {
     [P in keyof T]?: T[P];
@@ -53,9 +53,53 @@ export class ModelQueryLanguage<T> {
         return collection.filter(object => this._parseBinaryExpression(object, ast as BinaryExpression));
     }
     
+    stringFromExpression(ast: AST) {
+        function valueToString(val: AST) {
+            const value = (val as any).value;
+            
+            switch (val.type) {
+                case 'bool':
+                    return value ? 'true' : 'false';
+                case 'str':
+                    return JSON.stringify(value);
+                case 'num':
+                    return `${value}`;
+                case 'binary':
+                    return binaryToString(val as any);
+            }
+        }
+        
+        function binaryToString(expression: BinaryExpression): string {
+            const left = valueToString(expression.left);
+            const right = valueToString(expression.right);
+
+            return `(${left} ${expression.operator} ${right})`;
+        }
+        
+        return valueToString(ast);
+    }
+
+    parseExpression(object: T, expression: string, dump: boolean = false): any {
+        const ast = this.parse(expression);
+        
+        if (dump) {
+            console.log(ast);
+        }
+
+        return this.resolveValue(object, ast as BinaryExpression);
+    }
+    
     protected _parseBinaryExpression(object: T, expression: BinaryExpression): any {
         let leftValue = this.resolveValue(object, expression.left);
+        
+        if (expression.operator === '||' && typeof leftValue !== 'object' && !!leftValue) {
+            return leftValue;
+        }
+
         let rightValue = this.resolveValue(object, expression.right);
+        if (expression.operator === '&&' && typeof rightValue !== 'object' && !rightValue) {
+            return false;
+        }
         
         // Check if we have an operator override and use that if one is set
         const override = this._operators[expression.operator];
@@ -119,6 +163,8 @@ export class ModelQueryLanguage<T> {
                 return this.getIdentityProperty(object, (expression as IdentifierToken).value)
             case 'binary':
                 return this._parseBinaryExpression(object, expression as BinaryExpression);
+            case 'bool':
+                return (expression as BooleanValue).value;
             default:
                 throw new Error(`Invalid expression type ${expression.type}`);
         }

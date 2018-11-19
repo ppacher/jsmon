@@ -68,6 +68,34 @@ describe('ModelQueryLanguage', () => {
         });
     });
 
+    describe('when evaluate correctly', () => {
+        it('should handle operator precedence correctly', () => {
+            interface TestCase {
+                case: string,
+                result: boolean|string|number,
+                dump?: boolean,
+            }
+            
+            const cases: TestCase[] = [
+                { case: 'true && true', result: true },
+                { case: 'false && false || true', result: true },
+                { case: 'false || true', result: true },
+                { case: 'false || ( true && false )', result: false},
+                { case: '1 == 2 || 1 == 1 && 1 == 1', result: true},
+                { case: '1 == 2 || 3', result: 3},
+                { case: '1', result: 1},
+                { case: '0 || "test"', result: "test"}
+            ];
+
+            cases.forEach(t => {
+                const ast = query.parse(t.case);
+                console.log(t.case, '\n', query.stringFromExpression(ast));
+                
+                expect(query.parseExpression({} as User, t.case, t.dump || false)).toBe(t.result);
+            });
+        });
+    });
+
     it('should validate identifiers', () => {
         expect(() => query.parse('username')).not.toThrow();
         expect(() => query.parse('foobar')).toThrow();
@@ -96,6 +124,13 @@ describe('ModelQueryLanguage', () => {
             const result = query.find('username == "admin" && firstname == "Admin"', users);
             expect(result.length).toBe(1);
             expect(result[0]).toEqual(users[2]);
+        });
+        
+        it('should work for complex boolean expressions', () => {
+            const result = query.find('username == "alice" || username == "bob" && permissions contains "user:list"', users);
+            expect(result[0]).toEqual(users[1]);
+            expect(result[1]).toBeUndefined();
+            expect(result.length).toBe(1);
         });
         
         it('should work for complex expressions', () => {

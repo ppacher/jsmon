@@ -8,6 +8,7 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '==' ,
+            parentheses: false,
             left: {
                 type: 'ident',
                 value: 'processName'
@@ -24,6 +25,7 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '+',
+            parentheses: false,
             left: {
                 type: 'num',
                 value: 1
@@ -31,6 +33,7 @@ describe('ExpressionParser', () => {
             right: {
                 type: 'binary',
                 operator: '*',
+                parentheses: false,
                 left: {
                     type: 'num',
                     value: 2
@@ -51,6 +54,7 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '!=',
+            parentheses: false,
             left: {
                 type: 'bool',
                 value: true
@@ -70,6 +74,7 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '==',
+            parentheses: false,
             left: {
                 type: 'ident',
                 value: 'Foo'
@@ -148,6 +153,7 @@ describe('ExpressionParser', () => {
             ],
             expression: {
                 type: 'binary',
+                parentheses: false,
                 operator: '!=',
                 left: { type: 'num', value: 1},
                 right: { type: 'null', value: null}
@@ -164,9 +170,11 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '&&',
+            parentheses: false,
             left: {
                 type: 'binary',
                 operator: 'LIKE',
+                parentheses: false,
                 left: {
                     type: 'ident',
                     value: 'Foo'
@@ -179,6 +187,7 @@ describe('ExpressionParser', () => {
             right: {
                 type: 'binary',
                 operator: '>',
+                parentheses: false,
                 left: {
                     type: 'num',
                     value: 1
@@ -196,12 +205,15 @@ describe('ExpressionParser', () => {
         expect(result).toEqual({
             type: 'binary',
             operator: '||',
+            parentheses: false,
             left: {
                 type: 'binary',
                 operator: '&&',
+                parentheses: false,
                 left: {
                     type: 'binary',
                     operator: '>',
+                    parentheses: false,
                     left: {
                         type: 'ident',
                         value: 'Process.Parent.PID'
@@ -214,6 +226,7 @@ describe('ExpressionParser', () => {
                 right: {
                     type: 'binary',
                     operator: '>',
+                    parentheses: true,
                     left: {
                         type: 'num',
                         value: 3
@@ -227,6 +240,7 @@ describe('ExpressionParser', () => {
             right: {
                 type: 'binary',
                 operator: '%',
+                parentheses: true,
                 left: {
                     type: 'ident',
                     value: 'Process.Name'
@@ -384,6 +398,7 @@ describe('Simple SQL-Parser', () => {
             expression: { 
                 type: 'binary',
                 operator: '>',
+                parentheses: false,
                 left: { 
                     type: 'ident',
                     value: 't.foo'
@@ -401,6 +416,7 @@ describe('Simple SQL-Parser', () => {
                     expression: { 
                         type: 'binary',
                         operator: '==',
+                        parentheses: false,
                         left: { 
                             type: 'ident',
                             value: 'a.id'

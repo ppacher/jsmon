@@ -2,6 +2,7 @@ import { Lexer, Token, LexerConfig } from './lexer';
 
 export interface BinaryExpression {
     type: 'binary';
+    parentheses: boolean;
     operator: string;
     left: AST;
     right: AST;
@@ -60,6 +61,7 @@ export class ExpressionParserConfig {
 
 export class ExpressionParser {
     input: Lexer;
+    in_parenthesis: boolean = false;
     
     private get parsers() {
         return this.config.keywordParsers;
@@ -267,9 +269,11 @@ export class ExpressionParser {
      */
     parse_atom(): AST {
         if (this.is_punc('(')) {
+            this.in_parenthesis = true;
             this.input.next();
             const exp = this.parse_expression();
             this.skip_punc(')');
+            this.in_parenthesis = false;
             return exp;
         }
 
@@ -311,6 +315,7 @@ export class ExpressionParser {
                 this.input.next();
                 return this.maybe_binary({
                     type: 'binary',
+                    parentheses: this.in_parenthesis,
                     operator: tok.value as string,
                     left: left,
                     right: this.maybe_binary(this.parse_atom(), his_prec)
