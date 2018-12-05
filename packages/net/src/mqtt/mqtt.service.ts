@@ -1,9 +1,10 @@
-import {Injectable, Inject, Optional} from '@jsmon/core';
-import {Logger, NoopLogAdapter} from '@jsmon/core/log';
-import {Client, connect, IClientOptions} from 'mqtt';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Observable} from 'rxjs';
-import {filter, map} from 'rxjs/operators';
+import { Inject, Injectable, Optional, Injector, Type, isType } from '@jsmon/core';
+import { Logger, NoopLogAdapter } from '@jsmon/core/log';
+import { Client, connect, IClientOptions } from 'mqtt';
+import { Observable, Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { filter, map } from 'rxjs/operators';
+import { getTopicHandlers } from './decorators';
 
 export const MQTT_BROKER_URL = 'mqtt-broker-url';
 export const MQTT_CLIENT_CONNECT = 'mqtt-client-connect';
@@ -33,6 +34,7 @@ export class MqttService {
     private _connected: BehaviorSubject<boolean> = new BehaviorSubject(false);
     private _topics: Map<string, number> = new Map();
     private _messageCallbacks: Set<MessageHandler> = new Set();
+    private _mounts: Map<any, () => void> = new Map();
     
     get onConnect(): Observable<void> {
         return this._connected.asObservable()
@@ -42,7 +44,8 @@ export class MqttService {
     constructor(
         @Inject(MQTT_BROKER_URL) @Optional() private _url: string,
         @Optional() log: Logger = new Logger(new NoopLogAdapter),
-        @Inject(MQTT_CLIENT_CONNECT) @Optional() connectClient: MqttConnectFn = connect
+        private _injector: Injector,
+        @Inject(MQTT_CLIENT_CONNECT) @Optional() connectClient: MqttConnectFn = connect,
     ) {
         this._client = connectClient(this._url);
         
@@ -58,6 +61,55 @@ export class MqttService {
                 handler(topic, payload);
             });
         });
+    }
+
+    public isMounted(instance: any): boolean {
+        return this._mounts.has(instance);
+    }
+    
+    public mount<T>(instanceOrType: Type<T>|T, injector: Injector = this._injector): T {
+        let instance: T;
+        if (isType(instanceOrType)) {
+            instance = injector.get(instanceOrType);
+        } else {
+            instance = instanceOrType;
+        }
+        
+        const topics = getTopicHandlers(Object.getPrototypeOf(instance).constructor);
+        const subscriptions: Subscription[] = [];
+        
+        Object.keys(topics)
+            .forEach(property => {
+                if ( typeof (instance as any)[property] !== 'function' ) {
+                    throw new Error(`Cannot mount property ${property}. Expected a handler function but got ${typeof (instance as any)[property]}`);
+                }
+                
+                const handlerTopics = topics[property];
+
+                handlerTopics.forEach(topic => {
+                    const sub = this.subscribe(topic)
+                        .subscribe(([t, payload]) => {
+                            (instance as any)[property].bind(instance)(t, payload, this);
+                        });
+                        
+                    subscriptions.push(sub);
+                });
+            });
+            
+        this._mounts.set(instance, () => {
+            subscriptions.forEach(sub => sub.unsubscribe());
+            this._mounts.delete(instance);
+        });
+        
+        return instance;
+    }
+    
+    public unmount(instance: any): void {
+        const unsub = this._mounts.get(instance);
+
+        if (!!unsub) {
+            unsub();
+        }
     }
     
     public publish(topic: string, payload: Buffer|string): void {
