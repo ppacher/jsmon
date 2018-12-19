@@ -1,0 +1,53 @@
+apiVersion: v1alpha
+kind: Platform
+spec:
+  id: master
+  type: tinkerforge
+  options:
+    host: 0.0.0.0
+     port: 443
+     username: admin
+     password: password
+
+---
+
+# The following must implement a "Output" type
+apiVersion: tinkerforge/v1alpha
+kind: TemperatureSensor
+spec:
+  id: master_temperature
+  connection:
+    id: master
+    options:
+      uid: 8UJ
+      
+---
+
+apiVersion: v1alpha
+kind: Sensor
+metadata:
+  name: "Temperature"
+  room: Living Room
+spec:
+  id: temperature_sensor_livingroom
+  output:
+    id: master_temperature
+    name: temp_celcius
+  unit: °C
+  
+---
+
+apiVersion: v1alpha
+kind: Sensor
+metadata:
+  name: Phone Detector
+spec:
+  id: phone_detector
+  output:
+    id: network_scanner
+    name: scan_result
+  unit: boolean
+  pipeline:
+    - type: json
+      path: .hwaddr
+      has: "00:00:de:ad:be:ef"
