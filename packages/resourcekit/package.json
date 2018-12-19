@@ -1,15 +1,15 @@
 {
   "name": "@jsmon/resourcekit",
   "version": "0.0.1",
-  "description": "",
+  "description": "A library for generic resource management designed after Kubernetes",
   "main": "index.js",
   "scripts": {
     "start": "tsc && cp package.json ./dist",
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Patrick Pacher",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^23.3.10",
     "@types/node": "^10.12.15",
