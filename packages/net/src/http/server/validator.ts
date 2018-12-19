@@ -110,6 +110,10 @@ export class Validator {
     }
 
     validateObject(name: string, def: ResolvedObjectProperty, value: any) {
+        if (def.disableValidation === true) {
+            return;
+        }
+        
         if (typeof value !== 'object') {
             throw new BadRequestError(`Expected body to contain a ${def.name} model for ${name} but got "${typeof value}".`)
         }
@@ -163,6 +167,10 @@ export class Validator {
     }
     
     validateArray(name: string, def: ResolvedArrayProperty, value: any) {
+        if (def.disableValidation === true) {
+            return;
+        }
+        
         if (!Array.isArray(value)) {
             throw new BadRequestError(`Expected an array for ${name} but got ${typeof value}`);
         }
@@ -197,6 +205,10 @@ export class Validator {
     }
     
     validateString(name: string, def: ResolvedStringProperty, value: string) {
+        if (def.disableValidation === true) {
+            return;
+        }
+        
         if (!!def.regex && !def.regex.test(value)) {
             throw new BadRequestError(`Parameter "${name}" does not match expression ${def.regex}. Got "${value}"`);
         }
@@ -207,6 +219,10 @@ export class Validator {
     }
     
     validateNumber(name: string, def: ResolvedNumberProperty, value: string|number) {
+        if (def.disableValidation === true) {
+            return;
+        }
+        
         let number = parseInt(''+value);
 
         if (isNaN(number)) {
@@ -223,6 +239,10 @@ export class Validator {
     }
     
     validateBoolean(name: string, def: ResolvedBooleanProperty, value: string|boolean) {
+        if (def.disableValidation === true) {
+            return;
+        }
+        
         const trueValues = ['true', '1', 't', true];
         const falseValues = ['false', '0', 'f', false];
 

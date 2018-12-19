@@ -1,5 +1,5 @@
 import { ANNOTATIONS, ForwardRef, isType, PROP_METADATA, resolveForwardRef, Type } from "@jsmon/core";
-import { ArrayPropertyOptions, BooleanPropertyOptions, Definition, NumberPropertyOptions, ObjectPropertyOptions, Property, PropertyType, Required, ResolvedArrayProperty, ResolvedBooleanProperty, ResolvedNumberProperty, ResolvedObjectProperty, ResolvedProperty, ResolvedPropertyRef, ResolvedStringProperty, StringPropertyOptions, isPropertyRef } from "./parameters";
+import { ArrayPropertyOptions, BooleanPropertyOptions, Definition, isPropertyRef, NumberPropertyOptions, ObjectPropertyOptions, Property, PropertyType, Required, ResolvedArrayProperty, ResolvedBooleanProperty, ResolvedNumberProperty, ResolvedObjectProperty, ResolvedProperty, ResolvedPropertyRef, ResolvedStringProperty, StringPropertyOptions } from "./parameters";
 
 export class DefinitionResolver {
     private static defaultResolver: DefinitionResolver;
@@ -215,15 +215,20 @@ export class DefinitionResolver {
                     throw new Error(`No @Property() decorator for ${what.name}.${propertyKey}.`);
                 }
                 
-                let def: ResolvedProperty | ResolvedPropertyRef = this._resolveType(propertyType, propertyDefinition);
-                
-                if (def.type === 'object') {
-                    def = {
-                        ref: def.name
+                if (!!propertyDefinition.options && propertyDefinition.options.disableValidation) {
+
+                } else {
+                    let def: ResolvedProperty | ResolvedPropertyRef = this._resolveType(propertyType, propertyDefinition);
+                    
+                    if (def.type === 'object') {
+                        def = {
+                            ref: def.name
+                        }
                     }
+                    
+                    result.properties[propertyKey] = def;
                 }
                 
-                result.properties[propertyKey] = def;
                 
                 if (isRequired) {
                     result.required.push(propertyKey);

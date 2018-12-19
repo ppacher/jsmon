@@ -131,7 +131,7 @@ export class MqttService {
                 if (!MqttService.filterMatchesTopic(topic, t)) {
                     return;
                 }
-                observer.next([topic, b]);
+                observer.next([t, b]);
             };
 
             this._messageCallbacks.add(handler);

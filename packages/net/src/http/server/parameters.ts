@@ -91,7 +91,12 @@ export interface Property {
 export interface PropertyOptions {
     /** The type of the decorated property. Mainly used for type-safety */
     type?: PropertyType;
+    
+    /** An optional description for the property */
     description?: string;
+    
+    /** An optional flag to disable property validation */
+    disableValidation?: boolean;
 }
 
 /**
@@ -136,6 +141,7 @@ export interface ObjectPropertyOptions extends PropertyOptions {
     /** The class type of the object */
     classType?: Type<any> | ForwardRef<any>;
 }
+
 
 /**
  * Property options for boolean properties
